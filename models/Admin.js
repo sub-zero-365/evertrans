@@ -2,11 +2,7 @@ const { Schema, model } = require("mongoose")
 const jwt = require("jsonwebtoken")
 
 const UserSchema = new Schema({
-        fullname: {
-            type: String,
-            required: [true, "please provide a user  name"],
-            minLength: 6,
-        },
+
         phone: {
             type: Number,
             required: [true, "please provide a number"],
@@ -37,7 +33,7 @@ UserSchema.methods.createJWT = function() {
 
 }
 
-const userschema = model("User", UserSchema)
+const userschema = model("admins", UserSchema)
 
 
 module.exports = userschema
