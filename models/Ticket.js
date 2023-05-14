@@ -1,17 +1,16 @@
 const { Schema, model } = require("mongoose");
-
 const ticketSchema = new Schema({
 
-    fullname: {
-        type: String,
-        required: [true, "please enter user name is needed"],
-        minLength: 4
-    },
+    // fullname: {
+    //     type: String,
+    //     required: [true, "please enter user name is needed"],
+    //     minLength: 4
+    // },
     from: {
         type: String,
         required: [true, "please enter from "],
-
     },
+    
     active: {
         type: Boolean,
         default: true,
@@ -35,6 +34,11 @@ const ticketSchema = new Schema({
     traveldate: {
         type: String,
         required: [true, "please enter date"],
+    },
+    createdBy: {
+        type: Schema.ObjectId,
+        required: [true,"please send a created user id"],
+        ref:"users"
     }
 
 }, {
