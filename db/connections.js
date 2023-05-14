@@ -11,6 +11,7 @@ const options = {
     // useFindAndModify: false
 }
 const LOCAL_URL = process.env.LOCAL_URL
+const PROD_URL = process.env.PROD_URL
 const connectWithDB = (uri) => {
     mongoose.connect(uri, options).then(() => console.log("connected to databse")).catch((err) => {
 
@@ -18,5 +19,5 @@ const connectWithDB = (uri) => {
     })
 
 }
-connectWithDB(LOCAL_URL)
+connectWithDB(PROD_URL)
 module.exports = connectWithDB
