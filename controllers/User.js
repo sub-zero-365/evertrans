@@ -14,6 +14,12 @@ const Register = async (req, res) => {
   });
 };
 const Login = async (req, res) => {
+  const {
+    body: { password, phone },
+  } = req;
+  if (!password || !phone) {
+    throw BadRequestError("please phone  or password needed");
+  }
   const user = await User.findOne({ ...req.body });
   if (!user) {
     throw BadRequestError("please check your login details");
@@ -25,8 +31,27 @@ const Login = async (req, res) => {
   });
 };
 const getUsers = async (req, res) => {
-  console.log(req.query);
-  const users = await User.find({ ...req.query });
+  const obj = {};
+  const {
+    query: { fullname, password, phone },
+  } = req;
+  if (fullname) {
+    obj.fullname = {
+      $regex: fullname,
+      $options: "i",
+    };
+  }
+  if (password) {
+    obj.password = password;
+  }
+  if (phone) {
+    obj.phone = {
+      $regex: phone,
+      $options: "i",
+    };
+  }
+
+  const users = await User.find({ ...obj });
   res.status(200).json({
     users,
     nHits: users.length,
@@ -36,6 +61,7 @@ const userInfo = async (req, res) => {
   const {
     userInfo: { _id },
   } = req;
+
   const user = await User.findOne(
     {
       _id,
@@ -56,5 +82,5 @@ module.exports = {
   Login,
   getAlluser: getUsers,
   uniqueUsers,
-  userInfo
+  userInfo,
 };
