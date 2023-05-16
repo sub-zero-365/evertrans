@@ -2,9 +2,13 @@ const express = require("express");
 const router = express.Router();
 const {
     getAlluser,
-    uniqueUsers
+    uniqueUsers,userInfo
 } = require("../controllers/User");
-router.get("/allusers", getAlluser);
+const {getTickets} =require("../controllers/Ticket");
+router.route("/allusers").get(getAlluser);
+router.route("/alltickets").get(getTickets);
+
+// router.route("/user/:id").get(userInfo)
 router.get("/unique/:search", uniqueUsers)
 
 

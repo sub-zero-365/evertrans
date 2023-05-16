@@ -1,12 +1,18 @@
-const Admin = require("../models/Admin")
+const Admin = require("../models/Admin");
 
-const login = async(req, res, next) => {
-
-    const user = await Admin.findOne({...req.body });
-    if (!user) {
-        throw require("../error").BadRequestError("login fail")
-    }
-    const token = await user.createJWT();
-    res.status(200).json({ token })
-}
-module.exports = login
+const login = async (req, res, next) => {
+  const {
+    body: { phone, password },
+  } = req;
+  if (!phone || !password) {
+    throw require("../error").BadRequestError("phone or password needed");
+  
+  }
+  const user = await Admin.findOne({ ...req.body });
+  if (!user) {
+    throw require("../error").BadRequestError("login fail");
+  }
+  const token = await user.createJWT();
+  res.status(200).json({ token });
+};
+module.exports = login;
