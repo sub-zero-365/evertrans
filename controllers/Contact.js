@@ -10,6 +10,7 @@ const getContact = async (req, res) => {
   } = req;
   const contact = await Contact.findOne({ _id });
   if (!contact) {
+  console.log("fail to get user with a specfic id here")
     throw BadRequestError("fail to lookup contact with id : " + _id);
   }
   res.status(200).json({ contact });

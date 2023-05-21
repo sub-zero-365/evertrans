@@ -6,9 +6,12 @@ const login = async (req, res, next) => {
   } = req;
   if (!phone || !password) {
     throw require("../error").BadRequestError("phone or password needed");
-  
   }
-  const user = await Admin.findOne({ ...req.body });
+  const obj = {
+    phone,
+    password,
+  };
+  const user = await Admin.findOne({ ...obj });
   if (!user) {
     throw require("../error").BadRequestError("login fail");
   }
