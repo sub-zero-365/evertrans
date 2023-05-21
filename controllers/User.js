@@ -20,7 +20,7 @@ const Login = async (req, res) => {
   if (!password || !phone) {
     throw BadRequestError("please phone  or password needed");
   }
-  const user = await User.findOne({ ...req.body });
+  const user = await User.findOne({ ...{ phone, password } });
   if (!user) {
     throw BadRequestError("please check your login details");
   }
@@ -77,10 +77,21 @@ const uniqueUsers = async (req, res) => {
   const unique = await User.distinct(req.params.search);
   res.status(200).json({ unique });
 };
+const getStaticUser = async (req, res) => {
+  const {
+    params: { id: _id },
+  } = req;
+  const user = await User.findOne({ _id });
+  if (!user) {
+    throw BadRequestError("user id is incorrect please try again");
+  }
+  res.status(200).json({ user });
+};
 module.exports = {
   Register,
   Login,
   getAlluser: getUsers,
   uniqueUsers,
   userInfo,
+  getStaticUser,
 };
