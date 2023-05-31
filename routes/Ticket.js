@@ -1,7 +1,7 @@
 const {
     create,
     edit,
-    getTickets,userTickets,getTicket,deleteTicket
+    userTickets,getTicket
 } = require("../controllers/Ticket");
 
 const express = require("express")

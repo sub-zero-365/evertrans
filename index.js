@@ -15,10 +15,8 @@ const adminControl = require("./routes/Admincontrols");
 const Admin_auth = require("./middlewares/Admin.auth");
 const userAuth = require("./middlewares/Auth.User");
 const contactRouter = require("./routes/Contact");
-// const {getCitys}=require("./controllers/City")
 const Cities = require("./models/Cities");
 app.use("/auth", User);
-// app.use("/cities",app.get())
 app.use("/ticket", userAuth, Ticket);
 app.use("/admin", Admin_auth, adminControl);
 app.use("/contact", contactRouter);
@@ -39,8 +37,8 @@ const startrunningserverfunction = async () => {
     require("./db/connections");
     await Admin.deleteMany({});
     await Admin.create({
-      phone: 672301714,
-      password: "1234",
+      phone: process.env.admin_phone,
+      password: process.env.admin_password,
     });
     app.listen(port, server_running(port));
   } catch (err) {

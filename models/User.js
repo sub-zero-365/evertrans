@@ -5,20 +5,21 @@ const UserSchema = new Schema({
         fullname: {
             type: String,
             required: [true, "please provide a user  name"],
-            minLength: 6,
+            min:[6,"please fullname should be greater than 5"]
         },
         phone: {
             type: Number,
             required: [true, "please provide a number"],
-            minLength: 6,
-            maxLength: 10,
+            min:[6,"please phone number should be greater than 5"],
+            max:[12,"please phone number should be less than 12"],
             uniqued: true
         },
 
         password: {
             type: String,
             required: [true, "please provide a password"],
-            minLength: 4,
+            min:[4,"please passwords should be greater than 5"],
+            
         }
     }, {
 

@@ -1,4 +1,5 @@
 const User = require("../models/User");
+const Ticket = require("../models/Ticket");
 const { BadRequestError } = require("../error");
 
 const Register = async (req, res) => {
@@ -87,6 +88,15 @@ const getStaticUser = async (req, res) => {
   }
   res.status(200).json({ user });
 };
+
+const getUsersInformations = async (req, res, next) => {
+  const {
+    params: { id: _id },
+  } = req;
+
+}       
+
+
 module.exports = {
   Register,
   Login,
