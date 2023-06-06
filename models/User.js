@@ -11,7 +11,7 @@ const UserSchema = new Schema({
             type: Number,
             required: [true, "please provide a number"],
             min:[6,"please phone number should be greater than 5"],
-            max:[12,"please phone number should be less than 12"],
+            // max:[12,"please phone number should be less than 12"],
             uniqued: true
         },
 

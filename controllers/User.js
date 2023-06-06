@@ -7,6 +7,7 @@ const Register = async (req, res) => {
   if (isUserWithPhone) {
     throw BadRequestError("user exist with the phone  number");
   }
+  console.log(req.body)
   const user = await User.create({ ...req.body });
   const token = await user.createJWT();
   res.status(200).json({
@@ -58,7 +59,29 @@ const getUsers = async (req, res) => {
     nHits: users.length,
   });
 };
+
+const getUserAdmin = async () => {
+
+  const {
+    params: { id },
+  } = req;
+
+  const user = await User.findOne(
+    {
+      _id,
+    },
+    { password: 0 }
+  );
+  if (!user) throw BadRequestError("couldnot find user");
+  res.json({
+    user,
+  });
+
+}
+
+
 const userInfo = async (req, res) => {
+
   const {
     userInfo: { _id },
   } = req;
@@ -89,12 +112,7 @@ const getStaticUser = async (req, res) => {
   res.status(200).json({ user });
 };
 
-const getUsersInformations = async (req, res, next) => {
-  const {
-    params: { id: _id },
-  } = req;
 
-}       
 
 
 module.exports = {
@@ -104,4 +122,5 @@ module.exports = {
   uniqueUsers,
   userInfo,
   getStaticUser,
+  
 };
