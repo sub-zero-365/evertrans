@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const {
     getAlluser,
-    getStaticUser
+    getStaticUser,getUserAdmin
 } = require("../controllers/User");
 const {addCity,
     getCitys,
