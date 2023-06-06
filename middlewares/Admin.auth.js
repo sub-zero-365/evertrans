@@ -14,17 +14,22 @@ const auth = async (req, _, next) => {
         const payload = jwt.verify(token, process.env.jwtAdminSecret,);
         const isAdmin = await Admin.findOne({
             _id: payload._id,
-            password: payload.phone
+            phone: payload.phone
         })
         if (!isAdmin) {
+            const error = new Error("Fail to find Admin");
+            error.status = 1234
             // throw new Error("something went wrong",status);
             throw BadRequestError("user not found ")
 
+        } {
+            req.user = true
+            next()
         }
-        req.user = true
-        next()
-
     } catch (err) {
+        if (err.status === 1234) {
+            throw BadRequestError("fail to find user")
+        }
         throw BadRequestError("bad token")
     }
 
