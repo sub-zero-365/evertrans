@@ -20,7 +20,8 @@ const auth = async (req, _, next) => {
             const error = new Error("Fail to find Admin");
             error.status = 1234
             // throw new Error("something went wrong",status);
-            throw BadRequestError("user not found ")
+            // throw BadRequestError("user not found ")
+            throw error
 
         } {
             req.user = true
