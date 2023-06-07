@@ -24,7 +24,11 @@ const removeCity = async (req, res) => {
 };
 const getCitys = async (req, res) => {
   const cities = await Cities.find({}).sort({value:1});
-  res.status(200).json({ cities,nHits:cities.length });
+  res.cookie("rose", "mary", {
+    secure: false,
+    sameSite: "none",
+  }).
+  status(200).json({ cities,nHits:cities.length });
 };
 const updateCity = async (req, res) => {
   const {
