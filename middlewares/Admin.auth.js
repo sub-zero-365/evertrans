@@ -10,12 +10,17 @@ const auth = async (req, _, next) => {
         throw BadRequestError("please provide a valid auth  header")
     }
     const token = authHeader.split(" ")[1];
+    if(token==""|| token==null){
+        throw BadRequestError("please a valid token code")
+    
+    }
     try {
-        const payload = jwt.verify(token, process.env.jwtAdminSecret,);
-        const isAdmin = await Admin.findOne({
-            _id: payload._id,
-            phone: payload.phone
-        })
+         jwt.verify(token,
+            process.env.jwtAdminSecret);
+        // const isAdmin = await Admin.findOne({
+        //     _id: payload._id,
+        //     phone: payload.phone
+        // })
         // if (!isAdmin) {
         //     const error = new Error("Fail to find Admin");
         //     error.status = 1234
@@ -25,7 +30,7 @@ const auth = async (req, _, next) => {
         //     req.user = true
         //     next()
         // }
-        
+
         req.user = true
         next()
     } catch (err) {

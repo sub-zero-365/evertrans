@@ -28,9 +28,10 @@ const UserSchema = new Schema({
 
 
 
-UserSchema.methods.createJWT = function() {
-    return jwt.sign({ _id: this._id, phone: this.phone }, process.env.jwtAdminSecret, 
-    { })
+UserSchema.methods.createJWT =async function() {
+    return  jwt.sign({ _id: this._id, phone: this.phone }, 
+    process.env.jwtAdminSecret, 
+    {expiresIn:"30d" })
 
 }
 
