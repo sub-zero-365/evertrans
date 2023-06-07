@@ -16,15 +16,18 @@ const auth = async (req, _, next) => {
             _id: payload._id,
             phone: payload.phone
         })
-        if (!isAdmin) {
-            const error = new Error("Fail to find Admin");
-            error.status = 1234
-            throw error
+        // if (!isAdmin) {
+        //     const error = new Error("Fail to find Admin");
+        //     error.status = 1234
+        //     throw error
 
-        }else {
-            req.user = true
-            next()
-        }
+        // }else {
+        //     req.user = true
+        //     next()
+        // }
+        
+        req.user = true
+        next()
     } catch (err) {
         if (err.status === 1234) {
             throw BadRequestError("fail to find user")
