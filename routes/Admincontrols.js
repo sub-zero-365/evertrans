@@ -2,16 +2,17 @@ const express = require("express");
 const router = express.Router();
 const {
     getAlluser,
-    getStaticUser,getUserAdmin
+    getStaticUser,
 } = require("../controllers/User");
 const {addCity,
     getCitys,
     updateCity,
     removeCity} =require("../controllers/City")
-const {getTickets,getTicket} =require("../controllers/Ticket");
+const {getTickets,getTicket,edit} =require("../controllers/Ticket");
 const {getContact,getAllContact} =require("../controllers/Contact")
 router.route("/allusers").get(getAlluser);
 router.route("/alltickets").get(getTickets);
+router.route("/edit/:id").get(edit);
 router.route("/staticuser/:id").get(getStaticUser)
 router.route("/staticticket/:id").get(getTicket)
 router.route("/allcontacts").get(getAllContact)

@@ -16,6 +16,13 @@ const login = async (req, res, next) => {
     throw require("../error").BadRequestError("login fail");
   }
   const token = await user.createJWT();
-  res.status(200).json({ token });
+  console.log("enter here in some files")
+  res.status(200)
+  res
+    .cookie("rose", "mary", {
+      secure: true,
+      sameSite: "none"
+    }).
+    json({ token });
 };
 module.exports = login;

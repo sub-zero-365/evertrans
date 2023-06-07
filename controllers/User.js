@@ -102,6 +102,7 @@ const uniqueUsers = async (req, res) => {
   res.status(200).json({ unique });
 };
 const getStaticUser = async (req, res) => {
+console.log(req.cookies);
   const {
     params: { id: _id },
   } = req;

@@ -15,16 +15,31 @@ const createTicket = async (req, res) => {
   });
 };
 const editTicket = async (req, res) => {
+  const { id } = req.params
+  const isTicket = await Ticket.findOne({
+    _id: id
+  });
+  if (!isTicket) {
+    throw BadRequestError("cannot find ticket with this id " + id)
+  }
+  var isTicketAlreadyRedeem = await Ticket.findOne({
+    _id: id,
+    active: false
+  })
+  if (isTicketAlreadyRedeem) {
+    throw BadRequestError("this ticket is already redeem  " + id)
+  }
   const isEdited = await Ticket.findOneAndUpdate(
-    {},
-    { isActive: req.body.isActive },
+    { _id: id },
+    { active: false },
     { new: true }
   );
   if (!isEdited) {
     throw BadRequestError("fail to update ticket");
   }
+  console.log(isEdited)
   res.status(200).json({
-    edited: isEdited,
+    status: true,
   });
 };
 const getTicket = async (req, res) => {
@@ -41,12 +56,12 @@ const getTicket = async (req, res) => {
     });
     if (!ticket) {
       console.log("the user send an inv")
-        throw BadRequestError("please send a valid for to get the ticket");
-      }
-   return  res.status(200).json({
-        ticket,
-        admin:true
-      });
+      throw BadRequestError("please send a valid for to get the ticket");
+    }
+    return res.status(200).json({
+      ticket,
+      admin: true
+    });
   }
   ticket = await Ticket.findOne({
     createdBy: req.userInfo._id,
@@ -62,18 +77,35 @@ const getTicket = async (req, res) => {
 };
 
 const userTickets = async (req, res) => {
+  const getPreviousDay = (day_offset = 1, date = new Date()) => {
+    const previous = new Date(date.getTime());
+    previous.setDate(date.getDate() - day_offset);
+    return previous;
+  }
   const {
     userInfo: { _id },
+    query: { createdAt }
   } = req;
+  console.log(createdAt)
+  const queryObject = {
+    createdBy: _id
+  }
+  if (createdAt) {
+    queryObject.createdAt = {
+      $gte: getPreviousDay(createdAt),
+    }
+  }
+  console.log(queryObject, createdAt)
 
   const tickets = await Ticket.find(
     {
-      createdBy: _id,
+      ...queryObject
     },
     {
       isActive: 0,
     }
   ).sort({ createdAt: -1 });
+  console.log(tickets.length)
   res.status(200).json({
     tickets,
     nHits: tickets.length,
@@ -81,7 +113,34 @@ const userTickets = async (req, res) => {
 };
 
 const getTickets = async (req, res) => {
-  const tickets = await Ticket.find({ ...req.query }, {}).sort({
+  const getPreviousDay = (day_offset = 1, date = new Date()) => {
+    const previous = new Date(date.getTime());
+    previous.setDate(date.getDate() - day_offset);
+    return previous;
+  }
+  const {
+    createdAt, createdBy,
+  } = req.query
+  console.log(createdAt, createdBy, 1)
+
+  const queryObject = {
+  }
+
+  if (createdBy) {
+    queryObject.createdBy = createdBy
+  }
+  if (createdAt !== "null" && createdAt !== undefined) {
+    console.log("dont need to enter here")
+    queryObject.createdAt = {
+      $gte: getPreviousDay(createdAt),
+    }
+  }
+  console.log(queryObject, createdAt)
+
+  const tickets = await Ticket.find({
+    ...queryObject
+
+  }, {}).sort({
     createdAt: -1,
   });
   res.status(200).json({

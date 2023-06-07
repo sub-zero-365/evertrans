@@ -1,10 +1,30 @@
 require("dotenv").config();
 require("express-async-errors");
+const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const express = require("express");
 const app = express();
 app.use(express.json());
-app.use(cors());
+app.use(cookieParser());
+
+app.use(cors({
+  origin: ["http://localhost:3000",
+    "http://192.168.43.68:3000",
+    "https://ntaribotaken.vercel.app/"],
+  credentials: true,
+  optionsSuccessStatus: 200
+  // some legacy browsers (IE11, various SmartTVs) choke on 204
+
+}));
+// app.use(function(req, res, next) {
+//   res.header('Content-Type', 'application/json;charset=UTF-8')
+//   res.header('Access-Control-Allow-Credentials', true)
+//   res.header(
+//     'Access-Control-Allow-Headers',
+//     'Origin, X-Requested-With, Content-Type, Accept'
+//   )
+//   next()
+// })
 
 const port = process.env.PORT || 5000;
 const User = require("./routes/User");
@@ -28,7 +48,14 @@ const Admin = require("./models/Admin");
 const server_running = (port) =>
   console.log(`server is running on port ${port}`);
 app.get("/", async (req, res) => {
-  res.send("welcome to the homepage ");
+  res
+    .cookie("foo", "bar")
+    .send("welcome to the homepage ");
+});
+app.get("/getcookie", async (req, res) => {
+  console.log(req.cookies)
+  res
+    .send("get cookie page here ");
 });
 app.use(ERROR);
 app.use(NOTFOUND);
