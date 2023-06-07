@@ -14,7 +14,7 @@ const Auth =async(req,res,next)=>{
     const token = authHeader.split(" ")[1];
 
     try {
-       const payload= jwt.verify(token, process.env.jwtSecret, );
+       const payload= jwt.verify(token, process.env.jwtSecret);
         req.userInfo ={
         _id:payload._id,
         phone:payload.phone
