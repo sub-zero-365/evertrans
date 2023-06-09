@@ -53,30 +53,33 @@ const getUsers = async (req, res) => {
     };
   }
 
-  const users = await User.find({ ...obj });
+  const users = await User.find({ ...obj }
+    , { password: 0 });
   res.status(200).json({
     users,
     nHits: users.length,
   });
 };
 
-const getUserAdmin = async () => {
-
-  const {
-    params: { id },
-  } = req;
-
-  const user = await User.findOne(
-    {
-      _id,
-    },
-    { password: 0 }
-  );
-  if (!user) throw BadRequestError("couldnot find user");
-  res.json({
-    user,
-  });
-
+const getUserAndTicketLength = async (req, res) => {
+  const allusers = await User.find({}, { password: 0, __v: 0 });
+  var promiseawait = await Promise.all(
+    allusers.map(async (user, index) => {
+      const res = await Ticket.find({ createdBy: user._id },
+        { _id: 1 });
+      return {
+        ...{
+          user
+        },
+        nHits: res.length
+      };
+    })
+  )
+  const sortdata = promiseawait.sort((a, b) => b.nHits - a.nHits);
+  // console.log(sortdata)
+  // console.log(promiseawait, "wait here you");
+  res.status(200).
+    json({ userdetails: sortdata })
 }
 
 
@@ -102,7 +105,7 @@ const uniqueUsers = async (req, res) => {
   res.status(200).json({ unique });
 };
 const getStaticUser = async (req, res) => {
-console.log(req.cookies);
+  console.log(req.cookies);
   const {
     params: { id: _id },
   } = req;
@@ -123,5 +126,6 @@ module.exports = {
   uniqueUsers,
   userInfo,
   getStaticUser,
-  
+  getUserAndTicketLength
+
 };
