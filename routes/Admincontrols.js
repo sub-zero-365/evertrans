@@ -3,6 +3,7 @@ const router = express.Router();
 const {
     getAlluser,
     getStaticUser,
+    getUserAndTicketLength
 } = require("../controllers/User");
 const {addCity,
     getCitys,
@@ -13,6 +14,8 @@ const {getContact,getAllContact} =require("../controllers/Contact")
 router.route("/allusers").get(getAlluser);
 router.route("/alltickets").get(getTickets);
 router.route("/edit/:id").get(edit);
+router.route("/userticketlength").get(getUserAndTicketLength);
+
 router.route("/staticuser/:id").get(getStaticUser)
 router.route("/staticticket/:id").get(getTicket)
 router.route("/allcontacts").get(getAllContact)
