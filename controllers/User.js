@@ -34,49 +34,82 @@ const Login = async (req, res) => {
 };
 const getUsers = async (req, res) => {
   const obj = {};
-  const {
-    query: { fullname, password, phone },
-  } = req;
-  if (fullname) {
-    obj.fullname = {
-      $regex: fullname,
-      $options: "i",
-    };
-  }
-  if (password) {
-    obj.password = password;
-  }
-  if (phone) {
-    obj.phone = {
-      $regex: phone,
-      $options: "i",
-    };
-  }
+  // const {
+  //   query: { fullname, password, phone },
+  // } = req;
+  // if (fullname) {
+  //   obj.fullname = {
+  //     $regex: fullname,
+  //     $options: "i",
+  //   };
+  // }
+  // if (password) {
+  //   obj.password = password;
+  // }
+  // if (phone) {
+  //   obj.phone = {
+  //     $regex: phone,
+  //     $options: "i",
+  //   };
+  // }
 
-  const users = await User.find({ ...obj }
-    , { password: 0 });
+  // const users = await User.find({ ...obj }
+  //   , { password: 0 });
+  // res.status(200).json({
+  //   users,
+  //   nHits: users.length,
+  // });
+  const { search } = req.query;
+
+  const queryObject = {};
+  if (search) {
+    const userSearch = [
+      {
+        fullname: { $regex: search, $options: "i" }
+      }
+    ]
+    console.log(Number(search))
+    // if (!isNaN(Number(search))) {
+    //   console.log("enter here")
+    //   userSearch.push({
+    //     phone: { $regex: search, $toString: `${search}`}
+    //   })
+    // }
+    queryObject.$or = [
+      ...userSearch
+    ]
+
+  }
+  const page = Number(req.query.page) || 1;
+  const limit = Number(req.query.limit) || 20;
+  const skip = (page - 1) * limit;
+  const users = await User.find(queryObject)
+  const totalUsers = await User.countDocuments(queryObject);
+  const numberOfPage = Math.ceil(totalUsers / limit);
   res.status(200).json({
-    users,
-    nHits: users.length,
-  });
+    totalUsers,
+    numberOfPage,
+    currentPage: page,
+    users
+  })
+  // const users=await User.
+
 };
 
 const getUserAndTicketLength = async (req, res) => {
   const allusers = await User.find({}, { password: 0, __v: 0 });
   var promiseawait = await Promise.all(
-    allusers.map(async (user, index) => {
-      const res = await Ticket.find({ createdBy: user._id },
-        { _id: 1 });
+    allusers.map(async (user) => {
+      const lenght = await Ticket.countDocuments({ createdBy: user._id });
       return {
         ...{
           user
         },
-        nHits: res.length
+        nHits: lenght
       };
     })
   )
   const sortdata = promiseawait.sort((a, b) => b.nHits - a.nHits);
-  // console.log(sortdata)
   // console.log(promiseawait, "wait here you");
   res.status(200).
     json({ userdetails: sortdata })
