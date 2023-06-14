@@ -117,13 +117,13 @@ const userTickets = async (req, res) => {
   const {
     createdBy,
     sort,
-    ticketStatus }
+    ticketStatus, daterange }
     =
     req.query;
   const queryObject = {
-  createdBy:req.userInfo._id
+    createdBy: req.userInfo._id
   }
-  
+
   if (ticketStatus && ticketStatus !== "all") {
     if (ticketStatus == "active") {
       queryObject.active = true
@@ -149,21 +149,23 @@ const userTickets = async (req, res) => {
     .skip(skip)
     .limit(limit)
   const totalTickets = await Ticket.countDocuments(queryObject);
-  const alltickets = await Ticket.countDocuments({createdBy:req.userInfo._id});
+  const alltickets = await Ticket.countDocuments({ createdBy: req.userInfo._id });
   const totalActiveTickets = await Ticket.countDocuments({
     ...queryObject,
     active: true
   });
+
   const totalInActiveTickets = await Ticket.countDocuments({
     ...queryObject,
     active: false
   });
+  // const totalPrice=await Ticket.find(queryObject).select("price").
   const numberOfPages = Math.ceil(totalTickets / limit);
+
   res.
     status(200).json({
       totalTickets,
-      alltickets
-      ,
+      alltickets,
       numberOfPages,
       currentPage: page,
       tickets,
@@ -171,23 +173,93 @@ const userTickets = async (req, res) => {
       totalInActiveTickets
     })
 
-  
+
 };
 
 const getTickets = async (req, res) => {
-  
+
+  const getPrices = (arr) => {
+    if (arr?.length == 0) return 0
+    return arr?.
+      map(({ price }) => price)
+      .reduce((acc, next) => {
+        return acc ? acc + next : next
+      })
+  }
+
   const { search,
     createdBy,
     sort,
-    ticketStatus,
-    daterange }
+    ticketStatus, daterange }
     =
     req.query;
   const queryObject = {
   }
+  if (search) {
+    queryObject.$or = [
+      {
+        fullname: {
+          $regex: search, $options: "i"
+        }
+      }, {
+        from: {
+          $regex: search, $options: "i"
+        },
+      }
+    ]
+  }
   if (createdBy) {
     // get specific data about a user when pass createdBy
     queryObject.createdBy = createdBy;
+  }
+  if (daterange) {
+    const [startdate, endDate] = daterange.
+      split(",").
+      map(arr => arr.split("="))
+      .map(([v, t]) => {
+        return {
+          [v]: t
+        }
+      })
+    console.log(startdate.start, endDate.end);
+    if ("start" in startdate && "end" in endDate) {
+      const getPreviousDay = (date) => {
+
+        const previous = new Date(date.getTime());
+        previous.setDate(date.getDate() + 1);
+        return previous
+      }
+      // console.log(getPreviousDay(new Date(startdate.start)).toLocaleDateString())
+      if (startdate.start != "null" && endDate.end != "null") {
+        console.log("date in correct format: ", endDate.end || "no enddate passed")
+        console.log(endDate.end)
+        try {
+          var createdAt = {
+            $gte: startdate.start,
+            $lte: getPreviousDay(new Date(endDate.end)),
+          }
+          queryObject.createdAt = createdAt
+          console.log(createdAt, "something hre", "hifhiohasoidhf ahaiousdfh ioasdgiuog ")
+
+
+        } catch (err) {
+
+          console.log(err)
+        }
+
+
+      }
+      if (startdate.start != "null" && endDate.end == "null") {
+        console.log("passes invalid second date")
+
+        var createdAt = {
+          $gte: new Date(startdate.start),
+          $lte: getPreviousDay(new Date(startdate.start)),
+        }
+        queryObject.createdAt = createdAt
+      }
+    }
+
   }
   if (ticketStatus && ticketStatus !== "all") {
     if (ticketStatus == "active") {
@@ -212,25 +284,30 @@ const getTickets = async (req, res) => {
   const tickets = await Ticket.find(queryObject)
     .sort(sortKey)
     .skip(skip)
-    .limit(limit)
-  const totalTickets = await Ticket.countDocuments(queryObject);
-  const totalActiveTickets = await Ticket.countDocuments({
-    ...queryObject,
-    active: true
-  });
-  const totalInActiveTickets = await Ticket.countDocuments({
-    ...queryObject,
-    active: false
-  });
-  const numberOfPages = Math.ceil(totalTickets / limit);
+    .limit(limit);
+
+  const totaltickets = await Ticket.find(queryObject,
+    { _id: 0, price: 1, active: 1 });
+
+  const totalPrice = getPrices(totaltickets);
+  const totalActiveTickets = totaltickets.filter(({ active }) => active === true);
+  const totalActivePrice = getPrices(totalActiveTickets)
+  const totalInActiveTickets = totaltickets.filter(({ active }) => active === false);
+  const totalInActivePrice = getPrices(totalInActiveTickets)
+  const numberOfPages = Math.ceil(totaltickets.length / limit);
+
   res.
     status(200).json({
-      totalTickets,
+      totalPrice,
+      totalActivePrice,
+      totalInActivePrice,
+      totalTickets: totaltickets.length,
       numberOfPages,
       currentPage: page,
+      totalActiveTickets: totalActiveTickets.length,
+      totalInActiveTickets: totalInActiveTickets.length,
       tickets,
-      totalActiveTickets,
-      totalInActiveTickets
+
     })
 
 };

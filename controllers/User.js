@@ -97,7 +97,22 @@ const getUsers = async (req, res) => {
 };
 
 const getUserAndTicketLength = async (req, res) => {
-  const allusers = await User.find({}, { password: 0, __v: 0 });
+  const { search } = req.query;
+  const queryObject = {}
+
+  if (search) {
+    queryObject.$or = [
+      {
+        fullname: {
+          $regex: search, $options: "i"
+        },
+        // email:{
+        //   $regex: search, $options: "i"
+        // }
+      }
+    ]
+  }
+  const allusers = await User.find(queryObject, { password: 0, __v: 0 });
   var promiseawait = await Promise.all(
     allusers.map(async (user) => {
       const lenght = await Ticket.countDocuments({ createdBy: user._id });
@@ -110,7 +125,6 @@ const getUserAndTicketLength = async (req, res) => {
     })
   )
   const sortdata = promiseawait.sort((a, b) => b.nHits - a.nHits);
-  // console.log(promiseawait, "wait here you");
   res.status(200).
     json({ userdetails: sortdata })
 }
