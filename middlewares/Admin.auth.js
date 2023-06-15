@@ -31,7 +31,7 @@ const auth = async (req, _, next) => {
         //     next()
         // }
 
-        req.user = true
+        req.admin = true
         next()
     } catch (err) {
         if (err.status === 1234) {

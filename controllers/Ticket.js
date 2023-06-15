@@ -76,50 +76,14 @@ const getTicket = async (req, res) => {
 };
 
 const userTickets = async (req, res) => {
-  // const {
-  //   userInfo: { _id },
-  //   query: { filter }
-  // } = req;
-  // const obj = {};
-  // if (filter) {
-  //   const canSplitFilter = filter.split(",")
-  //   if (canSplitFilter.length != 2) {
-  //     console.log("invalid filter option ");
-  //     throw BadRequestError("please send a valid date ")
-  //   }
-  //   else {
-  //     const [startdate, endDate] = canSplitFilter;
-  //     obj.createdAt = {
-  //       $gte: new Date(startdate),
-  //       $lte: new Date(endDate),
-  //     }
-  //   }
-  // }
-  // const queryObject = {
-  //   createdBy: _id,
-  //   ...obj
-  // }
-
-  // console.log(queryObject)
-
-  // const tickets = await Ticket.find(
-  //   {
-  //     ...queryObject
-  //   },
-  //   {
-  //     isActive: 0,
-  //   }
-  // ).sort({ createdAt: -1 });
-  // res.status(200).json({
-  //   tickets,
-  //   nHits: tickets.length,
-  // });
+  const { userInfo } = req
   const {
     createdBy,
     sort,
     ticketStatus, daterange }
     =
     req.query;
+
   const queryObject = {
     createdBy: req.userInfo._id
   }
@@ -208,9 +172,13 @@ const getTickets = async (req, res) => {
       }
     ]
   }
-  if (createdBy) {
+  if (createdBy && req.admin===true) {
     // get specific data about a user when pass createdBy
     queryObject.createdBy = createdBy;
+  }
+  if (req.userInfo?._id && !createdBy) {
+    queryObject.createdBy = req.userInfo._id
+    console.log("enter here thanks for the console.log")
   }
   if (daterange) {
     const [startdate, endDate] = daterange.
@@ -229,7 +197,6 @@ const getTickets = async (req, res) => {
         previous.setDate(date.getDate() + 1);
         return previous
       }
-      // console.log(getPreviousDay(new Date(startdate.start)).toLocaleDateString())
       if (startdate.start != "null" && endDate.end != "null") {
         console.log("date in correct format: ", endDate.end || "no enddate passed")
         console.log(endDate.end)
@@ -264,6 +231,8 @@ const getTickets = async (req, res) => {
   if (ticketStatus && ticketStatus !== "all") {
     if (ticketStatus == "active") {
       queryObject.active = true
+    console.log("all was here")
+      
     }
     if (ticketStatus == "inactive") {
       queryObject.active = false
@@ -291,7 +260,7 @@ const getTickets = async (req, res) => {
 
   const totalPrice = getPrices(totaltickets);
   const totalActiveTickets = totaltickets.filter(({ active }) => active === true);
-  const totalActivePrice = getPrices(totalActiveTickets)
+  const totalActivePrice = getPrices(totalActiveTickets);
   const totalInActiveTickets = totaltickets.filter(({ active }) => active === false);
   const totalInActivePrice = getPrices(totalInActiveTickets)
   const numberOfPages = Math.ceil(totaltickets.length / limit);
@@ -307,7 +276,7 @@ const getTickets = async (req, res) => {
       totalActiveTickets: totalActiveTickets.length,
       totalInActiveTickets: totalInActiveTickets.length,
       tickets,
-
+      
     })
 
 };
