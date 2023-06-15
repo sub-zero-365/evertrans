@@ -1,11 +1,15 @@
 require("dotenv").config();
 require("express-async-errors");
 const cookieParser = require("cookie-parser");
+// const rateLimit = require('express-rate-limit')x
+const { ticketLimiter, } = require("./utils/rateLimiters")
+
 const cors = require("cors");
 const express = require("express");
 const app = express();
 app.use(express.json());
 app.use(cookieParser());
+
 
 app.use(cors({
   origin: ["http://localhost:3000",
@@ -13,18 +17,7 @@ app.use(cors({
     "https://ntaribotaken.vercel.app"],
   credentials: true,
   optionsSuccessStatus: 200
-  // some legacy browsers (IE11, various SmartTVs) choke on 204
-
 }));
-// app.use(function(req, res, next) {
-//   res.header('Content-Type', 'application/json;charset=UTF-8')
-//   res.header('Access-Control-Allow-Credentials', true)
-//   res.header(
-//     'Access-Control-Allow-Headers',
-//     'Origin, X-Requested-With, Content-Type, Accept'
-//   )
-//   next()
-// })
 
 const port = process.env.PORT || 5000;
 const User = require("./routes/User");
@@ -37,7 +30,7 @@ const userAuth = require("./middlewares/Auth.User");
 const contactRouter = require("./routes/Contact");
 const Cities = require("./models/Cities");
 app.use("/auth", User);
-app.use("/ticket", userAuth, Ticket);
+app.use("/ticket", ticketLimiter, userAuth, Ticket);
 app.use("/admin", Admin_auth, adminControl);
 app.use("/contact", contactRouter);
 app.get("/allcities", async (req, res) => {
