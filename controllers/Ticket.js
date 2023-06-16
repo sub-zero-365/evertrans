@@ -1,6 +1,9 @@
+const { mongoose, Mongoose } = require("mongoose")
+
 const { BadRequestError } = require("../error");
 const Ticket = require("../models/Ticket");
-const moment = require("moment")
+const moment = require("moment");
+// const { Schema } = require("mongoose");
 const createTicket = async (req, res) => {
   const {
     body,
@@ -142,43 +145,65 @@ const userTickets = async (req, res) => {
 
 const getTickets = async (req, res) => {
 
-  const getPrices = (arr) => {
-    if (arr?.length == 0) return 0
-    return arr?.
-      map(({ price }) => price)
-      .reduce((acc, next) => {
-        return acc ? acc + next : next
-      })
-  }
+  // const getPrices = (arr) => {
+  //   if (arr?.length == 0) return 0
+  //   return arr?.
+  //     map(({ price }) => price)
+  //     .reduce((acc, next) => {
+  //       return acc ? acc + next : next
+  //     })
+  // }
 
   const { search,
     createdBy,
     sort,
-    ticketStatus, daterange }
+    ticketStatus, daterange, price }
     =
     req.query;
   const queryObject = {
   }
+
+
   if (search) {
+    console.log("searching here and the code for the code ", search)
     queryObject.$or = [
       {
         fullname: {
           $regex: search, $options: "i"
         }
-      }, {
-        from: {
-          $regex: search, $options: "i"
-        },
-      }
+      },
+      // {
+      //   from: {
+      //     $regex: search, $options: "i"
+      //   },
+      // }
     ]
   }
-  if (createdBy && req.admin===true) {
-    // get specific data about a user when pass createdBy
+  var delCreatetBy = {}
+  if (price) {
+    delCreatetBy.price = {
+      $eq: Number(price) || 0
+    }
+    queryObject.price = {
+      $eq: Number(price) || 0
+    }
+  }
+  if (createdBy && req.admin === true) {
+
+
+    delCreatetBy = {
+      ...queryObject
+    }
     queryObject.createdBy = createdBy;
+
+    delCreatetBy.$expr = {
+      $eq: ['$createdBy', { $toObjectId: createdBy }]
+    }
+    console.log(delCreatetBy)
+
   }
   if (req.userInfo?._id && !createdBy) {
     queryObject.createdBy = req.userInfo._id
-    console.log("enter here thanks for the console.log")
   }
   if (daterange) {
     const [startdate, endDate] = daterange.
@@ -189,41 +214,37 @@ const getTickets = async (req, res) => {
           [v]: t
         }
       })
-    console.log(startdate.start, endDate.end);
     if ("start" in startdate && "end" in endDate) {
       const getPreviousDay = (date) => {
-
         const previous = new Date(date.getTime());
         previous.setDate(date.getDate() + 1);
         return previous
       }
       if (startdate.start != "null" && endDate.end != "null") {
-        console.log("date in correct format: ", endDate.end || "no enddate passed")
-        console.log(endDate.end)
+        // console.log("date in correct format: ", endDate.end || "no enddate passed")
+        // console.log(endDate.end)
         try {
           var createdAt = {
-            $gte: startdate.start,
+            $gte: new Date(startdate.start),
             $lte: getPreviousDay(new Date(endDate.end)),
           }
+          delCreatetBy.createdAt = createdAt
           queryObject.createdAt = createdAt
-          console.log(createdAt, "something hre", "hifhiohasoidhf ahaiousdfh ioasdgiuog ")
-
+          // console.log(delCreatetBy,"enter here")
 
         } catch (err) {
-
           console.log(err)
         }
 
 
       }
       if (startdate.start != "null" && endDate.end == "null") {
-        console.log("passes invalid second date")
-
         var createdAt = {
           $gte: new Date(startdate.start),
           $lte: getPreviousDay(new Date(startdate.start)),
         }
         queryObject.createdAt = createdAt
+        delCreatetBy.createdAt = createdAt
       }
     }
 
@@ -231,11 +252,11 @@ const getTickets = async (req, res) => {
   if (ticketStatus && ticketStatus !== "all") {
     if (ticketStatus == "active") {
       queryObject.active = true
-    console.log("all was here")
-      
+      delCreatetBy.active = true
     }
     if (ticketStatus == "inactive") {
       queryObject.active = false
+      delCreatetBy.active = false
     }
   }
   const sortOptions = {
@@ -255,28 +276,82 @@ const getTickets = async (req, res) => {
     .skip(skip)
     .limit(limit);
 
-  const totaltickets = await Ticket.find(queryObject,
-    { _id: 0, price: 1, active: 1 });
 
-  const totalPrice = getPrices(totaltickets);
-  const totalActiveTickets = totaltickets.filter(({ active }) => active === true);
-  const totalActivePrice = getPrices(totalActiveTickets);
-  const totalInActiveTickets = totaltickets.filter(({ active }) => active === false);
-  const totalInActivePrice = getPrices(totalInActiveTickets)
-  const numberOfPages = Math.ceil(totaltickets.length / limit);
+  // const totaltickets = await Ticket.find(queryObject,
+  //   { _id: 0, price: 1, active: 1 });
+  // console.log(queryObject)
+  if (delCreatetBy?.sort) delete deleteTicket.sort
+  const nDoc = await Ticket.countDocuments(queryObject);
+
+  var [totalActivePrice, totalInActivePrice] = (await Ticket.aggregate([{
+    $match: {
+      ...delCreatetBy,
+    }
+  }, {
+    $group: {
+      _id: "$active",
+      sum: { $sum: "$price" },
+      total: { $sum: 1 },
+
+    }
+  }, {
+    $project: {
+      sum: 1,
+      total: 1,
+      _id: 1,
+      percentage: {
+        $cond: [
+          { $eq: [nDoc, 0] }, 1, {
+            $multiply: [
+              { $divide: [100, nDoc || 1] }, "$total"
+            ]
+          }],
+
+      }
+    }
+  }]
+  ))?.sort((a, b) => b._id - a._id)
+  // console.log(totalActivePrice, totalInActivePrice, "this is here")
+  if (totalActivePrice) {
+    // console.log("active price")
+    const { _id } = totalActivePrice;
+    // console.log(temp, "temp here")
+    if (_id == false) {
+      var temp = totalActivePrice
+      totalActivePrice = {}
+      totalInActivePrice = temp
+
+    }
+
+
+  }
+  // if (totalActivePrice && "_id" in totalActivePrice) {
+  //   totalActivePrice = totalActivePrice
+  // }
+  // const totalActiveTickets = totaltickets.filter(({ active }) => active === true);
+  // const totalActivePrice = getPrices(totalActiveTickets);
+  // const totalInActiveTickets = totaltickets.filter(({ active }) => active === false);
+  // const totalInActivePrice = getPrices(totalInActiveTickets)
+  console.log(totalActivePrice, "jihf safh giugfiu gui")
+  const _length = (totalActivePrice?.total || 0) + (totalInActivePrice?.total || 0)
+  const numberOfPages = Math.ceil(_length / limit);
+
+  console.log(nDoc, totalActivePrice, totalInActivePrice)
 
   res.
     status(200).json({
-      totalPrice,
-      totalActivePrice,
-      totalInActivePrice,
-      totalTickets: totaltickets.length,
+      totalPrice: (totalActivePrice?.sum || 0) + (totalInActivePrice?.sum || 0),
+      totalActivePrice: totalActivePrice?.sum || 0,
+      totalInActivePrice: totalInActivePrice?.sum || 0,
+      totalTickets: _length,
       numberOfPages,
+      percentageActive: totalActivePrice?.percentage || 0,
+      percentageInActive: totalInActivePrice?.percentage || 0,
       currentPage: page,
-      totalActiveTickets: totalActiveTickets.length,
-      totalInActiveTickets: totalInActiveTickets.length,
+      totalActiveTickets: totalActivePrice?.total || 0,
+      totalInActiveTickets: totalInActivePrice?.total || 0,
       tickets,
-      
+
     })
 
 };

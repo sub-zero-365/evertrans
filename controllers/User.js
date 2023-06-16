@@ -112,7 +112,7 @@ const getUserAndTicketLength = async (req, res) => {
       }
     ]
   }
-  const allusers = await User.find(queryObject, { password: 0, __v: 0 });
+  const allusers = await User.find(queryObject, { password: 0, __v: 0 }).sort("-createdAt").limit(30);
   var promiseawait = await Promise.all(
     allusers.map(async (user) => {
       const lenght = await Ticket.countDocuments({ createdBy: user._id });
