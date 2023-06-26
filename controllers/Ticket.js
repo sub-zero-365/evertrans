@@ -1,10 +1,9 @@
-const { mongoose, Mongoose } = require("mongoose")
 
 const { BadRequestError } = require("../error");
+const toJson = require("../utils/toJson")
 const Ticket = require("../models/Ticket");
-const moment = require("moment");
-// const { Schema } = require("mongoose");
 const createTicket = async (req, res) => {
+
   const {
     body,
     userInfo: { _id },
@@ -20,11 +19,73 @@ const createTicket = async (req, res) => {
 };
 const editTicket = async (req, res) => {
   const { id } = req.params
-  const isTicket = await Ticket.findOne({
+  const { index } = req.query
+  if (index && !([1, 2].some(x => x == index))) {
+    throw BadRequestError("something went wrong try again later ");
+  }
+  var isTicket = await Ticket.findOne({
     _id: id
   });
   if (!isTicket) {
     throw BadRequestError("cannot find ticket with this id " + id);
+  }
+  if (isTicket && isTicket.type &&
+    isTicket.type === "roundtrip" &&
+    isTicket?.doubletripdetails &&
+    typeof (isTicket?.doubletripdetails) === "object" && [1, 2]
+      .some(x => x == index)) {
+    var tempObj = JSON.parse(JSON.stringify(isTicket))
+    const arr = tempObj?.doubletripdetails
+    if (index == 1 && arr[0]) {
+      const { active } = arr[0]
+      if (active !== true) {
+        throw BadRequestError(`fail to update ticket cause ticket was updated at ${arr[0].updatedAt} and the active status is ${arr[0].active} `)
+      }
+      if (active == true) {
+        arr[0].active = false;
+        arr[0].updatedAt = new Date()
+      }
+      tempObj = {
+        ...tempObj,
+        doubletripdetails: arr
+      }
+    }
+    if (index == 2 && arr[1]) {
+      if (arr[0].active == true) {
+        throw BadRequestError(`please you cant validate the return trip without validating the start trip `)
+      }
+      const { active } = arr[1]
+      if (active !== true) {
+        throw BadRequestError(`fail to update ticket cause ticket was updated at ${arr[1].updatedAt} and the active status is ${arr[1].active} `)
+      }
+      if (active == true) {
+        arr[1].active = false;
+        arr[1].updatedAt = new Date();
+
+      }
+      // is active is set to false cause the trip was successfully 
+      tempObj = {
+        ...tempObj,
+        doubletripdetails: arr,
+        active: false
+      }
+    }
+    try {
+      const updatevalue = await Ticket.findOneAndUpdate(
+        {
+          _id: id,
+
+        }
+        , {
+          ...tempObj
+        }, { new: true })
+      return res.status(200).json({ ticket: updatevalue })
+    }
+    catch (err) {
+      console.log(err)
+      throw BadRequestError("fail to update ")
+
+    }
   }
   var isTicketAlreadyRedeem = await Ticket.findOne({
     _id: id,
@@ -33,6 +94,7 @@ const editTicket = async (req, res) => {
   if (isTicketAlreadyRedeem) {
     throw BadRequestError("this ticket is already redeem  " + id)
   }
+
   const isEdited = await Ticket.findOneAndUpdate(
     { _id: id },
     { active: false },
@@ -41,9 +103,9 @@ const editTicket = async (req, res) => {
   if (!isEdited) {
     throw BadRequestError("fail to update ticket");
   }
-  console.log(isEdited)
   res.status(200).json({
     status: true,
+    updateTicket: isEdited
   });
 };
 const getTicket = async (req, res) => {
@@ -57,13 +119,20 @@ const getTicket = async (req, res) => {
       _id: id,
     });
     if (!ticket) {
-      console.log("the user send an inv")
+      // console.log("the user send an inv")
       throw BadRequestError("please send a valid for to get the ticket");
     }
-    return res.status(200).json({
-      ticket,
-      admin: true
+    // if (ticket?.type && ticket.type == "roundtrip") {
+    //   res.status(200).json({
+    //     ticket: toJson("active", ticket)
+    //   });
+    //   return
+    // }
+    res.status(200).json({
+      // ticket: toJson("doubletripdetails", ticket)
+      ticket
     });
+    return
   }
   ticket = await Ticket.findOne({
     createdBy: req.userInfo._id,
@@ -73,9 +142,17 @@ const getTicket = async (req, res) => {
     console.log("the user send an invalid id to get a ticket");
     throw BadRequestError("please send a valid for to get the ticket");
   }
+  // if (ticket?.type && ticket.type == "roundtrip") {
+  //   res.status(200).json({
+  //     ticket: toJson("active", ticket)
+  //   });
+  //   return
+  // }
   res.status(200).json({
-    ticket,
+    // ticket: toJson("doubletripdetails", ticket)
+    ticket
   });
+  return
 };
 
 const userTickets = async (req, res) => {
@@ -83,14 +160,17 @@ const userTickets = async (req, res) => {
   const {
     createdBy,
     sort,
-    ticketStatus, daterange }
+    ticketStatus, daterange,
+    triptype
+
+  }
     =
     req.query;
 
   const queryObject = {
     createdBy: req.userInfo._id
   }
-
+consol.log(triptype,"hijgijoagsdf a som cod h")
   if (ticketStatus && ticketStatus !== "all") {
     if (ticketStatus == "active") {
       queryObject.active = true
@@ -98,6 +178,10 @@ const userTickets = async (req, res) => {
     if (ticketStatus == "inactive") {
       queryObject.active = false
     }
+  }
+  if (triptype && triptype !== "all") {
+    queryObject.type = triptype
+    console.log("hoahdfa 9pidsohfoijhasd ifuiadsgiou da")
   }
   const sortOptions = {
     newest: "-createdAt",
@@ -145,25 +229,23 @@ const userTickets = async (req, res) => {
 
 const getTickets = async (req, res) => {
 
-  // const getPrices = (arr) => {
-  //   if (arr?.length == 0) return 0
-  //   return arr?.
-  //     map(({ price }) => price)
-  //     .reduce((acc, next) => {
-  //       return acc ? acc + next : next
-  //     })
-  // }
-
   const { search,
     createdBy,
     sort,
-    ticketStatus, daterange, price }
+    ticketStatus,
+    daterange, price,
+    boardingRange,
+    triptype
+  }
     =
     req.query;
   const queryObject = {
   }
 
-
+  if (triptype && triptype !== "all") {
+    queryObject.type = triptype
+    console.log("hoahdfa 9pidsohfoijhasd ifuiadsgiou da")
+  }
   if (search) {
     console.log("searching here and the code for the code ", search)
     queryObject.$or = [
@@ -172,11 +254,6 @@ const getTickets = async (req, res) => {
           $regex: search, $options: "i"
         }
       },
-      // {
-      //   from: {
-      //     $regex: search, $options: "i"
-      //   },
-      // }
     ]
   }
   var delCreatetBy = {}
@@ -189,7 +266,7 @@ const getTickets = async (req, res) => {
     }
   }
   if (createdBy && req.admin === true) {
-
+    console.log("enter in here ok")
 
     delCreatetBy = {
       ...queryObject
@@ -203,7 +280,11 @@ const getTickets = async (req, res) => {
 
   }
   if (req.userInfo?._id && !createdBy) {
+    console.log(req.userInfo)
     queryObject.createdBy = req.userInfo._id
+    delCreatetBy.$expr = {
+      $eq: ['$createdBy', { $toObjectId: req.userInfo?._id }]
+    }
   }
   if (daterange) {
     const [startdate, endDate] = daterange.
@@ -213,7 +294,8 @@ const getTickets = async (req, res) => {
         return {
           [v]: t
         }
-      })
+      });
+
     if ("start" in startdate && "end" in endDate) {
       const getPreviousDay = (date) => {
         const previous = new Date(date.getTime());
@@ -221,8 +303,7 @@ const getTickets = async (req, res) => {
         return previous
       }
       if (startdate.start != "null" && endDate.end != "null") {
-        // console.log("date in correct format: ", endDate.end || "no enddate passed")
-        // console.log(endDate.end)
+
         try {
           var createdAt = {
             $gte: new Date(startdate.start),
@@ -230,7 +311,6 @@ const getTickets = async (req, res) => {
           }
           delCreatetBy.createdAt = createdAt
           queryObject.createdAt = createdAt
-          // console.log(delCreatetBy,"enter here")
 
         } catch (err) {
           console.log(err)
@@ -245,6 +325,47 @@ const getTickets = async (req, res) => {
         }
         queryObject.createdAt = createdAt
         delCreatetBy.createdAt = createdAt
+      }
+    }
+
+  }
+  if (boardingRange) {
+    const [startdate, endDate] = boardingRange.
+      split(",").
+      map(arr => arr.split("="))
+      .map(([v, t]) => {
+        return {
+          [v]: t
+        }
+      });
+
+    if ("start" in startdate && "end" in endDate) {
+      const getPreviousDay = (date) => {
+        const previous = new Date(date.getTime());
+        previous.setDate(date.getDate() + 1);
+        return previous
+      }
+      if (startdate.start != "null" && endDate.end != "null") {
+        try {
+          var traveldate = {
+            $gte: new Date(startdate.start),
+            $lte: getPreviousDay(new Date(endDate.end)),
+          }
+          delCreatetBy.traveldate = traveldate
+          queryObject.traveldate = traveldate
+
+        } catch (err) {
+          console.log(err)
+        }
+
+      }
+      if (startdate.start != "null" && endDate.end == "null") {
+        var traveldate = {
+          $gte: new Date(startdate.start),
+          $lte: getPreviousDay(new Date(startdate.start)),
+        }
+        queryObject.traveldate = traveldate
+        delCreatetBy.traveldate = traveldate
       }
     }
 
@@ -264,7 +385,6 @@ const getTickets = async (req, res) => {
     oldest: "createdAt",
     new_traveldate: "-traveldate",
     old_traveldate: "traveldate",
-
   }
 
   const sortKey = sortOptions[sort] || sortOptions.newest;
@@ -277,9 +397,6 @@ const getTickets = async (req, res) => {
     .limit(limit);
 
 
-  // const totaltickets = await Ticket.find(queryObject,
-  //   { _id: 0, price: 1, active: 1 });
-  // console.log(queryObject)
   if (delCreatetBy?.sort) delete deleteTicket.sort
   const nDoc = await Ticket.countDocuments(queryObject);
 
@@ -292,7 +409,6 @@ const getTickets = async (req, res) => {
       _id: "$active",
       sum: { $sum: "$price" },
       total: { $sum: 1 },
-
     }
   }, {
     $project: {
@@ -311,32 +427,19 @@ const getTickets = async (req, res) => {
     }
   }]
   ))?.sort((a, b) => b._id - a._id)
-  // console.log(totalActivePrice, totalInActivePrice, "this is here")
   if (totalActivePrice) {
-    // console.log("active price")
     const { _id } = totalActivePrice;
-    // console.log(temp, "temp here")
     if (_id == false) {
       var temp = totalActivePrice
       totalActivePrice = {}
       totalInActivePrice = temp
-
     }
 
 
   }
-  // if (totalActivePrice && "_id" in totalActivePrice) {
-  //   totalActivePrice = totalActivePrice
-  // }
-  // const totalActiveTickets = totaltickets.filter(({ active }) => active === true);
-  // const totalActivePrice = getPrices(totalActiveTickets);
-  // const totalInActiveTickets = totaltickets.filter(({ active }) => active === false);
-  // const totalInActivePrice = getPrices(totalInActiveTickets)
-  console.log(totalActivePrice, "jihf safh giugfiu gui")
   const _length = (totalActivePrice?.total || 0) + (totalInActivePrice?.total || 0)
   const numberOfPages = Math.ceil(_length / limit);
 
-  console.log(nDoc, totalActivePrice, totalInActivePrice)
 
   res.
     status(200).json({

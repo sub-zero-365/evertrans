@@ -3,10 +3,18 @@ const User = require("./User");
 const ticketSchema = new Schema(
 
   {
-  
+
     fullname: {
       type: String,
       required: [true, "please enter fullname "],
+    },
+    type: {
+      type: String,
+      default: "singletrip",
+      enum: {
+        values: ["singletrip",
+          "roundtrip"],
+      },
     },
     phone: {
       type: Number,
@@ -16,8 +24,6 @@ const ticketSchema = new Schema(
       type: String,
       required: [true, "please enter from "],
     },
-  
-
     active: {
       type: Boolean,
       default: true,
@@ -38,13 +44,28 @@ const ticketSchema = new Schema(
       required: [true, "please enter time"],
     },
     traveldate: {
-      type: String,
+      type: Date,
       required: [true, "please enter date"],
     },
     createdBy: {
       type: Schema.ObjectId,
       required: [true, "please send a created user id"],
       ref: "users",
+
+    },
+    doubletripdetails: {
+      type: Array,
+      required: true,
+      default: [
+        {
+          updatedAt: null,
+          active: null,
+        },
+        {
+          updatedAt: null,
+          active: null,
+        },
+      ]
     },
     email: {
       type: String,
@@ -55,6 +76,7 @@ const ticketSchema = new Schema(
       required: [true, "Please your age is needed or required"],
     },
 
+
     sex: {
       type: String,
       required: [true, "Please your age is needed or required"],
@@ -63,9 +85,11 @@ const ticketSchema = new Schema(
         message: "sex is either male or female",
       },
     },
+
   },
   {
     timestamps: true,
+    versionKey: false
   }
 );
 
@@ -80,5 +104,42 @@ ticketSchema.pre(
     next();
   }
 );
+// ticketSchema.pre("validate", async function () {
+//   if (this.type === "singletrip") {
+//     this.doubletripdetails = [
+//       {
+//         updatedAt: this.createdAt,
+//         active: true,
+//       },
+//       {
+//         updatedAt: this.createdAt,
+//         active: true,
+//       },
+
+//     ]
+//     console.log("this", this)
+//   } else {
+
+//   }
+
+// })
+ticketSchema.pre("save", async function () {
+  if (this.type === "roundtrip") {
+    this.doubletripdetails = [
+      {
+        updatedAt: new Date(),
+        active: true,
+      },
+      {
+        updatedAt: new Date(),
+        active: true,
+      },
+
+    ]
+  }
+
+})
+// ticketSchema.methods.create
+
 const ticketschema = model("Ticket", ticketSchema);
 module.exports = ticketschema;
