@@ -1,4 +1,4 @@
-const mongoose = require("mongoose")
+const mongoose = require("mongoose");
 const options = {
     useNewUrlParser: true,
     useUnifiedTopology: true,
@@ -11,9 +11,12 @@ const options = {
     // useFindAndModify: false
 }
 const LOCAL_URL = process.env.LOCAL_URL
+
 const PROD_URL = process.env.PROD_URL
 const connectWithDB = (uri) => {
-    mongoose.connect(uri, options).then(() => console.log("connected to databse")).catch((err) => {
+    mongoose.connect(uri, options)
+    .then(() => console.log("connected to databse")).
+    catch((err) => {
         throw err
     })
 

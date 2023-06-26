@@ -2,7 +2,7 @@ require("dotenv").config();
 require("express-async-errors");
 const cookieParser = require("cookie-parser");
 // const rateLimit = require('express-rate-limit')x
-const { ticketLimiter, } = require("./utils/rateLimiters")
+const { ticketLimiter, } = require("./utils/rateLimiters");
 
 const cors = require("cors");
 const express = require("express");
@@ -30,7 +30,7 @@ const userAuth = require("./middlewares/Auth.User");
 const contactRouter = require("./routes/Contact");
 const Cities = require("./models/Cities");
 app.use("/auth", User);
-app.use("/ticket", ticketLimiter, userAuth, Ticket);
+app.use("/ticket", userAuth, Ticket);
 app.use("/admin", Admin_auth, adminControl);
 app.use("/contact", contactRouter);
 app.get("/allcities", async (req, res) => {
@@ -46,7 +46,7 @@ app.get("/", async (req, res) => {
     .send("welcome to the homepage ");
 });
 app.get("/getcookie", async (req, res) => {
-  console.log(req.cookies)
+  // console.log(req.cookies)
   res
     .send("get cookie page here ");
 });
