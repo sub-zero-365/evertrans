@@ -24,6 +24,7 @@
         "mongoose": "^7.0.3",
         "nodemon": "^2.0.20",
         "pdf-lib": "^1.17.1",
+        "qrcode": "^1.5.3",
         "underscore": "^1.13.6",
         "xhr2": "^0.2.1"
     }
