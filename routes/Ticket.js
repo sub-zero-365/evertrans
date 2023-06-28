@@ -3,6 +3,7 @@ const {
     edit,
     userTickets,getTicket,getTickets
 } = require("../controllers/Ticket");
+// const {getStaticRestrictedUsers} =require("../controllers/Restricted")
 
 const express = require("express")
 const router = express.Router()

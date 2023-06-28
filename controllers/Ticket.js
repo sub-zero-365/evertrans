@@ -1,7 +1,18 @@
 
-const { BadRequestError } = require("../error");
-const toJson = require("../utils/toJson")
+const {
+BadRequestError,
+  NotFoundError
+} = require("../error");
+const toJson = require("../utils/toJson");
+const dayjs = require("dayjs")
 const Ticket = require("../models/Ticket");
+function formatDate(date = new Date()) {
+  const formateDate = new Date(date);
+  return {
+    date: formateDate.toLocaleDateString('en-ZA'),
+    time: formateDate.toLocaleTimeString('en-ZA'),
+  }
+}
 const createTicket = async (req, res) => {
 
   const {
@@ -12,6 +23,15 @@ const createTicket = async (req, res) => {
     createdBy: _id,
     ...body,
   };
+
+
+  const lettodaydate = formatDate(new Date()).date
+  const ticketTravelDate = formatDate(req.body.traveldate).date;
+  // since we dont trust the client when need to check the two dates
+  if ((dayjs(ticketTravelDate).diff(lettodaydate, "day")) < 0) {
+    throw BadRequestError(`fail cause the user is trying to back date the date`)
+  }
+
   const ticket = await Ticket.create({ ...obj });
   res.status(200).json({
     ticket,
@@ -24,10 +44,21 @@ const editTicket = async (req, res) => {
     throw BadRequestError("something went wrong try again later ");
   }
   var isTicket = await Ticket.findOne({
-    _id: id
+    _id: id,
+
   });
   if (!isTicket) {
-    throw BadRequestError("cannot find ticket with this id " + id);
+    throw NotFoundError("cannot find ticket with this id " + id);
+  }
+  if (isTicket.active == false) {
+    throw BadRequestError("this ticket is already redeem  " + id)
+  }
+  const lettodaydate = formatDate(new Date()).date
+  const ticketTravelDate = formatDate(isTicket.traveldate).date;
+
+  if ((dayjs(ticketTravelDate).diff(lettodaydate, "day")) > 0) {
+    throw BadRequestError(`This errors cause you are trying to validate a ticket on the ${formatDate(new Date()).date}  when the  travel date is 
+      ${formatDate(isTicket.traveldate).date}   please come back on the ${formatDate(isTicket.traveldate).date} date to travel thanks `)
   }
   if (isTicket && isTicket.type &&
     isTicket.type === "roundtrip" &&
@@ -79,7 +110,7 @@ const editTicket = async (req, res) => {
         , {
           ...tempObj
         }, { new: true })
-      return res.status(200).json({ ticket: updatevalue })
+      return res.status(200).json({ updateTicket: updatevalue })
     }
     catch (err) {
       console.log(err)
@@ -87,13 +118,7 @@ const editTicket = async (req, res) => {
 
     }
   }
-  var isTicketAlreadyRedeem = await Ticket.findOne({
-    _id: id,
-    active: false
-  })
-  if (isTicketAlreadyRedeem) {
-    throw BadRequestError("this ticket is already redeem  " + id)
-  }
+
 
   const isEdited = await Ticket.findOneAndUpdate(
     { _id: id },
@@ -119,17 +144,10 @@ const getTicket = async (req, res) => {
       _id: id,
     });
     if (!ticket) {
-      // console.log("the user send an inv")
       throw BadRequestError("please send a valid for to get the ticket");
     }
-    // if (ticket?.type && ticket.type == "roundtrip") {
-    //   res.status(200).json({
-    //     ticket: toJson("active", ticket)
-    //   });
-    //   return
-    // }
+    
     res.status(200).json({
-      // ticket: toJson("doubletripdetails", ticket)
       ticket
     });
     return
@@ -142,12 +160,7 @@ const getTicket = async (req, res) => {
     console.log("the user send an invalid id to get a ticket");
     throw BadRequestError("please send a valid for to get the ticket");
   }
-  // if (ticket?.type && ticket.type == "roundtrip") {
-  //   res.status(200).json({
-  //     ticket: toJson("active", ticket)
-  //   });
-  //   return
-  // }
+
   res.status(200).json({
     // ticket: toJson("doubletripdetails", ticket)
     ticket
@@ -170,7 +183,7 @@ const userTickets = async (req, res) => {
   const queryObject = {
     createdBy: req.userInfo._id
   }
-consol.log(triptype,"hijgijoagsdf a som cod h")
+  consol.log(triptype, "hijgijoagsdf a som cod h")
   if (ticketStatus && ticketStatus !== "all") {
     if (ticketStatus == "active") {
       queryObject.active = true
@@ -244,19 +257,27 @@ const getTickets = async (req, res) => {
 
   if (triptype && triptype !== "all") {
     queryObject.type = triptype
-    console.log("hoahdfa 9pidsohfoijhasd ifuiadsgiou da")
   }
+  var delCreatetBy = {}
+
   if (search) {
-    console.log("searching here and the code for the code ", search)
+
     queryObject.$or = [
       {
         fullname: {
-          $regex: search, $options: "i"
+          $regex: decodeURIComponent(search), $options: "i"
         }
       },
     ]
+    delCreatetBy.$or = [
+      {
+        fullname: {
+          $regex: decodeURIComponent(search), $options: "i"
+        }
+      },
+    ]
+
   }
-  var delCreatetBy = {}
   if (price) {
     delCreatetBy.price = {
       $eq: Number(price) || 0
@@ -271,23 +292,28 @@ const getTickets = async (req, res) => {
     delCreatetBy = {
       ...queryObject
     }
-    queryObject.createdBy = createdBy;
 
     delCreatetBy.$expr = {
+      $eq: ['$createdBy', { $toObjectId: createdBy }]
+    }
+    queryObject.$expr = {
       $eq: ['$createdBy', { $toObjectId: createdBy }]
     }
     console.log(delCreatetBy)
 
   }
   if (req.userInfo?._id && !createdBy) {
-    console.log(req.userInfo)
-    queryObject.createdBy = req.userInfo._id
+    queryObject.$expr = {
+      $eq: ['$createdBy', { $toObjectId: req.userInfo?._id }]
+    }
+
     delCreatetBy.$expr = {
       $eq: ['$createdBy', { $toObjectId: req.userInfo?._id }]
     }
   }
   if (daterange) {
-    const [startdate, endDate] = daterange.
+    const decoded = decodeURIComponent(daterange)
+    const [startdate, endDate] = decoded.
       split(",").
       map(arr => arr.split("="))
       .map(([v, t]) => {
@@ -330,7 +356,9 @@ const getTickets = async (req, res) => {
 
   }
   if (boardingRange) {
-    const [startdate, endDate] = boardingRange.
+    const decoded = decodeURIComponent(boardingRange)
+    console.log(decoded)
+    const [startdate, endDate] = decoded.
       split(",").
       map(arr => arr.split("="))
       .map(([v, t]) => {
@@ -338,7 +366,6 @@ const getTickets = async (req, res) => {
           [v]: t
         }
       });
-
     if ("start" in startdate && "end" in endDate) {
       const getPreviousDay = (date) => {
         const previous = new Date(date.getTime());
@@ -397,12 +424,12 @@ const getTickets = async (req, res) => {
     .limit(limit);
 
 
-  if (delCreatetBy?.sort) delete deleteTicket.sort
+  if (queryObject?.sort) delete deleteTicket.sort
   const nDoc = await Ticket.countDocuments(queryObject);
 
   var [totalActivePrice, totalInActivePrice] = (await Ticket.aggregate([{
     $match: {
-      ...delCreatetBy,
+      ...queryObject,
     }
   }, {
     $group: {

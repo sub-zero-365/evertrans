@@ -28,11 +28,13 @@ const adminControl = require("./routes/Admincontrols");
 const Admin_auth = require("./middlewares/Admin.auth");
 const userAuth = require("./middlewares/Auth.User");
 const contactRouter = require("./routes/Contact");
+const restrictedRouter = require("./routes/RestrictedUsers");
 const Cities = require("./models/Cities");
 app.use("/auth", User);
 app.use("/ticket", userAuth, Ticket);
 app.use("/admin", Admin_auth, adminControl);
-app.use("/contact", contactRouter);
+app.use("/contact",Admin_auth,contactRouter);
+app.use("/restricted", restrictedRouter);
 app.get("/allcities", async (req, res) => {
   const cities = await Cities.find({}).sort({ value: 1 });
   res.status(200).json({ cities, nHits: cities.length });
@@ -46,7 +48,6 @@ app.get("/", async (req, res) => {
     .send("welcome to the homepage ");
 });
 app.get("/getcookie", async (req, res) => {
-  // console.log(req.cookies)
   res
     .send("get cookie page here ");
 });
