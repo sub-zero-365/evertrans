@@ -539,7 +539,7 @@ const downloadsoftcopyticket = async (req, res) => {
     url, {
     type: "terminal"
   }, function (err, code) {
-    if (err) return console.lg(err)
+    if (err) return console.log(err)
     try {
       // console.log(code)
       res.sendFile(path.join(_path, ticket._id + ".pdf"), {}, function (err) {
