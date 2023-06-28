@@ -30,15 +30,18 @@ const userAuth = require("./middlewares/Auth.User");
 const contactRouter = require("./routes/Contact");
 const restrictedRouter = require("./routes/RestrictedUsers");
 const Cities = require("./models/Cities");
+const { downloadsoftcopyticket } = require("./controllers/Ticket")
 app.use("/auth", User);
 app.use("/ticket", userAuth, Ticket);
 app.use("/admin", Admin_auth, adminControl);
-app.use("/contact",Admin_auth,contactRouter);
+app.use("/contact", Admin_auth, contactRouter);
 app.use("/restricted", restrictedRouter);
+app.get("/downloadticket/:id", downloadsoftcopyticket)
 app.get("/allcities", async (req, res) => {
   const cities = await Cities.find({}).sort({ value: 1 });
   res.status(200).json({ cities, nHits: cities.length });
 });
+// app.get()
 const Admin = require("./models/Admin");
 const server_running = (port) =>
   console.log(`server is running on port ${port}`);

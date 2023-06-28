@@ -1,6 +1,10 @@
-
+const qrcode = require("qrcode");
+const path = require("path")
+const fs = require("fs")
+const { PDFDocument, StandardFonts, rgb } = require("pdf-lib");
+const { readFile, writeFile } = require("fs/promises");
 const {
-BadRequestError,
+  BadRequestError,
   NotFoundError
 } = require("../error");
 const toJson = require("../utils/toJson");
@@ -146,7 +150,7 @@ const getTicket = async (req, res) => {
     if (!ticket) {
       throw BadRequestError("please send a valid for to get the ticket");
     }
-    
+
     res.status(200).json({
       ticket
     });
@@ -495,6 +499,72 @@ const deleteTicket = async (req, res) => {
   }
   res.send("delete ticket routes");
 };
+
+const downloadsoftcopyticket = async (req, res) => {
+  const id = req.params.id;
+  const ticket = await Ticket.findOne({
+    _id: id,
+  });
+  if (!ticket) {
+    throw BadRequestError("please send a valid for to get the ticket");
+  }
+
+
+  const url = `https://ntaribotaken.vercel.app/dashboard/${id}?admin=true&sound=true`
+  // if (!url) throw BadRequestError("please send a valid url");
+
+
+  // async function createPdf(input, output) {
+
+  // }
+
+  // createPdf("sample.pdf", "output.pdf")
+  // 
+  console.log("enter here")
+  const _path = path.resolve(__dirname, "../tickets")
+  console.log(path.join(_path, "qr2.png"), path.join(_path, "qr2.png"))
+  try {
+    const pdfDoc = await PDFDocument.load(await readFile(path.join(_path, "sample.pdf")));
+    const fileNames = pdfDoc.getForm().getFields().map(f => f.getName())
+    console.log(fileNames)
+    const form = pdfDoc.getForm()
+    form.getTextField("Name").setText(ticket.fullname)
+    form.getTextField("Address").setText(ticket.from)
+    const pdfBytes = await pdfDoc.save();
+    await writeFile(path.join(_path, ticket._id + ".pdf"), pdfBytes);
+  } catch (err) {
+    console.log(err);
+  }
+  qrcode.toFile(path.join(_path, "qr2.png"),
+    url, {
+    type: "terminal"
+  }, function (err, code) {
+    if (err) return console.lg(err)
+    try {
+      // console.log(code)
+      res.sendFile(path.join(_path, ticket._id + ".pdf"), {}, function (err) {
+        if (err) {
+          throw err
+        }
+        else {
+          if (fs.existsSync(path.join(_path, "qr2.png"))) {
+            try {
+              fs.unlinkSync(path.join(_path, "qr2.png"))
+            }
+            catch (err) {
+              console.lg(err)
+            }
+          }
+        }
+
+      })
+    }
+    catch (err) {
+      console.log(err)
+    }
+
+  })
+}
 module.exports = {
   create: createTicket,
   edit: editTicket,
@@ -502,4 +572,5 @@ module.exports = {
   userTickets,
   getTicket,
   deleteTicket,
+  downloadsoftcopyticket
 };
