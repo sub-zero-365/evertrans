@@ -511,22 +511,11 @@ const downloadsoftcopyticket = async (req, res) => {
 
 
   const url = `https://ntaribotaken.vercel.app/dashboard/${id}?admin=true&sound=true`
-  // if (!url) throw BadRequestError("please send a valid url");
 
-
-  // async function createPdf(input, output) {
-
-  // }
-
-  // createPdf("sample.pdf", "output.pdf")
-  // 
-  console.log("enter here")
   const _path = path.resolve(__dirname, "../tickets")
-  console.log(path.join(_path, "qr2.png"), path.join(_path, "qr2.png"))
   try {
     const pdfDoc = await PDFDocument.load(await readFile(path.join(_path, "sample.pdf")));
     const fileNames = pdfDoc.getForm().getFields().map(f => f.getName())
-    console.log(fileNames)
     const form = pdfDoc.getForm()
     form.getTextField("Name").setText(ticket.fullname)
     form.getTextField("Address").setText(ticket.from)
@@ -538,12 +527,31 @@ const downloadsoftcopyticket = async (req, res) => {
   qrcode.toFile(path.join(_path, "qr2.png"),
     url, {
     type: "terminal"
-  }, function (err, code) {
+  }, async function (err, code) {
     if (err) return console.log(err)
     try {
+
+
+      const pdfDoc = await PDFDocument.load(await readFile(path.join(_path, "sample.pdf")));
+  
+      const page = pdfDoc.getPage(0)
+      // const { width, height } = page.getSize()
+      let img = fs.readFileSync(path.join(_path, "qr2.png"));
+      img = await pdfDoc.embedPng(img)
+      img.scale(1)
+      page.drawImage(img, {
+        x: 100,
+        y: 200,
+
+      })
+      const pdfBytes = await pdfDoc.save()
+      await writeFile(path.join(__dirname, "ticket._id " + ".pdf"), pdfBytes);
+
+
       // console.log(code)
       res.sendFile(path.join(_path, ticket._id + ".pdf"), {}, function (err) {
         if (err) {
+        console.log(err)
           throw err
         }
         else {
