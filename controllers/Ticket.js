@@ -508,14 +508,10 @@ const downloadsoftcopyticket = async (req, res) => {
   if (!ticket) {
     throw BadRequestError("please send a valid for to get the ticket");
   }
-
-
   const url = `https://ntaribotaken.vercel.app/dashboard/${id}?admin=true&sound=true`
-
   const _path = path.resolve(__dirname, "../tickets")
   try {
     const pdfDoc = await PDFDocument.load(await readFile(path.join(_path, "sample.pdf")));
-    const fileNames = pdfDoc.getForm().getFields().map(f => f.getName())
     const form = pdfDoc.getForm()
     form.getTextField("Name").setText(ticket.fullname)
     form.getTextField("Address").setText(ticket.from)
@@ -530,12 +526,8 @@ const downloadsoftcopyticket = async (req, res) => {
   }, async function (err, code) {
     if (err) return console.log(err)
     try {
-
-
-      const pdfDoc = await PDFDocument.load(await readFile(path.join(_path, "sample.pdf")));
-  
+      const pdfDoc = await PDFDocument.load(await readFile(path.join(_path, ticket._id + ".pdf")));
       const page = pdfDoc.getPage(0)
-      // const { width, height } = page.getSize()
       let img = fs.readFileSync(path.join(_path, "qr2.png"));
       img = await pdfDoc.embedPng(img)
       img.scale(1)
@@ -545,19 +537,17 @@ const downloadsoftcopyticket = async (req, res) => {
 
       })
       const pdfBytes = await pdfDoc.save()
-      await writeFile(path.join(__dirname, "ticket._id " + ".pdf"), pdfBytes);
-
-
-      // console.log(code)
+      await writeFile(path.join(_path, ticket._id + ".pdf"), pdfBytes);
       res.sendFile(path.join(_path, ticket._id + ".pdf"), {}, function (err) {
         if (err) {
-        console.log(err)
+          console.log(err)
           throw err
         }
         else {
-          if (fs.existsSync(path.join(_path, "qr2.png"))) {
+          if (fs.existsSync(path.join(_path, "qr2.png")) && fs.existsSync(path.join(_path, ticket._id + ".pdf"))) {
             try {
-              fs.unlinkSync(path.join(_path, "qr2.png"))
+              fs.unlinkSync(path.join(_path, "qr2.png"));
+              fs.unlinkSync(path.join(_path, ticket._id + ".pdf"));
             }
             catch (err) {
               console.lg(err)
