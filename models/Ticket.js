@@ -104,25 +104,6 @@ ticketSchema.pre(
     next();
   }
 );
-// ticketSchema.pre("validate", async function () {
-//   if (this.type === "singletrip") {
-//     this.doubletripdetails = [
-//       {
-//         updatedAt: this.createdAt,
-//         active: true,
-//       },
-//       {
-//         updatedAt: this.createdAt,
-//         active: true,
-//       },
-
-//     ]
-//     console.log("this", this)
-//   } else {
-
-//   }
-
-// })
 ticketSchema.pre("save", async function () {
   if (this.type === "roundtrip") {
     this.doubletripdetails = [

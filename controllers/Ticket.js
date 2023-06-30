@@ -1,7 +1,7 @@
 const qrcode = require("qrcode");
 const path = require("path")
 const fs = require("fs")
-const { PDFDocument, StandardFonts, rgb } = require("pdf-lib");
+const { PDFDocument} = require("pdf-lib");
 const { readFile, writeFile } = require("fs/promises");
 const {
   BadRequestError,
@@ -18,32 +18,23 @@ function formatDate(date = new Date()) {
   }
 }
 const createTicket = async (req, res) => {
-
-  const {
-    body,
-    userInfo: { _id },
-  } = req;
-  const obj = {
-    createdBy: _id,
-    ...body,
-  };
-
-
   const lettodaydate = formatDate(new Date()).date
   const ticketTravelDate = formatDate(req.body.traveldate).date;
   // since we dont trust the client when need to check the two dates
   if ((dayjs(ticketTravelDate).diff(lettodaydate, "day")) < 0) {
     throw BadRequestError(`fail cause the user is trying to back date the date`)
   }
-
-  const ticket = await Ticket.create({ ...obj });
+  req.body.createdBy = req.userInfo._id
+  const ticket = await Ticket.create(req.body);
   res.status(200).json({
     ticket,
   });
 };
+
 const editTicket = async (req, res) => {
   const { id } = req.params
   const { index } = req.query
+  
   if (index && !([1, 2].some(x => x == index))) {
     throw BadRequestError("something went wrong try again later ");
   }
@@ -161,12 +152,10 @@ const getTicket = async (req, res) => {
     _id: id,
   });
   if (!ticket) {
-    console.log("the user send an invalid id to get a ticket");
     throw BadRequestError("please send a valid for to get the ticket");
   }
 
   res.status(200).json({
-    // ticket: toJson("doubletripdetails", ticket)
     ticket
   });
   return
@@ -187,7 +176,6 @@ const userTickets = async (req, res) => {
   const queryObject = {
     createdBy: req.userInfo._id
   }
-  consol.log(triptype, "hijgijoagsdf a som cod h")
   if (ticketStatus && ticketStatus !== "all") {
     if (ticketStatus == "active") {
       queryObject.active = true
@@ -196,9 +184,8 @@ const userTickets = async (req, res) => {
       queryObject.active = false
     }
   }
-  if (triptype && triptype !== "all") {
+  if (triptype && triptype !== "all" && ["roundtrip", "singletrip"].some(x => x == triptype)) {
     queryObject.type = triptype
-    console.log("hoahdfa 9pidsohfoijhasd ifuiadsgiou da")
   }
   const sortOptions = {
     newest: "-createdAt",
@@ -291,7 +278,7 @@ const getTickets = async (req, res) => {
     }
   }
   if (createdBy && req.admin === true) {
-    console.log("enter in here ok")
+    // console.log("enter in here ok")
 
     delCreatetBy = {
       ...queryObject
@@ -303,7 +290,7 @@ const getTickets = async (req, res) => {
     queryObject.$expr = {
       $eq: ['$createdBy', { $toObjectId: createdBy }]
     }
-    console.log(delCreatetBy)
+    // console.log(delCreatetBy)
 
   }
   if (req.userInfo?._id && !createdBy) {
@@ -361,7 +348,7 @@ const getTickets = async (req, res) => {
   }
   if (boardingRange) {
     const decoded = decodeURIComponent(boardingRange)
-    console.log(decoded)
+    // console.log(decoded)
     const [startdate, endDate] = decoded.
       split(",").
       map(arr => arr.split("="))
@@ -383,7 +370,7 @@ const getTickets = async (req, res) => {
             $lte: getPreviousDay(new Date(endDate.end)),
           }
           delCreatetBy.traveldate = traveldate
-          queryObject.traveldate = traveldate
+          queryObject.traveldate = traveldate;
 
         } catch (err) {
           console.log(err)

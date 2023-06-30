@@ -34,7 +34,7 @@ const Login = async (req, res) => {
 };
 const getUsers = async (req, res) => {
   const obj = {};
-  // const {
+
   //   query: { fullname, password, phone },
   // } = req;
   // if (fullname) {
@@ -69,12 +69,7 @@ const getUsers = async (req, res) => {
       }
     ]
     console.log(Number(search))
-    // if (!isNaN(Number(search))) {
-    //   console.log("enter here")
-    //   userSearch.push({
-    //     phone: { $regex: search, $toString: `${search}`}
-    //   })
-    // }
+  
     queryObject.$or = [
       ...userSearch
     ]
@@ -112,7 +107,7 @@ const getUserAndTicketLength = async (req, res) => {
       }
     ]
   }
-  const allusers = await User.find(queryObject, { password: 0, __v: 0 }).sort("-createdAt").limit(30);
+  const allusers = await User.find(queryObject, { password: 0, __v: 0 }).sort("-createdAt");
   var promiseawait = await Promise.all(
     allusers.map(async (user) => {
       const lenght = await Ticket.countDocuments({ createdBy: user._id });
