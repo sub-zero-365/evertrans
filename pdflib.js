@@ -4,7 +4,6 @@ const path = require("path")
 const fs = require("fs")
 async function createPdf() {
     const pdfDoc = await PDFDocument.create()
-    // const timesRomanFont = await pdfDoc.embedFont(StandardFonts.TimesRoman)
 
     const page = pdfDoc.addPage()
     const { width, height } = page.getSize()
