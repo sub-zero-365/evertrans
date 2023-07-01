@@ -15,12 +15,12 @@ const busSchema = new Schema({
     image: {
         type: String,
         required: false,
+        default:"demobusimage"
     }
     ,
     feature: {
         type: String,
-        default: "normal bus"
-
+        default: "normal bus",
     }
 }, {
     timestamps: true,

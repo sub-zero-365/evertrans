@@ -28,12 +28,14 @@ const adminControl = require("./routes/Admincontrols");
 const Admin_auth = require("./middlewares/Admin.auth");
 const userAuth = require("./middlewares/Auth.User");
 const contactRouter = require("./routes/Contact");
+const busRouter=require("./routes/Bus")
 const restrictedRouter = require("./routes/RestrictedUsers");
 const Cities = require("./models/Cities");
 const { downloadsoftcopyticket } = require("./controllers/Ticket")
 app.use("/auth", User);
 app.use("/ticket", userAuth, Ticket);
 app.use("/admin", Admin_auth, adminControl);
+app.use("/bus", Admin_auth, busRouter);
 app.use("/contact", Admin_auth, contactRouter);
 app.use("/restricted", restrictedRouter);
 app.get("/downloadticket/:id", downloadsoftcopyticket)

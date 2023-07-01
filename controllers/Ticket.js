@@ -1,3 +1,5 @@
+
+const User = require("../models/User")
 const qrcode = require("qrcode");
 const path = require("path")
 const fs = require("fs")
@@ -129,6 +131,7 @@ const editTicket = async (req, res) => {
   });
 };
 const getTicket = async (req, res) => {
+
   var ticket = null;
   const {
     params: { id },
@@ -141,9 +144,12 @@ const getTicket = async (req, res) => {
     if (!ticket) {
       throw BadRequestError("please send a valid for to get the ticket");
     }
-
+    const createdBy = (await User.findOne({ _id: ticket.createdBy }).select("fullname")).fullname;
+    console.log(createdBy)
+    const usernameticket=ticket?.toJSON();
+    usernameticket.username=createdBy;
     res.status(200).json({
-      ticket
+      ticket: usernameticket
     });
     return
   }
@@ -166,7 +172,8 @@ const userTickets = async (req, res) => {
   const {
     createdBy,
     sort,
-    ticketStatus, daterange,
+    ticketStatus,
+    daterange,
     triptype
 
   }
@@ -481,6 +488,7 @@ const getTickets = async (req, res) => {
 
 const deleteTicket = async (req, res) => {
   const ticket = await Ticket.findOne({ _id: req.params.id });
+  
   if (ticket) {
     await ticket.deleteOne();
   }
@@ -488,6 +496,7 @@ const deleteTicket = async (req, res) => {
 };
 
 const downloadsoftcopyticket = async (req, res) => {
+
   const id = req.params.id;
   const ticket = await Ticket.findOne({
     _id: id,
@@ -497,26 +506,16 @@ const downloadsoftcopyticket = async (req, res) => {
   }
   const url = `https://ntaribotaken.vercel.app/dashboard/${id}?admin=true&sound=true`
   const _path = path.resolve(__dirname, "../tickets")
-  // try {
-  //   const pdfDoc = await PDFDocument.load(await readFile(path.join(_path, "sample.pdf")));
-  //   const form = pdfDoc.getForm()
-  //   form.getTextField("Name").setText(ticket.fullname)
-  //   form.getTextField("Address").setText(ticket.from)
-  //   const pdfBytes = await pdfDoc.save();
-  //   await writeFile(path.join(_path, ticket._id + ".pdf"), pdfBytes);
-  // } catch (err) {
-  //   console.log(err);
-  // }
+  const createdBy = (await User.findOne({ _id: ticket.createdBy }).select("fullname")).fullname;
+  
+ 
   qrcode.toFile(path.join(_path, "qr2.png"),
     url, {
     type: "terminal"
   }, async function (err, code) {
     if (err) return console.log(err)
     try {
-      // const pdfDoc = await PDFDocument.load(await readFile(path.join(_path, ticket._id + ".pdf")));
-      // const page = pdfDoc.getPage(0)
-      const pdfDoc = await PDFDocument.load(await readFile(path.resolve(__dirname,"../tickets", "rotatesample.pdf")));
-
+     const pdfDoc = await PDFDocument.load(await readFile(path.resolve(__dirname, "../tickets", "rotatesample.pdf")));
       const page = pdfDoc.getPage(0)
       const { width, height } = page.getSize()
       const fontSize = 15
@@ -588,7 +587,7 @@ const downloadsoftcopyticket = async (req, res) => {
         rotate: degrees(-90),
       })
       // createdBy
-      page.drawText('Ramatou Yoland', {
+      page.drawText(createdBy?.split(" ").map(i=>i[0].toUpperCase()+i.slice(1)).join(" "), {
         x: width - 430,
         // y: height - (8 * fontSize),
         y: height - 130,
