@@ -1,7 +1,7 @@
 const qrcode = require("qrcode");
 const path = require("path")
 const fs = require("fs")
-const { PDFDocument} = require("pdf-lib");
+const { PDFDocument, rgb, degrees } = require("pdf-lib");
 const { readFile, writeFile } = require("fs/promises");
 const {
   BadRequestError,
@@ -34,7 +34,7 @@ const createTicket = async (req, res) => {
 const editTicket = async (req, res) => {
   const { id } = req.params
   const { index } = req.query
-  
+
   if (index && !([1, 2].some(x => x == index))) {
     throw BadRequestError("something went wrong try again later ");
   }
@@ -497,24 +497,144 @@ const downloadsoftcopyticket = async (req, res) => {
   }
   const url = `https://ntaribotaken.vercel.app/dashboard/${id}?admin=true&sound=true`
   const _path = path.resolve(__dirname, "../tickets")
-  try {
-    const pdfDoc = await PDFDocument.load(await readFile(path.join(_path, "sample.pdf")));
-    const form = pdfDoc.getForm()
-    form.getTextField("Name").setText(ticket.fullname)
-    form.getTextField("Address").setText(ticket.from)
-    const pdfBytes = await pdfDoc.save();
-    await writeFile(path.join(_path, ticket._id + ".pdf"), pdfBytes);
-  } catch (err) {
-    console.log(err);
-  }
+  // try {
+  //   const pdfDoc = await PDFDocument.load(await readFile(path.join(_path, "sample.pdf")));
+  //   const form = pdfDoc.getForm()
+  //   form.getTextField("Name").setText(ticket.fullname)
+  //   form.getTextField("Address").setText(ticket.from)
+  //   const pdfBytes = await pdfDoc.save();
+  //   await writeFile(path.join(_path, ticket._id + ".pdf"), pdfBytes);
+  // } catch (err) {
+  //   console.log(err);
+  // }
   qrcode.toFile(path.join(_path, "qr2.png"),
     url, {
     type: "terminal"
   }, async function (err, code) {
     if (err) return console.log(err)
     try {
-      const pdfDoc = await PDFDocument.load(await readFile(path.join(_path, ticket._id + ".pdf")));
+      // const pdfDoc = await PDFDocument.load(await readFile(path.join(_path, ticket._id + ".pdf")));
+      // const page = pdfDoc.getPage(0)
+      const pdfDoc = await PDFDocument.load(await readFile(path.resolve(__dirname,"../tickets", "rotatesample.pdf")));
+
       const page = pdfDoc.getPage(0)
+      const { width, height } = page.getSize()
+      const fontSize = 15
+      console.log(height)
+      // name
+      page.drawText(ticket?.fullname || "n/a", {
+        x: width - 250,
+        // y: height - (8 * fontSize),
+        y: height - 70,
+        size: fontSize,
+        // font: timesRomanFont,
+        // color: rgb(0, 0.53, 0.71),
+        color: rgb(0, 0, 0),
+        rotate: degrees(-90),
+      })
+      // date
+      page.drawText(formatDate(ticket?.traveldate).date || "n/a", {
+        x: width - 287,
+        // y: height - (8 * fontSize),
+        y: height - 70,
+        size: fontSize,
+        // font: timesRomanFont,
+        // color: rgb(0, 0.53, 0.71),
+        color: rgb(0, 0, 0),
+        rotate: degrees(-90),
+      })
+      // derpature time
+      page.drawText(ticket?.time || "n/a", {
+        x: width - 324,
+        // y: height - (8 * fontSize),
+        y: height - 150,
+        size: fontSize,
+        // font: timesRomanFont,
+        // color: rgb(0, 0.53, 0.71),
+        color: rgb(0, 0, 0),
+        rotate: degrees(-90),
+      })
+      // from
+      page.drawText(ticket?.from || "n/a", {
+        x: width - 361,
+        // y: height - (8 * fontSize),
+        y: height - 70,
+        size: fontSize,
+        // font: timesRomanFont,
+        // color: rgb(0, 0.53, 0.71),
+        color: rgb(0, 0, 0),
+        rotate: degrees(-90),
+      })
+      // to
+      page.drawText(ticket?.to || "n/a", {
+        x: width - 361,
+        // y: height - (8 * fontSize),
+        y: height - 255,
+        size: fontSize,
+        // font: timesRomanFont,
+        // color: rgb(0, 0.53, 0.71),
+        color: rgb(0, 0, 0),
+        rotate: degrees(-90),
+      })
+      // bus
+      page.drawText(ticket?.from || "n/a", {
+        x: width - 398,
+        // y: height - (8 * fontSize),
+        y: height - 70,
+        size: fontSize,
+        // font: timesRomanFont,
+        // color: rgb(0, 0.53, 0.71),
+        color: rgb(0, 0, 0),
+        rotate: degrees(-90),
+      })
+      // createdBy
+      page.drawText('Ramatou Yoland', {
+        x: width - 430,
+        // y: height - (8 * fontSize),
+        y: height - 130,
+        size: fontSize,
+        // font: timesRomanFont,
+        // color: rgb(0, 0.53, 0.71),
+        color: rgb(0, 0, 0),
+        rotate: degrees(-90),
+      })
+      // bus
+      page.drawText('13', {
+        x: width - 250,
+        // y: height - (8 * fontSize),
+        y: height - 500,
+        size: fontSize,
+        // font: timesRomanFont,
+        // color: rgb(0, 0.53, 0.71),
+        color: rgb(0, 0, 0),
+        rotate: degrees(-90),
+      })
+      // price
+      page.drawText('13000', {
+        x: width - 361,
+        // y: height - (8 * fontSize),
+        y: height - 500,
+        size: fontSize,
+        // font: timesRomanFont,
+        // color: rgb(0, 0.53, 0.71),
+        color: rgb(0, 0, 0),
+        rotate: degrees(-90),
+      })
+      // triptype
+      page.drawText('.', {
+        x: width - 335,
+        // y: height - (8 * fontSize),
+        y: height - 400,
+        size: 100,
+        // font: timesRomanFont,
+        // color: rgb(0, 0.53, 0.71),
+        color: rgb(0, 0, 0),
+        rotate: degrees(-90),
+      })
+
+
+      // hihjh
+
       let img = fs.readFileSync(path.join(_path, "qr2.png"));
       img = await pdfDoc.embedPng(img)
       img.scale(1)
