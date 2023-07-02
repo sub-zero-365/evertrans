@@ -76,7 +76,6 @@ const ticketSchema = new Schema(
       required: [true, "Please your age is needed or required"],
     },
 
-
     sex: {
       type: String,
       required: [true, "Please your age is needed or required"],
