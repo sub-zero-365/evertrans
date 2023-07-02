@@ -20,12 +20,14 @@ function formatDate(date = new Date()) {
   }
 }
 const createTicket = async (req, res) => {
-  const lettodaydate = formatDate(new Date()).date
-  const ticketTravelDate = formatDate(req.body.traveldate).date;
-  // since we dont trust the client when need to check the two dates
-  if ((dayjs(ticketTravelDate).diff(lettodaydate, "day")) < 0) {
-    throw BadRequestError(`fail cause the user is trying to back date the date`)
-  }
+  // const lettodaydate = formatDate(new Date()).date
+  // const ticketTravelDate = formatDate(req.body.traveldate).date;
+  // // since we dont trust the client when need to check the two dates
+  // if ((dayjs(ticketTravelDate).diff(lettodaydate, "day")) < 0) {
+  //   throw BadRequestError(`fail cause the user is trying to back date the date`)
+  // }
+  const isUser = await User.findOne({ _id: req.userInfo });
+  if(!isUser) throw BadRequestError("coudnot find user please login again")
   req.body.createdBy = req.userInfo._id
   const ticket = await Ticket.create(req.body);
   res.status(200).json({
@@ -136,6 +138,7 @@ const getTicket = async (req, res) => {
   const {
     params: { id },
   } = req;
+
   if (!req.userInfo) {
     // the user is the admn of the pagge let him get the user information
     ticket = await Ticket.findOne({
@@ -146,8 +149,8 @@ const getTicket = async (req, res) => {
     }
     const createdBy = (await User.findOne({ _id: ticket.createdBy }).select("fullname")).fullname;
     console.log(createdBy)
-    const usernameticket=ticket?.toJSON();
-    usernameticket.username=createdBy;
+    const usernameticket = ticket?.toJSON();
+    usernameticket.username = createdBy;
     res.status(200).json({
       ticket: usernameticket
     });
@@ -161,8 +164,11 @@ const getTicket = async (req, res) => {
     throw BadRequestError("please send a valid for to get the ticket");
   }
 
+  const createdBy = (await User.findOne({ _id: ticket.createdBy }).select("fullname")).fullname;
+  const usernameticket = ticket?.toJSON();
+  usernameticket.username = createdBy;
   res.status(200).json({
-    ticket
+    ticket: usernameticket
   });
   return
 };
@@ -256,7 +262,6 @@ const getTickets = async (req, res) => {
   if (triptype && triptype !== "all") {
     queryObject.type = triptype
   }
-  var delCreatetBy = {}
 
   if (search) {
 
@@ -267,45 +272,21 @@ const getTickets = async (req, res) => {
         }
       },
     ]
-    delCreatetBy.$or = [
-      {
-        fullname: {
-          $regex: decodeURIComponent(search), $options: "i"
-        }
-      },
-    ]
 
   }
   if (price) {
-    delCreatetBy.price = {
-      $eq: Number(price) || 0
-    }
     queryObject.price = {
       $eq: Number(price) || 0
     }
   }
   if (createdBy && req.admin === true) {
-    // console.log("enter in here ok")
-
-    delCreatetBy = {
-      ...queryObject
-    }
-
-    delCreatetBy.$expr = {
-      $eq: ['$createdBy', { $toObjectId: createdBy }]
-    }
     queryObject.$expr = {
       $eq: ['$createdBy', { $toObjectId: createdBy }]
     }
-    // console.log(delCreatetBy)
 
   }
   if (req.userInfo?._id && !createdBy) {
     queryObject.$expr = {
-      $eq: ['$createdBy', { $toObjectId: req.userInfo?._id }]
-    }
-
-    delCreatetBy.$expr = {
       $eq: ['$createdBy', { $toObjectId: req.userInfo?._id }]
     }
   }
@@ -327,13 +308,11 @@ const getTickets = async (req, res) => {
         return previous
       }
       if (startdate.start != "null" && endDate.end != "null") {
-
         try {
           var createdAt = {
             $gte: new Date(startdate.start),
             $lte: getPreviousDay(new Date(endDate.end)),
           }
-          delCreatetBy.createdAt = createdAt
           queryObject.createdAt = createdAt
 
         } catch (err) {
@@ -348,14 +327,12 @@ const getTickets = async (req, res) => {
           $lte: getPreviousDay(new Date(startdate.start)),
         }
         queryObject.createdAt = createdAt
-        delCreatetBy.createdAt = createdAt
       }
     }
 
   }
   if (boardingRange) {
     const decoded = decodeURIComponent(boardingRange)
-    // console.log(decoded)
     const [startdate, endDate] = decoded.
       split(",").
       map(arr => arr.split("="))
@@ -376,7 +353,6 @@ const getTickets = async (req, res) => {
             $gte: new Date(startdate.start),
             $lte: getPreviousDay(new Date(endDate.end)),
           }
-          delCreatetBy.traveldate = traveldate
           queryObject.traveldate = traveldate;
 
         } catch (err) {
@@ -390,19 +366,17 @@ const getTickets = async (req, res) => {
           $lte: getPreviousDay(new Date(startdate.start)),
         }
         queryObject.traveldate = traveldate
-        delCreatetBy.traveldate = traveldate
       }
     }
 
   }
   if (ticketStatus && ticketStatus !== "all") {
+  console.log(ticketStatus)
     if (ticketStatus == "active") {
       queryObject.active = true
-      delCreatetBy.active = true
     }
     if (ticketStatus == "inactive") {
       queryObject.active = false
-      delCreatetBy.active = false
     }
   }
   const sortOptions = {
@@ -488,7 +462,7 @@ const getTickets = async (req, res) => {
 
 const deleteTicket = async (req, res) => {
   const ticket = await Ticket.findOne({ _id: req.params.id });
-  
+
   if (ticket) {
     await ticket.deleteOne();
   }
@@ -507,15 +481,15 @@ const downloadsoftcopyticket = async (req, res) => {
   const url = `https://ntaribotaken.vercel.app/dashboard/${id}?admin=true&sound=true`
   const _path = path.resolve(__dirname, "../tickets")
   const createdBy = (await User.findOne({ _id: ticket.createdBy }).select("fullname")).fullname;
-  
- 
+
+
   qrcode.toFile(path.join(_path, "qr2.png"),
     url, {
     type: "terminal"
   }, async function (err, code) {
     if (err) return console.log(err)
     try {
-     const pdfDoc = await PDFDocument.load(await readFile(path.resolve(__dirname, "../tickets", "rotatesample.pdf")));
+      const pdfDoc = await PDFDocument.load(await readFile(path.resolve(__dirname, "../tickets", "rotatesample.pdf")));
       const page = pdfDoc.getPage(0)
       const { width, height } = page.getSize()
       const fontSize = 15
@@ -587,7 +561,7 @@ const downloadsoftcopyticket = async (req, res) => {
         rotate: degrees(-90),
       })
       // createdBy
-      page.drawText(createdBy?.split(" ").map(i=>i[0].toUpperCase()+i.slice(1)).join(" "), {
+      page.drawText(createdBy?.split(" ").map(i => i[0].toUpperCase() + i.slice(1)).join(" "), {
         x: width - 430,
         // y: height - (8 * fontSize),
         y: height - 130,
