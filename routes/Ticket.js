@@ -7,7 +7,8 @@ const {
 } = require("../controllers/Ticket");
 const {validateTicketInput,
 validateupdateTicket,
-validateIdParam
+validateIdParam,
+validateEditTicket
 }=require("../middlewares/validationMiddleware")
 const IsUserRestricted=require("../middlewares/IsUserRestricted")
 const express = require("express")
@@ -21,7 +22,8 @@ get(validateIdParam,
 downloadsoftcopyticket)
 router.route("/edit/:id").
 post(require("../middlewares/Admin.auth"),
-validateupdateTicket,
+validateIdParam,
+validateupdateTicket,validateEditTicket,
 edit)
 
 module.exports = router
