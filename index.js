@@ -35,7 +35,7 @@ const { downloadsoftcopyticket } = require("./controllers/Ticket")
 app.use("/auth", User);
 app.use("/ticket", userAuth, Ticket);
 app.use("/admin", Admin_auth, adminControl);
-app.use("/bus", Admin_auth, busRouter);
+app.use("/bus", busRouter);
 app.use("/contact", Admin_auth, contactRouter);
 app.use("/restricted", restrictedRouter);
 app.get("/downloadticket/:id", downloadsoftcopyticket)

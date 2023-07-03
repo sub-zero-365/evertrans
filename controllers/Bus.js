@@ -3,6 +3,8 @@ const {
     NotFoundError
 } = require("../error")
 const create = async (req, res) => {
+    console.log(req.body)
+
     const bus = await Bus.create(req.body)
     res.status(201).
         json({ bus })
@@ -27,7 +29,24 @@ const getBus = async (req, res) => {
 
 const updateBus = async (req, res) => {
     res.send("update bus route  here")
-    // const bus=await Bus.findOneAndUpdate({_id:req.parma})
+}
+const updateBusSeat = async (req, res) => {
+    const { id, seat_number } = req.params;
+    console.log(id, seat_number);
+    const updatedid = await Bus.findOneAndUpdate({
+        _id: id, 
+        "seat_positions._id": seat_number
+    
+    }
+    ,
+        {
+            $set: {
+                "seat_details.seat_positions.$._id": seat_number
+            }
+        }
+    )
+    console.log(updatedid)
+    res.send("hello usser")
 
 
 }
@@ -37,5 +56,5 @@ const getAllBus = async (req, res) => {
 }
 module.exports = {
 
-    create, deleteBus, updateBus, getBus,getAllBus
+    create, deleteBus, updateBus, getBus, getAllBus, updateBusSeat
 }

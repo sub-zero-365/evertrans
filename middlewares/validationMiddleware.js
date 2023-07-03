@@ -7,6 +7,7 @@ const { BadRequestError } = require("../error")
 // import mongoose from 'mongoose';
 const mongoose = require("mongoose")
 const User = require("../models/User")
+const Ticket = require("../models/Ticket")
 const dayjs = require("dayjs")
 function formatDate(date = new Date()) {
     const formateDate = new Date(date);
@@ -78,8 +79,16 @@ const validateTicketInput = withValidationErrors([
         notEmpty().withMessage("sex is require bro").
         isIn(["female", "male"])
         .withMessage(`age is lessthan 2 or greater than 80`),
-
-
+    body("from")
+        .notEmpty()
+        .withMessage("from is required please send").
+        custom((value, { req, loc, path }) => {
+            console.log(value,req.body.to, loc, path)
+            if(value===req.body.to) throw BadRequestError("Cities should not be thesame ")
+            return true
+        }),
+    
+        
     // body('createdBy').notEmpty().withMessage('createdBy is required').
     // custom(async (email, { req }) => {
     //       const user = await User.findOne({ email });
@@ -114,7 +123,17 @@ const validateIdParam = withValidationErrors([
         })
         .withMessage('invalid MongoDB id'),
 ]);
+const validateEditTicket=withValidationErrors([
+// working here
+    query('index').
+        optional().
+        trim()
+        .isIn([1,2])
+        .withMessage('index should be 1 or 2')
+    ,
+   
 
+]);
 const validateRegisterInput = withValidationErrors([
     body('fullname').
         notEmpty().
@@ -132,8 +151,6 @@ const validateRegisterInput = withValidationErrors([
         .withMessage('email is required').
         isLength({ min: 8 })
         .withMessage('phone number must be at least 8 characters long')
-        // .isNum()
-        // .withMessage('invalid email format')
         .custom(async (phone) => {
             const user = await User.findOne({ phone });
             if (user) {
@@ -227,5 +244,6 @@ module.exports = {
     //   validateLoginInput,
     //   validateGetAllJobsParams,
     //   validateUpdateUserInput,
-    validateupdateTicket
+    validateupdateTicket,
+    validateEditTicket
 };

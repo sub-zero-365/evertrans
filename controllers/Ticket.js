@@ -20,12 +20,6 @@ function formatDate(date = new Date()) {
   }
 }
 const createTicket = async (req, res) => {
-  // const lettodaydate = formatDate(new Date()).date
-  // const ticketTravelDate = formatDate(req.body.traveldate).date;
-  // // since we dont trust the client when need to check the two dates
-  // if ((dayjs(ticketTravelDate).diff(lettodaydate, "day")) < 0) {
-  //   throw BadRequestError(`fail cause the user is trying to back date the date`)
-  // }
   const isUser = await User.findOne({ _id: req.userInfo });
   if(!isUser) throw BadRequestError("coudnot find user please login again")
   req.body.createdBy = req.userInfo._id
@@ -39,9 +33,9 @@ const editTicket = async (req, res) => {
   const { id } = req.params
   const { index } = req.query
 
-  if (index && !([1, 2].some(x => x == index))) {
-    throw BadRequestError("something went wrong try again later ");
-  }
+  // if (index && !([1, 2].some(x => x == index))) {
+  //   throw BadRequestError("something went wrong try again later ");
+  // }
   var isTicket = await Ticket.findOne({
     _id: id,
 
