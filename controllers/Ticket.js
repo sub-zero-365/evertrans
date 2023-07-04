@@ -5,6 +5,7 @@ const path = require("path")
 const fs = require("fs")
 const { PDFDocument, rgb, degrees } = require("pdf-lib");
 const { readFile, writeFile } = require("fs/promises");
+const Bus = require("../models/Bus")
 const {
   BadRequestError,
   NotFoundError
@@ -20,14 +21,68 @@ function formatDate(date = new Date()) {
   }
 }
 const createTicket = async (req, res) => {
+  var buscreatedid = null
+  try {
+    const { seatposition: seat_number, busId: id } = req.body;
+    if (!id) {
+      throw BadRequestError("please provide id or sea number")
+    }
+    const isUser = await User.findOne({ _id: req.userInfo });
+    if (!isUser) throw BadRequestError("coudnot find user please login again");
+    req.body.createdBy = req.userInfo._id
+    const ticket = await Ticket.create(req.body);
+    console.log(req.body);
+    buscreatedid = ticket.toJSON()._id
+    const bus = await Bus.findOne({
+      "seat_positions._id": Number(seat_number),
+      _id: id
+    })
+    if (!bus) throw BadRequestError("couldnot found bus with id " + id)
+    if (bus.seat_positions[Number(seat_number)].isTaken == true) {
+      throw BadRequestError("oops seat is already taken,please choose another seat thanks")
+    }
+    console.log(bus.seat_positions[Number(seat_number)])
+    const updatedid = await Bus.findOneAndUpdate({
+      "seat_positions._id": Number(seat_number),
+      _id: id
+    }
+      ,
+      {
+        $set: {
+          "seat_positions.$.isTaken": true
+        }
+      }
+      , {
 
-  const isUser = await User.findOne({ _id: req.userInfo });
-  if(!isUser) throw BadRequestError("coudnot find user please login again")
-  req.body.createdBy = req.userInfo._id
-  const ticket = await Ticket.create(req.body);
-  res.status(200).json({
-    ticket,
-  });
+        new: true
+      }
+    )
+    console.log("updated value", updatedid?.seat_positions)
+    res.status(200)
+      .json({ state: true })
+
+    // iohoih
+
+    // res.status(200).json({
+    //   ticket,
+    // });
+
+  } catch (err) {
+    // console.log("err :", err);
+    console.log(err.message,
+      err.statuscode)
+    Ticket.findOneAndDelete({ _id: buscreatedid }).
+      then((data) => {
+        console.log("every thing ok")
+        return res.status((err.statuscode || 500)).send(
+          err.message
+        )
+      }).catch(err => {
+        return res.status(500).send("something went wrong try again")
+        console.log(err)
+      })
+
+  }
 };
 
 const editTicket = async (req, res) => {
@@ -366,7 +421,7 @@ const getTickets = async (req, res) => {
 
   }
   if (ticketStatus && ticketStatus !== "all") {
-  console.log(ticketStatus)
+    console.log(ticketStatus)
     if (ticketStatus == "active") {
       queryObject.active = true
     }

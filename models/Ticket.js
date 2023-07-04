@@ -84,6 +84,13 @@ const ticketSchema = new Schema(
         message: "sex is either male or female",
       },
     },
+    seatposition:{
+      type: Number,
+      required: [true, "Please seat is needed or required"],
+      max:[58,"please ax bus seat is 58"] ,
+      min:[0,"please min box seat is one"] ,
+    
+    }
 
   },
   {
