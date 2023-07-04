@@ -20,6 +20,7 @@ function formatDate(date = new Date()) {
   }
 }
 const createTicket = async (req, res) => {
+
   const isUser = await User.findOne({ _id: req.userInfo });
   if(!isUser) throw BadRequestError("coudnot find user please login again")
   req.body.createdBy = req.userInfo._id

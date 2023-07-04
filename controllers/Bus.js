@@ -1,10 +1,9 @@
 const Bus = require("../models/Bus")
 const {
-    NotFoundError
+    NotFoundError, BadRequestError
 } = require("../error")
 const create = async (req, res) => {
     console.log(req.body)
-
     const bus = await Bus.create(req.body)
     res.status(201).
         json({ bus })
@@ -20,6 +19,7 @@ const deleteBus = async (req, res) => {
 
 
 const getBus = async (req, res) => {
+
     const bus = await Bus.findOne({ _id: req.params.id })
     if (!bus) {
         throw NotFoundError("couldnot found bus with this " + req.params.id)
@@ -31,22 +31,37 @@ const updateBus = async (req, res) => {
     res.send("update bus route  here")
 }
 const updateBusSeat = async (req, res) => {
+    // await Bus.deleteMany()
+
     const { id, seat_number } = req.params;
-    console.log(id, seat_number);
-    const updatedid = await Bus.findOneAndUpdate({
-        _id: id, 
-        "seat_positions._id": seat_number
-    
+    const bus = await Bus.findOne({
+        "seat_positions._id": Number(seat_number),
+        _id: id
+    })
+    if (!bus) throw BadRequestError("couldnot found bus with id " + id)
+    if (bus.seat_positions[Number(seat_number)].isTaken == true) {
+        throw BadRequestError("oops seat is already taken,please choose another seat thanks")
+
     }
-    ,
+    console.log(bus.seat_positions[Number(seat_number)])
+    const updatedid = await Bus.findOneAndUpdate({
+        "seat_positions._id": Number(seat_number),
+        _id: id
+    }
+        ,
         {
             $set: {
-                "seat_details.seat_positions.$._id": seat_number
+                "seat_positions.$.isTaken": true
             }
         }
+        , {
+
+            new: true
+        }
     )
-    console.log(updatedid)
-    res.send("hello usser")
+    console.log("updated value", updatedid?.seat_positions)
+    res.status(200)
+        .json({ state: true })
 
 
 }
