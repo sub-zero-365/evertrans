@@ -54,10 +54,18 @@ const validateupdateTicket = withValidationErrors([
     ,
 ])
 const validateTicketInput = withValidationErrors([
-    body('fullname').notEmpty().withMessage('fullname is required'),
-    body('age')
+    body('busId').notEmpty().
+        withMessage("please provide a bus id")
+        .custom((value) => mongoose.Types.ObjectId.isValid(value))
+        .withMessage('created by invalid MongoDB id'),
+    body('fullname').
+        notEmpty().
+        withMessage('fullname is required'),
+    body('sex')
         .notEmpty().
-        withMessage('age is require')
+        withMessage('sex of user is require').
+        isIn(["male", "female"])
+        .withMessage("sex is either male or female")
     ,
     body("traveldate")
         .notEmpty()
@@ -72,6 +80,7 @@ const validateTicketInput = withValidationErrors([
 
         }),
     body("age").
+
         notEmpty().withMessage("age is require bro").
         isFloat({ min: 2, max: 80 })
         .withMessage(`age is lessthan 2 or greater than 80`),
@@ -83,12 +92,34 @@ const validateTicketInput = withValidationErrors([
         .notEmpty()
         .withMessage("from is required please send").
         custom((value, { req, loc, path }) => {
-            console.log(value,req.body.to, loc, path)
-            if(value===req.body.to) throw BadRequestError("Cities should not be thesame ")
+            console.log(value, req.body.to, loc, path)
+            if (value === req.body.to) throw BadRequestError("Cities should not be thesame ")
             return true
         }),
-    
-        
+    body("seatposition")
+        .notEmpty()
+        .withMessage("seatposition is required please send").
+        isFloat({ min: 0, max: 67 })
+        .withMessage("bus sea should be in range of 0-67")
+    ,
+    body("phone")
+        .notEmpty()
+        .withMessage("phone number is required please send").
+        isLength({ min: 7 })
+        .withMessage("phone nuber is less than 7")
+    ,
+    body("type")
+        .optional().
+        isIn(["singletrip", "roundtrip"])
+        .withMessage('invalid trip type type')
+    ,
+    body("active")
+        .optional().
+        isIn([true, false])
+        .withMessage('invalid active type')
+    ,
+
+
     // body('createdBy').notEmpty().withMessage('createdBy is required').
     // custom(async (email, { req }) => {
     //       const user = await User.findOne({ email });
@@ -123,15 +154,15 @@ const validateIdParam = withValidationErrors([
         })
         .withMessage('invalid MongoDB id'),
 ]);
-const validateEditTicket=withValidationErrors([
-// working here
+const validateEditTicket = withValidationErrors([
+    // working here
     query('index').
         optional().
         trim()
-        .isIn([1,2])
+        .isIn([1, 2])
         .withMessage('index should be 1 or 2')
     ,
-   
+
 
 ]);
 const validateRegisterInput = withValidationErrors([

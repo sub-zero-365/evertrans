@@ -27,7 +27,6 @@ const Auth = async (req, res, next) => {
             _id: payload._id,
             phone: payload.phone
         }
-        // await isUserNotRestricted(payload._id);
         next()
     } catch (err) {
         console.log(err)

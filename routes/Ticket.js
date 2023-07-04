@@ -3,27 +3,29 @@ const {
     edit,
     getTicket,
     getTickets
-    ,downloadsoftcopyticket,
+    , downloadsoftcopyticket,
 } = require("../controllers/Ticket");
-const {validateTicketInput,
-validateupdateTicket,
-validateIdParam,
-validateEditTicket
-}=require("../middlewares/validationMiddleware")
-const IsUserRestricted=require("../middlewares/IsUserRestricted")
+const { validateTicketInput,
+    validateupdateTicket,
+    validateIdParam,
+    validateEditTicket
+} = require("../middlewares/validationMiddleware")
+const IsUserRestricted = require("../middlewares/IsUserRestricted")
 const express = require("express")
 const router = express.Router()
-router.route("/").post(IsUserRestricted,validateTicketInput,create).get(getTickets)
+router.route("/").post(IsUserRestricted,
+    validateTicketInput, create).get(getTickets)
 router.route("/:id").get(
-validateIdParam,
-getTicket)
+    validateIdParam,
+    getTicket)
 router.route("/download/:id").
-get(validateIdParam,
-downloadsoftcopyticket)
+    get(validateIdParam,
+        downloadsoftcopyticket)
 router.route("/edit/:id").
-post(require("../middlewares/Admin.auth"),
-validateIdParam,
-validateupdateTicket,validateEditTicket,
-edit)
+    post(require("../middlewares/Admin.auth"),
+        validateIdParam,
+        validateupdateTicket,
+        validateEditTicket,
+        edit)
 
 module.exports = router
