@@ -24,12 +24,17 @@ const createTicket = async (req, res) => {
   var buscreatedid = null
   try {
     const { seatposition: seat_number, busId: id } = req.body;
-    if (!id) {
-      throw BadRequestError("please provide id or sea number")
+    const isBus= await Bus.findOne({
+      _id: id
+    })
+    if (!isBus) {
+      throw BadRequestError("invalid Bus id")
     }
     const isUser = await User.findOne({ _id: req.userInfo });
     if (!isUser) throw BadRequestError("coudnot find user please login again");
     req.body.createdBy = req.userInfo._id
+    req.body.bus=isBus.name
+    
     const ticket = await Ticket.create(req.body);
     console.log(req.body);
     buscreatedid = ticket.toJSON()._id
@@ -511,11 +516,11 @@ const getTickets = async (req, res) => {
 
 
 const deleteTicket = async (req, res) => {
-  const ticket = await Ticket.findOne({ _id: req.params.id });
+  // const ticket = await Ticket.findOne({ _id: req.params.id });
 
-  if (ticket) {
-    await ticket.deleteOne();
-  }
+  // if (ticket) {
+  //   await ticket.deleteOne();
+  // }
   res.send("delete ticket routes");
 };
 
@@ -535,137 +540,174 @@ const downloadsoftcopyticket = async (req, res) => {
 
   qrcode.toFile(path.join(_path, "qr2.png"),
     url, {
-    type: "terminal"
+    type: "terminal",
+    size: 4
   }, async function (err, code) {
     if (err) return console.log(err)
     try {
-      const pdfDoc = await PDFDocument.load(await readFile(path.resolve(__dirname, "../tickets", "rotatesample.pdf")));
+      const pdfDoc = await PDFDocument.load(await readFile(path.resolve(__dirname, "../tickets", "sampleticket.pdf")));
       const page = pdfDoc.getPage(0)
       const { width, height } = page.getSize()
-      const fontSize = 15
-      console.log(height)
+
+      const fileNames = pdfDoc.getForm().getFields().map(f => f.getName())
+      const form = pdfDoc.getForm()
+      const { fullname, traveldate, traveltime, seatposition, from, to, type:triptype, _id ,bus} = ticket.toJSON()
+      form.getTextField("fullname").
+        setText(fullname)
+      form.getTextField("traveldate").
+        setText(formatDate(traveldate).date)
+      form.getTextField("seatposition").
+        setText(String(seatposition))
+      form.getTextField("createdBy").
+        setText(createdBy)
+      form.getTextField("time").
+        setText(traveltime)
+      form.getTextField("from").
+        setText(from)
+      form.getTextField("to").
+        setText(to)
+      form.getTextField("triptype").
+        setText((triptype || "n/a"))
+      form.getTextField("bus").
+        setText((bus || "n/a"))
+      form.getTextField("ticket_id").
+        setText((String(_id) || "n/a"))
+      console.log(fileNames)
+      // const { width, height } = page.getSize()
+      // const fontSize = 15
+      // console.log(height)
       // name
-      page.drawText(ticket?.fullname || "n/a", {
-        x: width - 250,
-        // y: height - (8 * fontSize),
-        y: height - 70,
-        size: fontSize,
-        // font: timesRomanFont,
-        // color: rgb(0, 0.53, 0.71),
-        color: rgb(0, 0, 0),
-        rotate: degrees(-90),
-      })
-      // date
-      page.drawText(formatDate(ticket?.traveldate).date || "n/a", {
-        x: width - 287,
-        // y: height - (8 * fontSize),
-        y: height - 70,
-        size: fontSize,
-        // font: timesRomanFont,
-        // color: rgb(0, 0.53, 0.71),
-        color: rgb(0, 0, 0),
-        rotate: degrees(-90),
-      })
-      // derpature time
-      page.drawText(ticket?.time || "n/a", {
-        x: width - 324,
-        // y: height - (8 * fontSize),
-        y: height - 150,
-        size: fontSize,
-        // font: timesRomanFont,
-        // color: rgb(0, 0.53, 0.71),
-        color: rgb(0, 0, 0),
-        rotate: degrees(-90),
-      })
-      // from
-      page.drawText(ticket?.from || "n/a", {
-        x: width - 361,
-        // y: height - (8 * fontSize),
-        y: height - 70,
-        size: fontSize,
-        // font: timesRomanFont,
-        // color: rgb(0, 0.53, 0.71),
-        color: rgb(0, 0, 0),
-        rotate: degrees(-90),
-      })
-      // to
-      page.drawText(ticket?.to || "n/a", {
-        x: width - 361,
-        // y: height - (8 * fontSize),
-        y: height - 255,
-        size: fontSize,
-        // font: timesRomanFont,
-        // color: rgb(0, 0.53, 0.71),
-        color: rgb(0, 0, 0),
-        rotate: degrees(-90),
-      })
-      // bus
-      page.drawText(ticket?.from || "n/a", {
-        x: width - 398,
-        // y: height - (8 * fontSize),
-        y: height - 70,
-        size: fontSize,
-        // font: timesRomanFont,
-        // color: rgb(0, 0.53, 0.71),
-        color: rgb(0, 0, 0),
-        rotate: degrees(-90),
-      })
-      // createdBy
-      page.drawText(createdBy?.split(" ").map(i => i[0].toUpperCase() + i.slice(1)).join(" "), {
-        x: width - 430,
-        // y: height - (8 * fontSize),
-        y: height - 130,
-        size: fontSize,
-        // font: timesRomanFont,
-        // color: rgb(0, 0.53, 0.71),
-        color: rgb(0, 0, 0),
-        rotate: degrees(-90),
-      })
-      // bus
-      page.drawText('13', {
-        x: width - 250,
-        // y: height - (8 * fontSize),
-        y: height - 500,
-        size: fontSize,
-        // font: timesRomanFont,
-        // color: rgb(0, 0.53, 0.71),
-        color: rgb(0, 0, 0),
-        rotate: degrees(-90),
-      })
-      // price
-      page.drawText('13000', {
-        x: width - 361,
-        // y: height - (8 * fontSize),
-        y: height - 500,
-        size: fontSize,
-        // font: timesRomanFont,
-        // color: rgb(0, 0.53, 0.71),
-        color: rgb(0, 0, 0),
-        rotate: degrees(-90),
-      })
-      // triptype
-      page.drawText('.', {
-        x: width - 335,
-        // y: height - (8 * fontSize),
-        y: height - 400,
-        size: 100,
-        // font: timesRomanFont,
-        // color: rgb(0, 0.53, 0.71),
-        color: rgb(0, 0, 0),
-        rotate: degrees(-90),
-      })
+      // page.drawText(ticket?.fullname || "n/a", {
+      //   x: width - 250,
+      //   // y: height - (8 * fontSize),
+      //   y: height - 70,
+      //   size: fontSize,
+      //   // font: timesRomanFont,
+      //   // color: rgb(0, 0.53, 0.71),
+      //   color: rgb(0, 0, 0),
+      //   rotate: degrees(-90),
+      // })
+      // // date
+      // page.drawText(formatDate(ticket?.traveldate).date || "n/a", {
+      //   x: width - 287,
+      //   // y: height - (8 * fontSize),
+      //   y: height - 70,
+      //   size: fontSize,
+      //   // font: timesRomanFont,
+      //   // color: rgb(0, 0.53, 0.71),
+      //   color: rgb(0, 0, 0),
+      //   rotate: degrees(-90),
+      // })
+      // // derpature time
+      // page.drawText(ticket?.time || "n/a", {
+      //   x: width - 324,
+      //   // y: height - (8 * fontSize),
+      //   y: height - 150,
+      //   size: fontSize,
+      //   // font: timesRomanFont,
+      //   // color: rgb(0, 0.53, 0.71),
+      //   color: rgb(0, 0, 0),
+      //   rotate: degrees(-90),
+      // })
+      // // from
+      // page.drawText(ticket?.from || "n/a", {
+      //   x: width - 361,
+      //   // y: height - (8 * fontSize),
+      //   y: height - 70,
+      //   size: fontSize,
+      //   // font: timesRomanFont,
+      //   // color: rgb(0, 0.53, 0.71),
+      //   color: rgb(0, 0, 0),
+      //   rotate: degrees(-90),
+      // })
+      // // to
+      // page.drawText(ticket?.to || "n/a", {
+      //   x: width - 361,
+      //   // y: height - (8 * fontSize),
+      //   y: height - 255,
+      //   size: fontSize,
+      //   // font: timesRomanFont,
+      //   // color: rgb(0, 0.53, 0.71),
+      //   color: rgb(0, 0, 0),
+      //   rotate: degrees(-90),
+      // })
+      // // bus
+      // page.drawText(ticket?.from || "n/a", {
+      //   x: width - 398,
+      //   // y: height - (8 * fontSize),
+      //   y: height - 70,
+      //   size: fontSize,
+      //   // font: timesRomanFont,
+      //   // color: rgb(0, 0.53, 0.71),
+      //   color: rgb(0, 0, 0),
+      //   rotate: degrees(-90),
+      // })
+      // // createdBy
+      // page.drawText(createdBy?.split(" ").map(i => i[0].toUpperCase() + i.slice(1)).join(" "), {
+      //   x: width - 430,
+      //   // y: height - (8 * fontSize),
+      //   y: height - 130,
+      //   size: fontSize,
+      //   // font: timesRomanFont,
+      //   // color: rgb(0, 0.53, 0.71),
+      //   color: rgb(0, 0, 0),
+      //   rotate: degrees(-90),
+      // })
+      // // bus
+      // page.drawText('13', {
+      //   x: width - 250,
+      //   // y: height - (8 * fontSize),
+      //   y: height - 500,
+      //   size: fontSize,
+      //   // font: timesRomanFont,
+      //   // color: rgb(0, 0.53, 0.71),
+      //   color: rgb(0, 0, 0),
+      //   rotate: degrees(-90),
+      // })
+      // // price
+      // page.drawText('13000', {
+      //   x: width - 361,
+      //   // y: height - (8 * fontSize),
+      //   y: height - 500,
+      //   size: fontSize,
+      //   // font: timesRomanFont,
+      //   // color: rgb(0, 0.53, 0.71),
+      //   color: rgb(0, 0, 0),
+      //   rotate: degrees(-90),
+      // })
+      // // triptype
+      // page.drawText('.', {
+      //   x: width - 335,
+      //   // y: height - (8 * fontSize),
+      //   y: height - 400,
+      //   size: 100,
+      //   // font: timesRomanFont,
+      //   // color: rgb(0, 0.53, 0.71),
+      //   color: rgb(0, 0, 0),
+      //   rotate: degrees(-90),
+      // })
 
 
-      // hihjh
+      // // hihjh
 
       let img = fs.readFileSync(path.join(_path, "qr2.png"));
-      img = await pdfDoc.embedPng(img)
-      img.scale(1)
-      page.drawImage(img, {
-        x: 100,
-        y: 200,
 
+      img = await pdfDoc.embedPng(img)
+      img.scaleToFit(100, 100)
+      console.log(width)
+      page.drawImage(img, {
+        x: 0,
+        y: 0,
+        width: 80,
+        height: 80
       })
+      page.drawImage(img, {
+        x: width-40,
+        y: height-40,
+        width: 40,
+        height: 40
+      })
+
       const pdfBytes = await pdfDoc.save()
       await writeFile(path.join(_path, ticket._id + ".pdf"), pdfBytes);
       res.sendFile(path.join(_path, ticket._id + ".pdf"), {}, function (err) {

@@ -99,9 +99,22 @@ const validateTicketInput = withValidationErrors([
     body("seatposition")
         .notEmpty()
         .withMessage("seatposition is required please send").
+        isNumeric().
+        withMessage("seat position should be numerical").
         isFloat({ min: 0, max: 67 })
         .withMessage("bus sea should be in range of 0-67")
+        .custom((seat, { req, loc, path }) => {
+        console.log("enter here")
+            if (Number(seat) > 20) {
+                req.body.price = "10000"
+            } else {
+                req.body.price = "6500"
+            }
+            return true
+
+        })
     ,
+
     body("phone")
         .notEmpty()
         .withMessage("phone number is required please send").
