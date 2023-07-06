@@ -84,12 +84,16 @@ const ticketSchema = new Schema(
         message: "sex is either male or female",
       },
     },
-    seatposition:{
+    seatposition: {
       type: Number,
       required: [true, "Please seat is needed or required"],
-      max:[58,"please ax bus seat is 58"] ,
-      min:[0,"please min box seat is one"] ,
-    
+      max: [58, "please ax bus seat is 58"],
+      min: [0, "please min box seat is one"],
+
+    },
+    bus: {
+      type: String,
+      require: [true, "please send a bus"]
     }
 
   },
@@ -97,6 +101,7 @@ const ticketSchema = new Schema(
     timestamps: true,
     versionKey: false
   }
+
 );
 
 ticketSchema.pre(
