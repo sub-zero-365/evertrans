@@ -1,7 +1,14 @@
-const Bus = require("../models/Bus")
+const Bus = require("../models/Bus");
+const Ticket = require("../models/Ticket")
+const fs = require("fs")
+const { PDFDocument, rgb, degrees } = require("pdf-lib");
+const { readFile, writeFile } = require("fs/promises");
 const {
     NotFoundError, BadRequestError
 } = require("../error")
+const path = require("path")
+const { v4: uuid } = require("uuid");
+const { findOneAndUpdate } = require("../models/Routes");
 const create = async (req, res) => {
     console.log(req.body)
     const bus = await Bus.create(req.body)
@@ -37,42 +44,85 @@ const deleteBus = async (req, res) => {
 
 
 const getBus = async (req, res) => {
-
-    const bus = await Bus.findOne({ _id: req.params.id })
-    if (!bus) {
-        throw NotFoundError("couldnot found bus with this " + req.params.id)
-    }
+    const { id: _id } = req.params;
+    const bus = await Bus.findOne({ _id });
+    if (!bus) throw NotFoundError("Fail to get ticket with id " + _id)
     res.status(200).json({ bus })
 }
 
 const updateBus = async (req, res) => {
-    res.send("update bus route  here")
+    const { body: { name }, params: { id: _id } } = req;
+
+    const updatebus = await findOneAndUpdate({ _id }, {
+        $set: {
+            name
+        }
+    }, { new: true })
+    if (!updatebus) throw BadRequestError("fail to update  bus")
+
+    res.status(200).json({ bus: updatebus })
 }
 const resetBusData = async (req, res) => {
+    return res.send("reset bus route here")
     const { id } = req.params;
+    const { from, to } = req.body
     const bus = await Bus.findOne({
         _id: id
     })
     if (!bus) {
         throw BadRequestError("couldnt  find bus with id " + id)
     }
+    // if (bus.toJSON().seat_positions.some((x) => x.isTaken == true)) {
+
+    // }
     const isAllFilled = bus.toJSON().seat_positions.every((x) => x.isTaken == true);
     if (!isAllFilled) {
+        console.log("fail to update")
         throw BadRequestError("wait admin bus is not yet full")
     }
-    const n_seats = bus.number_of_seats;
-    const seat_positions =
-        Array.from({ length: n_seats }, (arr, index) => {
-            return ({
-                _id: index,
-                isTaken: false,
+
+    const { number_of_seats: n_seats,
+        travel_count,
+        trips
+    } = bus.toJSON();
+    console.log(n_seats, "end seats here")
+    const updateObj = {}
+    updateObj.tracking_id = uuid()
+    updateObj.active = false
+    updateObj.travel_count = travel_count + 1;
+    if (from) {
+        updateObj.from = from
+    }
+    if (to) {
+        updateObj.to = to
+    }
+    updateObj.trips = [
+        ...trips,
+        {
+            tracking_id: updateObj.tracking_id,
+            date: new Date()
+        }
+    ]
+    updateObj.seat_positions = [
+        ...Array.from({ length: n_seats },
+            (arr, index) => {
+                return ({
+                    _id: index,
+                    isTaken: false,
+                    isReserved: false
+                })
             })
-        })
+
+
+    ]
+    console.log("update obj", updateObj)
+
+
     const updateBus = await Bus.findOneAndUpdate({
         _id: id
     }
         , {
-            seat_positions
+            ...updateObj
         }
 
     )
@@ -109,15 +159,69 @@ const updateBusSeat = async (req, res) => {
             new: true
         }
     )
-    console.log("updated value", updatedid?.seat_positions)
+    if (!updatedid) throw BadRequestError("something went wrong try again later")
     res.status(200)
         .json({ state: true })
 
 
 }
+
+const setActive = async (req, res) => {
+    const { id: _id } = req.params
+    const isBus = await Bus.findOne({ _id });
+    if (!isBus) throw NotFoundError("invalid bus id");
+
+    const bus = await Bus.findOneAndUpdate({
+        _id: req.params.id
+    }, {
+        active: isBus.active == true ? false : true
+    }, { new: true })
+    if (bus) {
+        // console.log(bus)
+        return res.status(200).json({ status: true })
+    }
+    return BadRequestError("something went wrong")
+
+
+}
 const getAllBus = async (req, res) => {
-    const { search, feature } = req.query;
+    const getNextDay = (date = new Date()) => {
+        const next = new Date(date.getTime());
+        next.setDate(date.getDate() + 1);
+        return next.toLocaleDateString("en-CA")
+    }
+
+    const { search, feature, from, to, status, date } = req.query;
     const queryObject = {}
+    if (date) {
+        var date_ = {
+            $gte: new Date(date).toLocaleDateString("en-CA"),
+            $lte: getNextDay(new Date(date)),
+        }
+        console.log(date_)
+        queryObject.date = date_
+    }
+    if (status && status != "all") {
+        if (status == "active") {
+            queryObject.active = true
+        }
+        if (status == "inactive") {
+            queryObject.active = false
+        }
+
+    }
+    if (from) {
+        queryObject.from = {
+            $regex: from, $options: "i"
+        }
+
+    }
+    if (to) {
+        queryObject.to = {
+            $regex: to, $options: "i"
+        }
+
+    }
     if (search) {
         queryObject.$or = [
             {
@@ -126,20 +230,135 @@ const getAllBus = async (req, res) => {
                 }
             },
         ]
-        // console.log("search here : ",search)
     }
-    if (feature&&feature!=="all") {
-    
-    console.log("feature here ",feature)
+    if (feature && feature !== "all") {
         queryObject.feature = feature
     }
+
     const buses = await Bus.find(queryObject);
-    res.status(200).json({ buses })
+    if (buses.length === 0 && queryObject.from && queryObject.to) {
+        const clonequery = { ...queryObject };
+        delete clonequery.from
+        delete clonequery.to
+        const _buses = await Bus.find(clonequery).limit(10)
+        res.status(200).
+            json({ buses, avalaibe_buses: _buses, nHits: buses.length })
+        return
+    }
+    res.status(200).json({ nHits: buses.length, buses })
 }
+
+const downloadboarderaux = async (req, res) => {
+    const { id } = req.params
+    const currentBus = await Bus.findOne(
+        {
+            "trips.tracking_id": id,
+        }
+    )
+    const tickets = await Ticket.find({
+        bus_id: id?.trim()
+    }).select("fullname sex email seatposition")
+
+    const _path = path.resolve(__dirname, "../boarderaux");
+    const file = path.join(_path, "boarderauxafriquecon.pdf")
+
+    try {
+        const pdfDoc = await PDFDocument.load(await readFile(file));
+        const fileNames = pdfDoc.getForm().getFields().map(f => f.getName())
+        console.log(fileNames)
+        const arr = [];
+        for (let i = 0; i < currentBus?.number_of_seats; ++i) {
+            if (tickets.some(({ seatposition }) => seatposition === i)) {
+                arr.push(tickets.find(elm => elm.seatposition == i))
+            } else {
+                arr.push({ seatposition: i })
+            }
+        }
+        arr.sort((a, b) => a.seatposition - b.seatposition);
+        const form = pdfDoc.getForm()
+        try {
+            form.getTextField(`destination`).
+                setText((currentBus.from || "n/a"))
+        } catch (err) {
+            console.log(err)
+        }
+        try {
+            form.getTextField(`bus_number`).
+                setText((String(currentBus._id) || "n/a"))
+        } catch (err) {
+            console.log(err)
+        }
+        try {
+            form.getTextField(`date`).
+                setText((new Date().toLocaleDateString()))
+        } catch (err) {
+            console.log(err)
+        }
+        try {
+            form.getTextField(`passenger_count`).
+                setText((String(tickets.length) || "n/a"))
+        } catch (err) {
+            console.log(err)
+        }
+
+        for (let i = 0; i < arr.length; ++i) {
+            try {
+                if ((arr[i].seatposition + 1) == 8) {
+                    form.getTextField(`fullname ${i + 1}`).
+                        setText((arr[i]?.fullname ? arr[i]?.fullname.trim()?.split(" ").map((name) => `${name[0]?.toUpperCase()}${name.slice(1)}`).join(" ") : ""))
+                } else {
+                    form.getTextField(`fullname${i + 1}`).
+                        setText((arr[i]?.fullname ? arr[i]?.fullname.trim()?.split(" ").map((name) => `${name[0]?.toUpperCase()}${name.slice(1)}`).join(" ") : ""))
+
+                }
+                form.getTextField(`id${i + 1}`).
+                    setText((arr[i]?.email || ""))
+                form.getTextField(`sex${i + 1}`).
+                    setText((arr[i]?.sex || ""))
+            } catch (err) {
+                console.log(err)
+            }
+
+        }
+
+        form.flatten()
+        // console.log(fileNames)
+
+        const pdfBytes = await pdfDoc.save()
+        // const date = Date.now()
+        await writeFile(path.join(_path, id + ".pdf"), pdfBytes);
+        res.sendFile(path.join(_path, id + ".pdf"), {}, function (err) {
+            if (err) {
+                console.log(err)
+                throw err
+            }
+            else {
+                if (fs.existsSync(path.join(_path, id + ".pdf"))) {
+                    try {
+                        fs.unlinkSync(path.join(_path, id + ".pdf"));
+                    }
+                    catch (err) {
+                        console.lg(err)
+                    }
+                }
+            }
+
+        })
+    }
+    catch (err) {
+        console.log(err)
+    }
+
+}
+
 module.exports = {
     create,
     deleteBus,
-    updateBus, getBus,
-    getAllBus, updateBusSeat,
-    resetBusData
+    updateBus,
+    getBus,
+    getAllBus,
+    updateBusSeat,
+    resetBusData,
+    downloadboarderaux,
+    setActive
 }

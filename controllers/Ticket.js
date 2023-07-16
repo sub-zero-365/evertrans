@@ -6,6 +6,7 @@ const fs = require("fs")
 const { PDFDocument, rgb, degrees } = require("pdf-lib");
 const { readFile, writeFile } = require("fs/promises");
 const Bus = require("../models/Bus")
+const Seat = require("../models/Seat")
 const {
   BadRequestError,
   NotFoundError
@@ -21,44 +22,41 @@ function formatDate(date = new Date()) {
   }
 }
 const createTicket = async (req, res) => {
-  var buscreatedid = null
+  var seat_id = null
   try {
-    const { seatposition: seat_number, busId: id } = req.body;
-    const isBus= await Bus.findOne({
+    const { seatposition: seat_number, seat_id: id } = req.body;
+    const isSeat = await Seat.findOne({
       _id: id
     })
-    if (!isBus) {
-      throw BadRequestError("invalid Bus id")
+    if (!isSeat) {
+      throw BadRequestError("invalid Seat id")
     }
     const isUser = await User.findOne({ _id: req.userInfo });
     if (!isUser) throw BadRequestError("coudnot find user please login again");
     req.body.createdBy = req.userInfo._id
-    req.body.bus=isBus.name
-    
+    req.body.seat_id = isSeat._id
     const ticket = await Ticket.create(req.body);
-    console.log(req.body);
-    buscreatedid = ticket.toJSON()._id
-    const bus = await Bus.findOne({
+    seat_id = ticket.toJSON()._id
+    const seat = await Seat.findOne({
       "seat_positions._id": Number(seat_number),
       _id: id
     })
-    if (!bus) throw BadRequestError("couldnot found bus with id " + id)
-    if (bus.seat_positions[Number(seat_number)].isTaken == true) {
+    if (!seat) throw BadRequestError("couldnot found bus with id " + id)
+    if (seat.seat_positions[Number(seat_number)].isTaken == true) {
       throw BadRequestError("oops seat is already taken,please choose another seat thanks")
     }
-    console.log(bus.seat_positions[Number(seat_number)])
-    const updatedid = await Bus.findOneAndUpdate({
+    const updatedid = await Seat.findOneAndUpdate({
       "seat_positions._id": Number(seat_number),
       _id: id
     }
       ,
       {
         $set: {
-          "seat_positions.$.isTaken": true
+          "seat_positions.$.isTaken": true,
+          // "seat_positions.$.ticket_id": buscreatedid,
         }
       }
       , {
-
         new: true
       }
     )
@@ -66,25 +64,18 @@ const createTicket = async (req, res) => {
     res.status(200)
       .json({ state: true })
 
-    // iohoih
-
-    // res.status(200).json({
-    //   ticket,
-    // });
-
   } catch (err) {
-    // console.log("err :", err);
     console.log(err.message,
       err.statuscode)
-    Ticket.findOneAndDelete({ _id: buscreatedid }).
+    Ticket.findOneAndDelete({ _id: seat_id }).
       then((data) => {
         console.log("every thing ok")
         return res.status((err.statuscode || 500)).send(
           err.message
         )
       }).catch(err => {
-        return res.status(500).send("something went wrong try again")
         console.log(err)
+        return res.status(500).send("something went wrong try again")
       })
 
   }
@@ -93,10 +84,6 @@ const createTicket = async (req, res) => {
 const editTicket = async (req, res) => {
   const { id } = req.params
   const { index } = req.query
-
-  // if (index && !([1, 2].some(x => x == index))) {
-  //   throw BadRequestError("something went wrong try again later ");
-  // }
   var isTicket = await Ticket.findOne({
     _id: id,
 
@@ -235,7 +222,8 @@ const userTickets = async (req, res) => {
     sort,
     ticketStatus,
     daterange,
-    triptype
+    triptype,
+    traveltime
 
   }
     =
@@ -307,7 +295,8 @@ const getTickets = async (req, res) => {
     ticketStatus,
     daterange, price,
     boardingRange,
-    triptype
+    triptype,
+    traveltime
   }
     =
     req.query;
@@ -317,16 +306,15 @@ const getTickets = async (req, res) => {
   if (triptype && triptype !== "all") {
     queryObject.type = triptype
   }
-
+  if (traveltime) {
+    queryObject.traveltime = traveltime
+  }
   if (search) {
-
-    queryObject.$or = [
-      {
-        fullname: {
-          $regex: decodeURIComponent(search), $options: "i"
-        }
-      },
-    ]
+    // console.log(decodeURIComponent(search).split("+").join(" "))
+    queryObject.fullname =
+    {
+      $regex: decodeURIComponent(search).split("+").join(" ").trim(), $options: "i"
+    }
 
   }
   if (price) {
@@ -377,6 +365,7 @@ const getTickets = async (req, res) => {
 
       }
       if (startdate.start != "null" && endDate.end == "null") {
+
         var createdAt = {
           $gte: new Date(startdate.start),
           $lte: getPreviousDay(new Date(startdate.start)),
@@ -516,13 +505,15 @@ const getTickets = async (req, res) => {
 
 
 const deleteTicket = async (req, res) => {
-  // const ticket = await Ticket.findOne({ _id: req.params.id });
-
-  // if (ticket) {
-  //   await ticket.deleteOne();
-  // }
+ 
   res.send("delete ticket routes");
 };
+const editTicketData=async(req,res)=>{
+
+
+
+
+}
 
 const downloadsoftcopyticket = async (req, res) => {
 
@@ -551,7 +542,7 @@ const downloadsoftcopyticket = async (req, res) => {
 
       const fileNames = pdfDoc.getForm().getFields().map(f => f.getName())
       const form = pdfDoc.getForm()
-      const { fullname, traveldate, traveltime, seatposition, from, to, type:triptype, _id ,bus} = ticket.toJSON()
+      const { fullname, traveldate, traveltime, seatposition, from, to, type: triptype, _id, bus } = ticket.toJSON()
       form.getTextField("fullname").
         setText(fullname)
       form.getTextField("traveldate").
@@ -573,122 +564,8 @@ const downloadsoftcopyticket = async (req, res) => {
       form.getTextField("ticket_id").
         setText((String(_id) || "n/a"))
       console.log(fileNames)
-      // const { width, height } = page.getSize()
-      // const fontSize = 15
-      // console.log(height)
-      // name
-      // page.drawText(ticket?.fullname || "n/a", {
-      //   x: width - 250,
-      //   // y: height - (8 * fontSize),
-      //   y: height - 70,
-      //   size: fontSize,
-      //   // font: timesRomanFont,
-      //   // color: rgb(0, 0.53, 0.71),
-      //   color: rgb(0, 0, 0),
-      //   rotate: degrees(-90),
-      // })
-      // // date
-      // page.drawText(formatDate(ticket?.traveldate).date || "n/a", {
-      //   x: width - 287,
-      //   // y: height - (8 * fontSize),
-      //   y: height - 70,
-      //   size: fontSize,
-      //   // font: timesRomanFont,
-      //   // color: rgb(0, 0.53, 0.71),
-      //   color: rgb(0, 0, 0),
-      //   rotate: degrees(-90),
-      // })
-      // // derpature time
-      // page.drawText(ticket?.time || "n/a", {
-      //   x: width - 324,
-      //   // y: height - (8 * fontSize),
-      //   y: height - 150,
-      //   size: fontSize,
-      //   // font: timesRomanFont,
-      //   // color: rgb(0, 0.53, 0.71),
-      //   color: rgb(0, 0, 0),
-      //   rotate: degrees(-90),
-      // })
-      // // from
-      // page.drawText(ticket?.from || "n/a", {
-      //   x: width - 361,
-      //   // y: height - (8 * fontSize),
-      //   y: height - 70,
-      //   size: fontSize,
-      //   // font: timesRomanFont,
-      //   // color: rgb(0, 0.53, 0.71),
-      //   color: rgb(0, 0, 0),
-      //   rotate: degrees(-90),
-      // })
-      // // to
-      // page.drawText(ticket?.to || "n/a", {
-      //   x: width - 361,
-      //   // y: height - (8 * fontSize),
-      //   y: height - 255,
-      //   size: fontSize,
-      //   // font: timesRomanFont,
-      //   // color: rgb(0, 0.53, 0.71),
-      //   color: rgb(0, 0, 0),
-      //   rotate: degrees(-90),
-      // })
-      // // bus
-      // page.drawText(ticket?.from || "n/a", {
-      //   x: width - 398,
-      //   // y: height - (8 * fontSize),
-      //   y: height - 70,
-      //   size: fontSize,
-      //   // font: timesRomanFont,
-      //   // color: rgb(0, 0.53, 0.71),
-      //   color: rgb(0, 0, 0),
-      //   rotate: degrees(-90),
-      // })
-      // // createdBy
-      // page.drawText(createdBy?.split(" ").map(i => i[0].toUpperCase() + i.slice(1)).join(" "), {
-      //   x: width - 430,
-      //   // y: height - (8 * fontSize),
-      //   y: height - 130,
-      //   size: fontSize,
-      //   // font: timesRomanFont,
-      //   // color: rgb(0, 0.53, 0.71),
-      //   color: rgb(0, 0, 0),
-      //   rotate: degrees(-90),
-      // })
-      // // bus
-      // page.drawText('13', {
-      //   x: width - 250,
-      //   // y: height - (8 * fontSize),
-      //   y: height - 500,
-      //   size: fontSize,
-      //   // font: timesRomanFont,
-      //   // color: rgb(0, 0.53, 0.71),
-      //   color: rgb(0, 0, 0),
-      //   rotate: degrees(-90),
-      // })
-      // // price
-      // page.drawText('13000', {
-      //   x: width - 361,
-      //   // y: height - (8 * fontSize),
-      //   y: height - 500,
-      //   size: fontSize,
-      //   // font: timesRomanFont,
-      //   // color: rgb(0, 0.53, 0.71),
-      //   color: rgb(0, 0, 0),
-      //   rotate: degrees(-90),
-      // })
-      // // triptype
-      // page.drawText('.', {
-      //   x: width - 335,
-      //   // y: height - (8 * fontSize),
-      //   y: height - 400,
-      //   size: 100,
-      //   // font: timesRomanFont,
-      //   // color: rgb(0, 0.53, 0.71),
-      //   color: rgb(0, 0, 0),
-      //   rotate: degrees(-90),
-      // })
+      form.flatten()
 
-
-      // // hihjh
 
       let img = fs.readFileSync(path.join(_path, "qr2.png"));
 
@@ -702,8 +579,8 @@ const downloadsoftcopyticket = async (req, res) => {
         height: 80
       })
       page.drawImage(img, {
-        x: width-40,
-        y: height-40,
+        x: width - 40,
+        y: height - 40,
         width: 40,
         height: 40
       })

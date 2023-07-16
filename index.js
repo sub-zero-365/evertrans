@@ -18,9 +18,10 @@ app.use(cors({
   credentials: true,
   optionsSuccessStatus: 200
 }));
-
+const cityController = require("./controllers/City").getCitys
 const port = process.env.PORT || 5000;
 const User = require("./routes/User");
+const routesRouter = require("./routes/Route")
 const Ticket = require("./routes/Ticket");
 const ERROR = require("./middlewares/error");
 const NOTFOUND = require("./middlewares/notfound");
@@ -28,21 +29,21 @@ const adminControl = require("./routes/Admincontrols");
 const Admin_auth = require("./middlewares/Admin.auth");
 const userAuth = require("./middlewares/Auth.User");
 const contactRouter = require("./routes/Contact");
-const busRouter=require("./routes/Bus")
+const busRouter = require("./routes/Bus")
 const restrictedRouter = require("./routes/RestrictedUsers");
-const Cities = require("./models/Cities");
+const seatRouter = require("./routes/Seat");
 const { downloadsoftcopyticket } = require("./controllers/Ticket")
 app.use("/auth", User);
+app.use("/seat", seatRouter);
+app.use("/route", routesRouter);
 app.use("/ticket", userAuth, Ticket);
 app.use("/admin", Admin_auth, adminControl);
 app.use("/bus", busRouter);
 app.use("/contact", Admin_auth, contactRouter);
 app.use("/restricted", restrictedRouter);
 app.get("/downloadticket/:id", downloadsoftcopyticket)
-app.get("/allcities", async (req, res) => {
-  const cities = await Cities.find({}).sort({ value: 1 });
-  res.status(200).json({ cities, nHits: cities.length });
-});
+
+app.get("/allcities", cityController);
 // app.get()
 const Admin = require("./models/Admin");
 const server_running = (port) =>
@@ -61,11 +62,11 @@ app.use(NOTFOUND);
 const startrunningserverfunction = async () => {
   try {
     require("./db/connections");
-    await Admin.deleteMany({});
-    await Admin.create({
-      phone: process.env.admin_phone,
-      password: process.env.admin_password,
-    });
+    // await Admin.deleteMany({});
+    // await Admin.create({
+    //   phone: process.env.admin_phone,
+    //   password: process.env.admin_password,
+    // });
     app.listen(port, server_running(port));
   } catch (err) {
     console.log(err);
