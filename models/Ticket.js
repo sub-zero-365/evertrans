@@ -91,9 +91,9 @@ const ticketSchema = new Schema(
       min: [0, "please min box seat is one"],
 
     },
-    bus: {
+    seat_id: {
       type: String,
-      require: [true, "please send a bus"]
+      require: [true, "every ticket needs a unique bus id "]
     }
 
   },

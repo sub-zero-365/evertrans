@@ -6,7 +6,7 @@ const addCity = async (req, res) => {
   if (isCity) {
     throw BadRequestError("Cities already exist try again");
   }
-   await Cities.create({ ...req.body });
+  await Cities.create({ ...req.body });
 
   res.status(200).json({ status: true });
 };
@@ -23,12 +23,22 @@ const removeCity = async (req, res) => {
   res.status(200).json({ status: true });
 };
 const getCitys = async (req, res) => {
-  const cities = await Cities.find({}).sort({value:1});
-  res.cookie("rose", "mary", {
-    secure: false,
-    sameSite: "none",
-  }).
-  status(200).json({ cities,nHits:cities.length });
+  const { search } = req.query;
+  const queryObject = {}
+  if (search) {
+    console.log("enter queryobj",search)
+    queryObject.$or = [
+      {
+        value: {
+          $regex: search, $options: "i"
+        }
+      },
+    ]
+
+  }
+
+  const cities = await Cities.find(queryObject).sort({ value: 1 });
+  res.status(200).json({ cities, nHits: cities.length });
 };
 const updateCity = async (req, res) => {
   const {

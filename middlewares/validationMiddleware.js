@@ -54,7 +54,7 @@ const validateupdateTicket = withValidationErrors([
     ,
 ])
 const validateTicketInput = withValidationErrors([
-    body('busId').notEmpty().
+    body('seat_id').notEmpty().
         withMessage("please provide a bus id")
         .custom((value) => mongoose.Types.ObjectId.isValid(value))
         .withMessage('created by invalid MongoDB id'),
@@ -80,7 +80,6 @@ const validateTicketInput = withValidationErrors([
 
         }),
     body("age").
-
         notEmpty().withMessage("age is require bro").
         isFloat({ min: 2, max: 80 })
         .withMessage(`age is lessthan 2 or greater than 80`),
@@ -104,7 +103,6 @@ const validateTicketInput = withValidationErrors([
         isFloat({ min: 0, max: 67 })
         .withMessage("bus sea should be in range of 0-67")
         .custom((seat, { req, loc, path }) => {
-        console.log("enter here")
             if (Number(seat) > 20) {
                 req.body.price = "10000"
             } else {
