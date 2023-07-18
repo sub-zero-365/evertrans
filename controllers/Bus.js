@@ -3,10 +3,10 @@ const Ticket = require("../models/Ticket")
 const fs = require("fs")
 const { PDFDocument, rgb, degrees } = require("pdf-lib");
 const { readFile, writeFile } = require("fs/promises");
+const path = require("path")
 const {
     NotFoundError, BadRequestError
 } = require("../error")
-const path = require("path")
 const { v4: uuid } = require("uuid");
 const { findOneAndUpdate } = require("../models/Routes");
 const create = async (req, res) => {

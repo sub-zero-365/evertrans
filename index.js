@@ -1,8 +1,6 @@
 require("dotenv").config();
 require("express-async-errors");
 const cookieParser = require("cookie-parser");
-// const rateLimit = require('express-rate-limit')x
-const { ticketLimiter, } = require("./utils/rateLimiters");
 
 const cors = require("cors");
 const express = require("express");
@@ -37,6 +35,7 @@ app.use("/auth", User);
 app.use("/seat", seatRouter);
 app.use("/route", routesRouter);
 app.use("/ticket", userAuth, Ticket);
+// app.use("/ticket", Ticket);
 app.use("/admin", Admin_auth, adminControl);
 app.use("/bus", busRouter);
 app.use("/contact", Admin_auth, contactRouter);
@@ -44,7 +43,6 @@ app.use("/restricted", restrictedRouter);
 app.get("/downloadticket/:id", downloadsoftcopyticket)
 
 app.get("/allcities", cityController);
-// app.get()
 const Admin = require("./models/Admin");
 const server_running = (port) =>
   console.log(`server is running on port ${port}`);

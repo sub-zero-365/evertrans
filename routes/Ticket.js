@@ -3,7 +3,7 @@ const {
     edit,
     getTicket,
     getTickets
-    , downloadsoftcopyticket,
+    , downloadsoftcopyticket, editTicketMeta
 } = require("../controllers/Ticket");
 const { validateTicketInput,
     validateupdateTicket,
@@ -27,5 +27,10 @@ router.route("/edit/:id").
         validateupdateTicket,
         validateEditTicket,
         edit)
+router.
+route("/updateticket/:id").
+patch(
+    validateIdParam,
+editTicketMeta)
 
 module.exports = router
