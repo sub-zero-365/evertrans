@@ -39,27 +39,25 @@ const seatSchema = new Schema({
         }
     ],
 }, {
-
-    timestamps: true, versionKey: false
+    timestamps: true, 
+    versionKey: false
 })
 
 seatSchema.pre("validate", async function () {
 
-    const number_of_seats = 2
+    const number_of_seats = 53
 
     this.seat_positions =
-        Array.from({ length: number_of_seats }, (arr, index) => {
+        Array.from(
+        { length: number_of_seats }, 
+        (arr, index) => {
             return ({
                 _id: index,
                 isTaken: false,
+                isReserved:false
             })
         })
-    // this.tracking_id = uuid()
-    // this.trips = [{
-    //     tracking_id: this.tracking_id,
-    //     date: new Date()
-    // }]
-    // console.log(this)
+    
 })
 
 const seatschema = model("seats", seatSchema)

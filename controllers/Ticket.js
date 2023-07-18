@@ -31,6 +31,7 @@ const createTicket = async (req, res) => {
     if (!isSeat) {
       throw BadRequestError("invalid Seat id")
     }
+    console.log(req.userInfo)
     const isUser = await User.findOne({ _id: req.userInfo });
     if (!isUser) throw BadRequestError("coudnot find user please login again");
     req.body.createdBy = req.userInfo._id
@@ -293,7 +294,8 @@ const getTickets = async (req, res) => {
     createdBy,
     sort,
     ticketStatus,
-    daterange, price,
+    daterange,
+    price,
     boardingRange,
     triptype,
     traveltime
@@ -505,15 +507,10 @@ const getTickets = async (req, res) => {
 
 
 const deleteTicket = async (req, res) => {
- 
+
   res.send("delete ticket routes");
 };
-const editTicketData=async(req,res)=>{
 
-
-
-
-}
 
 const downloadsoftcopyticket = async (req, res) => {
 
@@ -612,6 +609,69 @@ const downloadsoftcopyticket = async (req, res) => {
 
   })
 }
+const editTicketMeta = async (req, res) => {
+  const {
+    traveldate,
+    traveltime,
+    seatposition,
+    seat_id
+  } = req.body
+  const { id: _id } = req.params;
+  let ticket_seatposition = null
+  const isTicket = await Ticket.findOne({
+    _id,
+    active: true
+  })
+  ticket_seatposition = isTicket.seatposition
+  let seat = await Seat.findOne({
+    "seat_positions._id": Number(ticket_seatposition),
+    _id: seat_id
+  })
+  if (!seat) throw BadRequestError("coudnot find seat")
+  if (seat.seat_positions[Number(ticket_seatposition)].isTaken == true || seat.seat_positions[Number(ticket_seatposition)].isReserved == true) {
+    throw BadRequestError("oops seat is already taken,please choose another seat thanks")
+  }
+  seat = await Seat.findOneAndUpdate({
+    "seat_positions._id": Number(ticket_seatposition),
+    _id: seat_id
+  }
+    ,
+    {
+      $set: {
+        "seat_positions.$.isReserved": true
+      }
+    }
+    , {
+
+      new: true
+    }
+  )
+
+  if (!seat) {
+    throw BadRequestError("fail to update seat")
+  }
+  if (!isTicket) {
+    throw BadRequestError(`cannot find ticket with ${_id} and status ${active} `)
+  }
+
+  const updateObj = {};
+  if (traveldate) {
+    updateObj.traveldate = traveldate
+  }
+  if (traveltime) {
+    updateObj.traveltime = traveltime
+  }
+  if (seatposition) {
+    updateObj.seatposition = seatposition;
+  }
+  if (seat_id) {
+    updateObj.seat_id = seat_id
+  }
+  const isUpdate = await Ticket.findOneAndUpdate({ _id }, updateObj);
+  if (!isUpdate) throw BadRequestError("fail to update ticket");
+  res.status(200).json({ status: true })
+}
+
 module.exports = {
   create: createTicket,
   edit: editTicket,
@@ -619,5 +679,6 @@ module.exports = {
   userTickets,
   getTicket,
   deleteTicket,
-  downloadsoftcopyticket
+  downloadsoftcopyticket,
+  editTicketMeta
 };

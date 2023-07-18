@@ -92,8 +92,8 @@ const ticketSchema = new Schema(
 
     },
     seat_id: {
-      type: String,
-      require: [true, "every ticket needs a unique bus id "]
+      type: Schema.ObjectId,
+      require: [true, "every ticket needs a unique seat id "]
     }
 
   },
