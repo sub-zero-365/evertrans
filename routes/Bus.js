@@ -4,8 +4,11 @@ const {
     downloadboarderaux, setActive
 
 } = require("../controllers/Bus");
+const { busValidtionInput } = require("../middlewares/validationMiddleware")
 const Admin_auth = require("../middlewares/Admin.auth")
-router.route("/").post(Admin_auth, create).get(getAllBus)
+router.route("/").post(Admin_auth,
+    busValidtionInput,
+    create).get(getAllBus)
 router.route("/:id").get(getBus)
     .delete(Admin_auth, deleteBus).
     patch(Admin_auth, updateBus)

@@ -31,12 +31,9 @@ const auth = async (req, _, next) => {
         //     next()
         // }
 
-        req.admin = true
+        req.user = true
         next()
     } catch (err) {
-        if (err.status === 1234) {
-            throw BadRequestError("fail to find user")
-        }
         throw BadRequestError("bad token")
     }
 

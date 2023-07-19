@@ -22,15 +22,17 @@ router.route("/download/:id").
     get(validateIdParam,
         downloadsoftcopyticket)
 router.route("/edit/:id").
-    post(require("../middlewares/Admin.auth"),
+    post(
+    // require("../middlewares/Admin.auth")
+    // ,
         validateIdParam,
         validateupdateTicket,
         validateEditTicket,
         edit)
 router.
-route("/updateticket/:id").
-patch(
-    validateIdParam,
-editTicketMeta)
+    route("/updateticket/:id").
+    patch(
+        validateIdParam,
+        editTicketMeta)
 
 module.exports = router

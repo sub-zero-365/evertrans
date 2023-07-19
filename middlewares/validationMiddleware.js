@@ -2,12 +2,11 @@ const { body, validationResult, param, query } = require('express-validator');
 const { TICKET_STATUS,
     TICKET_SORT_BY } = require('../utils/constants.js');
 const { BadRequestError } = require("../error")
-// import { BadRequestError } from '../errors/customErrors.js';
-// import User from '../models/User.js';
-// import mongoose from 'mongoose';
+
 const mongoose = require("mongoose")
 const User = require("../models/User")
-const Ticket = require("../models/Ticket")
+const Ticket = require("../models/Ticket");
+const Bus = require("../models/Bus")
 const dayjs = require("dayjs")
 function formatDate(date = new Date()) {
     const formateDate = new Date(date);
@@ -53,6 +52,39 @@ const validateupdateTicket = withValidationErrors([
         .withMessage('search value required')
     ,
 ])
+const busValidtionInput = withValidationErrors([
+    body('name').notEmpty().
+        withMessage("please provide a bus name").
+        custom(async (value) => {
+            const nameExist = await Bus.findOne({
+                name: value
+            })
+            if (nameExist) throw BadRequestError("bus with name  already exist ")
+            return true
+        })
+    ,
+    body('plate_number').notEmpty().
+        withMessage("please provide a bus plate number").
+        isNumeric().
+        withMessage("please send a numerical value").
+        isLength({ min: 5 })
+        .withMessage("plate number is less than  5").
+        custom(async (value, { req, loc, path }) => {
+            const numberExist = await Bus.findOne({
+                plate_number: value
+            })
+            if (numberExist) throw BadRequestError("bus Plate number already exist ")
+            return true
+        })
+    , body('number_of_seats')
+        .notEmpty().
+        withMessage("please provide a bus seat number").isFloat({
+            min: 49,
+            max: 53
+        })
+        .withMessage("please your bus seat number is greater 53 or less than 49")
+    ,
+])
 const validateTicketInput = withValidationErrors([
     body('seat_id').notEmpty().
         withMessage("please provide a bus id")
@@ -61,12 +93,7 @@ const validateTicketInput = withValidationErrors([
     body('fullname').
         notEmpty().
         withMessage('fullname is required'),
-    body('sex')
-        .notEmpty().
-        withMessage('sex of user is require').
-        isIn(["male", "female"])
-        .withMessage("sex is either male or female")
-    ,
+
     body("traveldate")
         .notEmpty()
         .withMessage('travel date is required')
@@ -287,5 +314,6 @@ module.exports = {
     //   validateGetAllJobsParams,
     //   validateUpdateUserInput,
     validateupdateTicket,
-    validateEditTicket
+    validateEditTicket,
+    busValidtionInput
 };
