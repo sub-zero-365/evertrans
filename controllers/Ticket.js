@@ -513,7 +513,6 @@ const deleteTicket = async (req, res) => {
 
 
 const downloadsoftcopyticket = async (req, res) => {
-
   const id = req.params.id;
   const ticket = await Ticket.findOne({
     _id: id,
@@ -521,11 +520,10 @@ const downloadsoftcopyticket = async (req, res) => {
   if (!ticket) {
     throw BadRequestError("please send a valid for to get the ticket");
   }
-  const url = `https://ntaribotaken.vercel.app/dashboard/${id}?admin=true&sound=true`
+  // const url = `https://ntaribotaken.vercel.app/dashboard/${id}?admin=true&sound=true&xyz=secret`
+  const url = `http://192.168.43.68:3000/dashboard/${id}?admin=true&sound=true&xyz=secret`
   const _path = path.resolve(__dirname, "../tickets")
   const createdBy = (await User.findOne({ _id: ticket.createdBy }).select("fullname")).fullname;
-
-
   qrcode.toFile(path.join(_path, "qr2.png"),
     url, {
     type: "terminal",
@@ -562,10 +560,7 @@ const downloadsoftcopyticket = async (req, res) => {
         setText((String(_id) || "n/a"))
       console.log(fileNames)
       form.flatten()
-
-
       let img = fs.readFileSync(path.join(_path, "qr2.png"));
-
       img = await pdfDoc.embedPng(img)
       img.scaleToFit(100, 100)
       console.log(width)
@@ -617,22 +612,29 @@ const editTicketMeta = async (req, res) => {
     seat_id
   } = req.body
   const { id: _id } = req.params;
-  let ticket_seatposition = null
+  let ticket_seatposition = null;
+  let ticket_id = null
   const isTicket = await Ticket.findOne({
     _id,
     active: true
   })
+  if (!isTicket) {
+    throw BadRequestError(`cannot find ticket with ${_id} and status ${active} `)
+  }
   ticket_seatposition = isTicket.seatposition
+  ticket_id = isTicket.seat_id
   let seat = await Seat.findOne({
     "seat_positions._id": Number(ticket_seatposition),
     _id: seat_id
   })
   if (!seat) throw BadRequestError("coudnot find seat")
-  if (seat.seat_positions[Number(ticket_seatposition)].isTaken == true || seat.seat_positions[Number(ticket_seatposition)].isReserved == true) {
+  if (seat.seat_positions[Number(seatposition)].isTaken == true
+    ||
+    seat.seat_positions[Number(seatposition)].isReserved == true) {
     throw BadRequestError("oops seat is already taken,please choose another seat thanks")
   }
   seat = await Seat.findOneAndUpdate({
-    "seat_positions._id": Number(ticket_seatposition),
+    "seat_positions._id": Number(seatposition),
     _id: seat_id
   }
     ,
@@ -650,14 +652,21 @@ const editTicketMeta = async (req, res) => {
   if (!seat) {
     throw BadRequestError("fail to update seat")
   }
-  if (!isTicket) {
-    throw BadRequestError(`cannot find ticket with ${_id} and status ${active} `)
-  }
+  await Seat.findOneAndUpdate({
+    "seat_positions._id": Number(ticket_seatposition),
+    _id: ticket_id
+  },
+    {
+      $set: {
+        "seat_positions.$.isTaken": false,
+        "seat_positions.$.isReserved": false
+      }
+    }).catch((err) => console.log("update seat err", err))
 
   const updateObj = {};
-  if (traveldate) {
-    updateObj.traveldate = traveldate
-  }
+  // if (traveldate) {
+  //   updateObj.traveldate = traveldate
+  // }
   if (traveltime) {
     updateObj.traveltime = traveltime
   }

@@ -1,4 +1,3 @@
-const Route = require("../models/Routes")
 const Ticket = require("../models/Ticket")
 const Seat = require("../models/Seat")
 const fs = require("fs")
@@ -107,16 +106,22 @@ const updateSeat = async (req, res) => {
     res.status(200)
         .json({ state: true })
 
-
 }
 const specificTicketId = async (req, res) => {
     const { id: _id, index } = req.params;
-    console.log("seat_id", _id, index)
-    const { id } = await Ticket.findOne({
+    console.log(await Ticket.find({
+        seat_id: _id,
+    
+    }))
+    const ticket = await Ticket.findOne({
         seat_id: _id,
         seatposition: index
     }).select("_id")
-    res.status(200).json({ id })
+    if (!ticket) {
+        console.log("no ticket found")
+
+    }
+    res.status(200).json({ id:ticket._id })
 
 
 
@@ -127,7 +132,7 @@ const getAllSeats = async (req, res) => {
         next.setDate(date.getDate() + 1);
         return next.toLocaleDateString("en-CA")
     }
-    const { 
+    const {
         from,
         to,
         traveltime,
@@ -137,45 +142,45 @@ const getAllSeats = async (req, res) => {
     if (daterange) {
         const decoded = decodeURIComponent(daterange)
         const [startdate, endDate] = decoded.
-          split(",").
-          map(arr => arr.split("="))
-          .map(([v, t]) => {
-            return {
-              [v]: t
-            }
-          });
-    
+            split(",").
+            map(arr => arr.split("="))
+            .map(([v, t]) => {
+                return {
+                    [v]: t
+                }
+            });
+
         if ("start" in startdate && "end" in endDate) {
-          const getPreviousDay = (date) => {
-            const previous = new Date(date.getTime());
-            previous.setDate(date.getDate() + 1);
-            return previous
-          }
-          if (startdate.start != "null" && endDate.end != "null") {
-            try {
-              var createdAt = {
-                $gte: new Date(startdate.start),
-                $lte: getPreviousDay(new Date(endDate.end)),
-              }
-              queryObject.traveldate = createdAt
-    
-            } catch (err) {
-              console.log(err)
+            const getPreviousDay = (date) => {
+                const previous = new Date(date.getTime());
+                previous.setDate(date.getDate() + 1);
+                return previous
             }
-    
-    
-          }
-          if (startdate.start != "null" && endDate.end == "null") {
-    
-            var createdAt = {
-              $gte: new Date(startdate.start),
-              $lte: getPreviousDay(new Date(startdate.start)),
+            if (startdate.start != "null" && endDate.end != "null") {
+                try {
+                    var createdAt = {
+                        $gte: new Date(startdate.start),
+                        $lte: getPreviousDay(new Date(endDate.end)),
+                    }
+                    queryObject.traveldate = createdAt
+
+                } catch (err) {
+                    console.log(err)
+                }
+
+
             }
-            queryObject.createdAt = createdAt
-          }
+            if (startdate.start != "null" && endDate.end == "null") {
+
+                var createdAt = {
+                    $gte: new Date(startdate.start),
+                    $lte: getPreviousDay(new Date(startdate.start)),
+                }
+                queryObject.createdAt = createdAt
+            }
         }
-    
-      }
+
+    }
     if (traveltime) {
         queryObject.traveltime = {
             $regex: traveltime, $options: "i"
@@ -191,7 +196,7 @@ const getAllSeats = async (req, res) => {
             $regex: to, $options: "i"
         }
     }
-  
+
     const seats = await Seat.find(queryObject).sort({ "traveldate": -1 })
     const distinc_field = await Seat.aggregate([
         {
@@ -244,19 +249,57 @@ const downloadboarderaux = async (req, res) => {
     const currentSeat = await Seat.findOne(
         {
             _id: id,
+
         }
     )
-    const tickets = await Ticket.find({
-        seat_id: currentSeat._id
-    }).select("fullname sex email seatposition")
+    if (!currentSeat) throw NotFoundError("coudnot find seat with id " + id);
 
+    let tickets = null;
+
+    tickets = await Ticket.find({
+        seat_id: currentSeat._id,
+        // $or: [
+        //     {
+        //         "doubletripdetails$.0.active": false
+        //     },
+        //     {
+        //         "doubletripdetails$.1.active": false
+        //     },
+        //     // {
+        //     //     active: false
+        //     // }
+
+
+        // ]
+
+
+    })
+ 
+    tickets = tickets.filter((ticket) => {
+        if (ticket.type === "roundtrip") {
+            console.log("enter here")
+            if (ticket.doubletripdetails[1].active === false) {
+                return true
+            }
+            if (ticket.doubletripdetails[0].active === false) {
+                return true
+            }
+            return false
+        }
+        if (ticket.type === "singletrip") {
+            if (ticket.active === false) return true
+        }
+
+
+
+    })
     const _path = path.resolve(__dirname, "../boarderaux");
     const file = path.join(_path, "boarderauxafriquecon.pdf")
 
     try {
         const pdfDoc = await PDFDocument.load(await readFile(file));
-        const fileNames = pdfDoc.getForm().getFields().map(f => f.getName())
-        console.log(fileNames)
+        // const fileNames = pdfDoc.getForm().getFields().map(f => f.getName())
+        // console.log(fileNames)
         const arr = [];
         for (let i = 0; i < currentSeat?.seat_positions.length; ++i) {
             if (tickets.some(({ seatposition }) => seatposition === i)) {
