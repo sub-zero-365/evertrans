@@ -516,8 +516,8 @@ const downloadsoftcopyticket = async (req, res) => {
   if (!ticket) {
     throw BadRequestError("please send a valid for to get the ticket");
   }
-  // const url = `https://ntaribotaken.vercel.app/dashboard/${id}?admin=true&sound=true&xyz=secret`
-  const url = `http://192.168.43.68:3000/dashboard/${id}?admin=true&sound=true&xyz=secret`
+  const url = `https://ntaribotaken.vercel.app/dashboard/${id}?admin=true&sound=true&xyz=secret`
+  // const url = `http://192.168.43.68:3000/dashboard/${id}?admin=true&sound=true&xyz=secret`
   const _path = path.resolve(__dirname, "../tickets")
   const createdBy = (await User.findOne({ _id: ticket.createdBy }).select("fullname")).fullname;
   qrcode.toFile(path.join(_path, "qr2.png"),
