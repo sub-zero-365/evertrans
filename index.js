@@ -31,10 +31,12 @@ const busRouter = require("./routes/Bus")
 const restrictedRouter = require("./routes/RestrictedUsers");
 const seatRouter = require("./routes/Seat");
 const { downloadsoftcopyticket } = require("./controllers/Ticket")
+const IsUserRestricted = require("./middlewares/IsUserRestricted")
+
 app.use("/auth", User);
 app.use("/seat", seatRouter);
 app.use("/route", routesRouter);
-app.use("/ticket", userAuth, Ticket);
+app.use("/ticket", userAuth,IsUserRestricted, Ticket);
 // app.use("/ticket", Ticket);
 app.use("/admin", Admin_auth, adminControl);
 app.use("/bus", busRouter);
@@ -43,7 +45,7 @@ app.use("/restricted", restrictedRouter);
 app.get("/downloadticket/:id", downloadsoftcopyticket)
 
 app.get("/allcities", cityController);
-const Admin = require("./models/Admin");
+// const Admin = require("./models/Admin");
 const server_running = (port) =>
   console.log(`server is running on port ${port}`);
 app.get("/", async (req, res) => {
