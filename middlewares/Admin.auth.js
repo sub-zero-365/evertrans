@@ -4,7 +4,7 @@ const jwt = require("jsonwebtoken")
 const auth = async (req, _, next) => {
     const authHeader = req.headers.authorization;
     if (!authHeader) {
-        throw BadRequestError("please provide an auth header");
+        throw BadRequestError("please provide a an auth header");
     }
     if (!authHeader.startsWith(process.env.jwtSecret)) {
         throw BadRequestError("please provide a valid auth  header")
@@ -31,7 +31,7 @@ const auth = async (req, _, next) => {
         //     next()
         // }
 
-        req.user = true
+        req.admin = true
         next()
     } catch (err) {
         throw BadRequestError("bad token")

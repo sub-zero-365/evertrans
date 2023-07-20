@@ -319,11 +319,7 @@ const getTickets = async (req, res) => {
     }
 
   }
-  if (price) {
-    queryObject.price = {
-      $eq: Number(price) || 0
-    }
-  }
+
   if (createdBy && req.admin === true) {
     queryObject.$expr = {
       $eq: ['$createdBy', { $toObjectId: createdBy }]
@@ -664,9 +660,9 @@ const editTicketMeta = async (req, res) => {
     }).catch((err) => console.log("update seat err", err))
 
   const updateObj = {};
-  // if (traveldate) {
-  //   updateObj.traveldate = traveldate
-  // }
+  if (traveldate) {
+    updateObj.traveldate = traveldate
+  }
   if (traveltime) {
     updateObj.traveltime = traveltime
   }
