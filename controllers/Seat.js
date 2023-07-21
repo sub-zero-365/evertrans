@@ -54,7 +54,8 @@ const getStaticSeat = async (req, res) => {
     }
     if (traveldate) {
         if (dayjs(new Date(traveldate).toLocaleDateString("en-CA")).diff(new Date().toLocaleDateString("en-CA"), "day") > 7) {
-            throw BadRequestError(`No Bus Traveling on the ${new Date(traveldate).toLocaleDateString("en-CA")} `)
+            throw BadRequestError(`No Bus Traveling on the
+             ${new Date(traveldate).toLocaleDateString("en-CA")} please chose a new previous date and try again `)
         }
 
     }
@@ -111,7 +112,7 @@ const specificTicketId = async (req, res) => {
     const { id: _id, index } = req.params;
     console.log(await Ticket.find({
         seat_id: _id,
-    
+
     }))
     const ticket = await Ticket.findOne({
         seat_id: _id,
@@ -121,7 +122,7 @@ const specificTicketId = async (req, res) => {
         console.log("no ticket found")
 
     }
-    res.status(200).json({ id:ticket._id })
+    res.status(200).json({ id: ticket._id })
 
 
 
@@ -136,7 +137,7 @@ const getAllSeats = async (req, res) => {
         from,
         to,
         traveltime,
-        daterange
+        daterange,sort
     } = req.query;
     const queryObject = {}
     if (daterange) {
@@ -196,8 +197,22 @@ const getAllSeats = async (req, res) => {
             $regex: to, $options: "i"
         }
     }
+    const sortOptions = {
+        newest: "-createdAt",
+        oldest: "createdAt",
+      }
+    const sortKey = sortOptions[sort] || sortOptions.newest;
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+    const seats = await Seat.find(queryObject)
+        .sort(sortKey)
+        .skip(skip)
+        .limit(limit);
 
-    const seats = await Seat.find(queryObject).sort({ "traveldate": -1 })
+
+    if (queryObject?.sort) delete deleteTicket.sort
+    const numberOfPages = Math.ceil(seats.length / limit);
     const distinc_field = await Seat.aggregate([
         {
             $match: {
@@ -217,6 +232,8 @@ const getAllSeats = async (req, res) => {
     ])
     res.status(200).json({
         seats,
+        numberOfPages,
+        currentPage: page,
         nHits: seats.length,
         routes: distinc_field,
         routes_count: distinc_field?.length
@@ -274,7 +291,7 @@ const downloadboarderaux = async (req, res) => {
 
 
     })
- 
+
     tickets = tickets.filter((ticket) => {
         if (ticket.type === "roundtrip") {
             console.log("enter here")
