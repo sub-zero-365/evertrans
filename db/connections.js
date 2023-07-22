@@ -21,5 +21,5 @@ const connectWithDB = (uri) => {
     })
 
 }
-connectWithDB(LOCAL_URL)
+connectWithDB(PROD_URL)
 module.exports = connectWithDB
