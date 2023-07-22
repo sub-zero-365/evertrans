@@ -143,8 +143,8 @@ const validateTicketInput = withValidationErrors([
     body("phone")
         .notEmpty()
         .withMessage("phone number is required please send").
-        isLength({ min: 7 })
-        .withMessage("phone nuber is less than 7")
+        isLength({ min: 9, max: 12 })
+        .withMessage('phone number must be at least 8 characters long and not greater than 12')
     ,
     body("type")
         .optional().
@@ -218,8 +218,8 @@ const validateRegisterInput = withValidationErrors([
     body('phone')
         .notEmpty()
         .withMessage('email is required').
-        isLength({ min: 8 })
-        .withMessage('phone number must be at least 8 characters long')
+        isLength({ min: 9, max: 12 })
+        .withMessage('phone number must be at least 8 characters long and not greater than 12')
         .custom(async (phone) => {
             const user = await User.findOne({ phone });
             if (user) {
@@ -306,13 +306,9 @@ const validateRegisterInput = withValidationErrors([
 // ]);
 
 module.exports = {
-    //   validateTest,
     validateTicketInput,
     validateIdParam,
     validateRegisterInput,
-    //   validateLoginInput,
-    //   validateGetAllJobsParams,
-    //   validateUpdateUserInput,
     validateupdateTicket,
     validateEditTicket,
     busValidtionInput
