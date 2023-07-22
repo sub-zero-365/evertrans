@@ -3,7 +3,7 @@ const User = require("../models/User")
 const qrcode = require("qrcode");
 const path = require("path")
 const fs = require("fs")
-const { PDFDocument, rgb, degrees } = require("pdf-lib");
+const { PDFDocument, degrees, StandardFonts, rgb } = require("pdf-lib");
 const { readFile, writeFile } = require("fs/promises");
 const Bus = require("../models/Bus")
 const Seat = require("../models/Seat")
@@ -516,8 +516,8 @@ const downloadsoftcopyticket = async (req, res) => {
   if (!ticket) {
     throw BadRequestError("please send a valid for to get the ticket");
   }
-  const url = `https://ntaribotaken.vercel.app/dashboard/${id}?admin=true&sound=true&xyz=secret`
-  // const url = `http://192.168.43.68:3000/dashboard/${id}?admin=true&sound=true&xyz=secret`
+  // const url = `https://ntaribotaken.vercel.app/dashboard/${id}?admin=true&sound=true&xyz=secret`
+  const url = `http://192.168.43.68:3000/dashboard/${id}?admin=true&sound=true&xyz=secret`
   const _path = path.resolve(__dirname, "../tickets")
   const createdBy = (await User.findOne({ _id: ticket.createdBy }).select("fullname")).fullname;
   qrcode.toFile(path.join(_path, "qr2.png"),
@@ -533,45 +533,85 @@ const downloadsoftcopyticket = async (req, res) => {
 
       const fileNames = pdfDoc.getForm().getFields().map(f => f.getName())
       const form = pdfDoc.getForm()
-      const { fullname, traveldate, traveltime, seatposition, from, to, type: triptype, _id, bus } = ticket.toJSON()
-      form.getTextField("fullname").
-        setText(fullname)
-      form.getTextField("traveldate").
-        setText(formatDate(traveldate).date)
-      form.getTextField("seatposition").
-        setText(String(seatposition))
-      form.getTextField("createdBy").
-        setText(createdBy)
-      form.getTextField("time").
-        setText(traveltime)
-      form.getTextField("from").
-        setText(from)
-      form.getTextField("to").
-        setText(to)
-      form.getTextField("triptype").
-        setText((triptype || "n/a"))
-      form.getTextField("bus").
-        setText((bus || "n/a"))
-      form.getTextField("ticket_id").
-        setText((String(_id) || "n/a"))
-      console.log(fileNames)
-      form.flatten()
+      const { fullname, traveldate, traveltime, seatposition, from, to, type, _id, bus, price } = ticket.toJSON()
+      try {
+        // console.log(fileNames)
+        form.getTextField("fullname").
+          setText(fullname)
+        form.getTextField("traveldate").
+          setText(formatDate(traveldate).date)
+        form.getTextField("seatposition").
+          setText(`${seatposition}`)
+        form.getTextField("createdby").
+          setText(createdBy)
+        form.getTextField("traveltime").
+          setText(traveltime)
+        form.getTextField("from").
+          setText(from)
+        form.getTextField("to").
+          setText(to)
+        form.getTextField("price").
+          setText(`${price} frs`)
+          if(type=="singletrip"){
+            const checkBox = form.getCheckBox("single")
+            checkBox.check()
+          }
+          if(type=="roundtrip"){
+            const checkBox = form.getCheckBox("round")
+            checkBox.check()
+          }
+  
+        const timesRomanFont = await pdfDoc.embedFont(StandardFonts.TimesRoman)
+        let fontSize = 25
+        page.drawText(
+          `Ticket N : ${_id}`,
+          {
+            x: 45,
+            y: (height / 2) - 150,
+            size: fontSize,
+            font: timesRomanFont,
+            color: rgb(0, 0.53, 0.71),
+            rotate: degrees(90)
+          })
+        // page.drawText(
+        //   `Afrique-Con Ticket is Valid for a period of 1month for round trip`,
+        //   {
+        //     x: width - 20,
+        //     y: (height / 2) - 300,
+        //     size: fontSize-6,
+        //     font: timesRomanFont,
+        //     color: rgb(0, 0.53, 0.71),
+        //     rotate: degrees(90)
+        //   })
+        //   );
+        // form.getTextField("triptype").
+        //   setText((triptype || "n/a"))
+        // form.getTextField("bus").
+        //   setText((bus || "n/a"))
+        // form.getTextField("ticket_id").
+        //   setText((String(_id) || "n/a"))
+
+        form.flatten()
+      } catch (err) {
+        console.log(err)
+      }
+
       let img = fs.readFileSync(path.join(_path, "qr2.png"));
       img = await pdfDoc.embedPng(img)
       img.scaleToFit(100, 100)
       console.log(width)
       page.drawImage(img, {
-        x: 0,
-        y: 0,
-        width: 80,
-        height: 80
+        x: (width / 2) - 72.5,
+        y: height - 195,
+        width: 145,
+        height: 145
       })
-      page.drawImage(img, {
-        x: width - 40,
-        y: height - 40,
-        width: 40,
-        height: 40
-      })
+      // page.drawImage(img, {
+      //   x: width - 40,
+      //   y: height - 40,
+      //   width: 40,
+      //   height: 40
+      // })
 
       const pdfBytes = await pdfDoc.save()
       await writeFile(path.join(_path, ticket._id + ".pdf"), pdfBytes);
@@ -676,7 +716,6 @@ const editTicketMeta = async (req, res) => {
   if (!isUpdate) throw BadRequestError("fail to update ticket");
   res.status(200).json({ status: true })
 }
-
 module.exports = {
   create: createTicket,
   edit: editTicket,

@@ -110,10 +110,10 @@ const updateSeat = async (req, res) => {
 }
 const specificTicketId = async (req, res) => {
     const { id: _id, index } = req.params;
-    console.log(await Ticket.find({
-        seat_id: _id,
+    // console.log(await Ticket.find({
+    //     seat_id: _id,
 
-    }))
+    // }))
     const ticket = await Ticket.findOne({
         seat_id: _id,
         seatposition: index
@@ -203,16 +203,17 @@ const getAllSeats = async (req, res) => {
       }
     const sortKey = sortOptions[sort] || sortOptions.newest;
     const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 20;
+    const limit = Number(req.query.limit) || 100;
     const skip = (page - 1) * limit;
+    const nDoc=await Seat.countDocuments(queryObject)
     const seats = await Seat.find(queryObject)
         .sort(sortKey)
         .skip(skip)
         .limit(limit);
 
-
     if (queryObject?.sort) delete deleteTicket.sort
-    const numberOfPages = Math.ceil(seats.length / limit);
+    const numberOfPages = Math.ceil(nDoc / limit);
+    console.log("nDoc",nDoc,limit)
     const distinc_field = await Seat.aggregate([
         {
             $match: {
