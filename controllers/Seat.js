@@ -128,17 +128,19 @@ const specificTicketId = async (req, res) => {
 
 }
 const getAllSeats = async (req, res) => {
-    const getNextDay = (date = new Date()) => {
-        const next = new Date(date.getTime());
-        next.setDate(date.getDate() + 1);
-        return next.toLocaleDateString("en-CA")
-    }
+    // const getNextDay = (date = new Date()) => {
+    //     const next = new Date(date.getTime());
+    //     next.setDate(date.getDate() + 1);
+    //     return next.toLocaleDateString("en-CA")
+    // }
     const {
         from,
         to,
         traveltime,
-        daterange,sort
+        daterange,
+        sort
     } = req.query;
+    console.log("date range", daterange, req.query)
     const queryObject = {}
     if (daterange) {
         const decoded = decodeURIComponent(daterange)
@@ -152,16 +154,16 @@ const getAllSeats = async (req, res) => {
             });
 
         if ("start" in startdate && "end" in endDate) {
-            const getPreviousDay = (date) => {
-                const previous = new Date(date.getTime());
-                previous.setDate(date.getDate() + 1);
-                return previous
+            const getNextDay = (date = new Date()) => {
+                const next = new Date(date.getTime());
+                next.setDate(date.getDate() + 1);
+                return next.toLocaleDateString("en-CA")
             }
             if (startdate.start != "null" && endDate.end != "null") {
                 try {
                     var createdAt = {
                         $gte: new Date(startdate.start),
-                        $lte: getPreviousDay(new Date(endDate.end)),
+                        $lte: getNextDay(new Date(endDate.end)),
                     }
                     queryObject.traveldate = createdAt
 
@@ -172,15 +174,14 @@ const getAllSeats = async (req, res) => {
 
             }
             if (startdate.start != "null" && endDate.end == "null") {
-
                 var createdAt = {
                     $gte: new Date(startdate.start),
-                    $lte: getPreviousDay(new Date(startdate.start)),
+                    $lte: getNextDay(new Date(startdate.start)),
                 }
-                queryObject.createdAt = createdAt
+                queryObject.traveldate = createdAt
             }
         }
-
+        console.log(queryObject)
     }
     if (traveltime) {
         queryObject.traveltime = {
@@ -200,12 +201,12 @@ const getAllSeats = async (req, res) => {
     const sortOptions = {
         newest: "-createdAt",
         oldest: "createdAt",
-      }
+    }
     const sortKey = sortOptions[sort] || sortOptions.newest;
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 100;
     const skip = (page - 1) * limit;
-    const nDoc=await Seat.countDocuments(queryObject)
+    const nDoc = await Seat.countDocuments(queryObject)
     const seats = await Seat.find(queryObject)
         .sort(sortKey)
         .skip(skip)
@@ -213,7 +214,7 @@ const getAllSeats = async (req, res) => {
 
     if (queryObject?.sort) delete deleteTicket.sort
     const numberOfPages = Math.ceil(nDoc / limit);
-    console.log("nDoc",nDoc,limit)
+    console.log("nDoc", nDoc, limit)
     const distinc_field = await Seat.aggregate([
         {
             $match: {
@@ -231,8 +232,9 @@ const getAllSeats = async (req, res) => {
         },
 
     ])
+    console.log(seats)
     res.status(200).json({
-        seats,
+        seats: seats.sort((a, b) => b.traveltime - a.traveltime),
         numberOfPages,
         currentPage: page,
         nHits: seats.length,
@@ -375,24 +377,38 @@ const downloadboarderaux = async (req, res) => {
 
         form.flatten()
         const pdfBytes = await pdfDoc.save()
+        // error here 
         await writeFile(path.join(_path, id + ".pdf"), pdfBytes);
-        res.sendFile(path.join(_path, id + ".pdf"), {}, function (err) {
-            if (err) {
-                console.log(err)
-                throw err
-            }
-            else {
-                if (fs.existsSync(path.join(_path, id + ".pdf"))) {
-                    try {
-                        fs.unlinkSync(path.join(_path, id + ".pdf"));
-                    }
-                    catch (err) {
-                        console.lg(err)
-                    }
-                }
-            }
+        try {
 
-        })
+            await res.sendFile(path.join(_path, id + ".pdf"),
+                null,
+
+                function (err) {
+                    res.end();
+                    if (err) {
+
+                        console.log(err)
+                        // throw err
+                    }
+
+                    else {
+                        if (fs.existsSync(path.join(_path, id + ".pdf"))) {
+                            try {
+                                fs.unlinkSync(path.join(_path, id + ".pdf"));
+                            }
+                            catch (err) {
+                                console.lg(err)
+                            }
+                        }
+                    }
+                    
+
+                })
+        } catch (err) {
+            console.log("causes the server to stop : ", err)
+
+        }
     }
     catch (err) {
         console.log(err)
@@ -406,6 +422,7 @@ module.exports = {
     getAllSeats,
     updateSeat,
     updateSeatBus,
-    getSpecificSeat, specificTicketId,
+    getSpecificSeat,
+    specificTicketId,
     downloadboarderaux
 }

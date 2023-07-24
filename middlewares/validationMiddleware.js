@@ -1,7 +1,7 @@
 const { body, validationResult, param, query } = require('express-validator');
 const { TICKET_STATUS,
     TICKET_SORT_BY } = require('../utils/constants.js');
-const { BadRequestError } = require("../error")
+const { BadRequestError } = require("../error");
 
 const mongoose = require("mongoose")
 const User = require("../models/User")
@@ -130,13 +130,18 @@ const validateTicketInput = withValidationErrors([
         isFloat({ min: 0, max: 67 })
         .withMessage("bus sea should be in range of 0-67")
         .custom((seat, { req, loc, path }) => {
-            if (Number(seat) > 20) {
-                req.body.price = "10000"
-            } else {
-                req.body.price = "6500"
+            const seatposition = Number(seat)
+            if (!seatposition || seatposition < 0) throw BadRequestError("please send a valid seat position");
+            if (req.body.type === "null" || req.body.type === "singletrip") {
+                if (seatposition < 20) req.body.price = 10000
+                if (seatposition > 19) req.body.price = 6500
+            }
+            if (req.body.type === "round" || req.body.type === "roundtrip") {
+                if (seatposition < 20) req.body.price = 20000
+                if (seatposition > 19) req.body.price = 13000
+                    
             }
             return true
-
         })
     ,
 
