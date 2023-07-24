@@ -69,7 +69,7 @@ const getUsers = async (req, res) => {
       }
     ]
     console.log(Number(search))
-  
+
     queryObject.$or = [
       ...userSearch
     ]
@@ -121,7 +121,7 @@ const getUserAndTicketLength = async (req, res) => {
   )
   const sortdata = promiseawait.sort((a, b) => b.nHits - a.nHits);
   res.status(200).
-    json({ userdetails: sortdata })
+    json({ userdetails: sortdata, nHits: sortdata.length })
 }
 
 

@@ -131,7 +131,7 @@ const validateTicketInput = withValidationErrors([
         .withMessage("bus sea should be in range of 0-67")
         .custom((seat, { req, loc, path }) => {
             const seatposition = Number(seat)
-            if (!seatposition || seatposition < 0) throw BadRequestError("please send a valid seat position");
+            if (seatposition>53 ||seatposition==NaN || seatposition < 0) throw BadRequestError("please send a valid seat position");
             if (req.body.type === "null" || req.body.type === "singletrip") {
                 if (seatposition < 20) req.body.price = 10000
                 if (seatposition > 19) req.body.price = 6500

@@ -23,8 +23,6 @@ router.route("/download/:id").
         downloadsoftcopyticket)
 router.route("/edit/:id").
     post(
-    // require("../middlewares/Admin.auth")
-    // ,
         validateIdParam,
         validateupdateTicket,
         validateEditTicket,

@@ -388,7 +388,7 @@ const downloadboarderaux = async (req, res) => {
                     res.end();
                     if (err) {
 
-                        console.log(err)
+                        console.log(err,"391")
                         // throw err
                     }
 

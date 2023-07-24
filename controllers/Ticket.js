@@ -176,22 +176,25 @@ const editTicket = async (req, res) => {
   });
 };
 const getTicket = async (req, res) => {
-
+  // new implentation here//change the code to make  please the client
   var ticket = null;
   const {
     params: { id },
   } = req;
 
   if (!req.userInfo) {
+
     // the user is the admn of the pagge let him get the user information
+    // any register person can read and write the ticket
     ticket = await Ticket.findOne({
       _id: id,
     });
     if (!ticket) {
+      console.log()
       throw BadRequestError("please send a valid for to get the ticket");
     }
     const createdBy = (await User.findOne({ _id: ticket.createdBy }).select("fullname")).fullname;
-    console.log(createdBy)
+    // console.log(createdBy)
     const usernameticket = ticket?.toJSON();
     usernameticket.username = createdBy;
     res.status(200).json({
@@ -200,14 +203,15 @@ const getTicket = async (req, res) => {
     return
   }
   ticket = await Ticket.findOne({
-    createdBy: req.userInfo._id,
+    // createdBy: req.userInfo._id,
     _id: id,
   });
   if (!ticket) {
     throw BadRequestError("please send a valid for to get the ticket");
   }
-
-  const createdBy = (await User.findOne({ _id: ticket.createdBy }).select("fullname")).fullname;
+  // this get all ticket if you didnit create it 
+  const createdBy = (await User.findOne({ _id: ticket.createdBy })
+    .select("fullname")).fullname;
   const usernameticket = ticket?.toJSON();
   usernameticket.username = createdBy;
   res.status(200).json({
@@ -254,7 +258,7 @@ const userTickets = async (req, res) => {
 
   const sortKey = sortOptions[sort] || sortOptions.newest;
   const page = Number(req.query.page) || 1;
-  const limit = Number(req.query.limit) || 20;
+  const limit = Number(req.query.limit) || 100;
   const skip = (page - 1) * limit;
   const tickets = await Ticket.find(queryObject)
     .sort(sortKey)
@@ -516,8 +520,8 @@ const downloadsoftcopyticket = async (req, res) => {
   if (!ticket) {
     throw BadRequestError("please send a valid for to get the ticket");
   }
-  const url = `https://ntaribotaken.vercel.app/dashboard/${id}?admin=true&sound=true&xyz=secret`
-  // const url = `http://192.168.43.68:3000/dashboard/${id}?admin=true&sound=true&xyz=secret`
+  const url = `https://ntaribotaken.vercel.app/user/${id}?sound=true&xyz=secret`
+  // const url = `http://192.168.43.68:3000/user/${id}?sound=true&xyz=secret`
   const _path = path.resolve(__dirname, "../tickets")
   const createdBy = (await User.findOne({ _id: ticket.createdBy }).select("fullname")).fullname;
   qrcode.toFile(path.join(_path, "qr2.png"),
@@ -615,24 +619,28 @@ const downloadsoftcopyticket = async (req, res) => {
 
       const pdfBytes = await pdfDoc.save()
       await writeFile(path.join(_path, ticket._id + ".pdf"), pdfBytes);
-      res.sendFile(path.join(_path, ticket._id + ".pdf"), {}, function (err) {
-        if (err) {
-          console.log(err)
-          throw err
-        }
-        else {
-          if (fs.existsSync(path.join(_path, "qr2.png")) && fs.existsSync(path.join(_path, ticket._id + ".pdf"))) {
-            try {
-              fs.unlinkSync(path.join(_path, "qr2.png"));
-              fs.unlinkSync(path.join(_path, ticket._id + ".pdf"));
-            }
-            catch (err) {
-              console.lg(err)
+      await res.sendFile(path.join(_path, ticket._id + ".pdf"),
+        null,
+        function (err) {
+          res.end()
+          if (err) {
+            console.log(err, "391 ticket download")
+
+            // throw err
+          }
+          else {
+            if (fs.existsSync(path.join(_path, "qr2.png")) && fs.existsSync(path.join(_path, ticket._id + ".pdf"))) {
+              try {
+                fs.unlinkSync(path.join(_path, "qr2.png"));
+                fs.unlinkSync(path.join(_path, ticket._id + ".pdf"));
+              }
+              catch (err) {
+                console.lg(err)
+              }
             }
           }
-        }
 
-      })
+        })
     }
     catch (err) {
       console.log(err)

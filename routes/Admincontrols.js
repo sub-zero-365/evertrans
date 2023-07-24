@@ -14,7 +14,7 @@ const { getContact,
 getAllContact } = require("../controllers/Contact")
 router.route("/allusers").get(getAlluser);
 router.route("/alltickets").get(getTickets);
-router.route("/edit/:id").get(edit);
+router.route("/edit/:id").post(edit);
 router.route("/userticketlength")
     .get(getUserAndTicketLength);
 
