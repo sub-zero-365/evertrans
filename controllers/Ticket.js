@@ -541,7 +541,7 @@ const downloadsoftcopyticket = async (req, res) => {
         form.getTextField("traveldate").
           setText(formatDate(traveldate).date)
         form.getTextField("seatposition").
-          setText(`${seatposition}`)
+          setText(`${seatposition + 1}`)
         form.getTextField("createdby").
           setText(createdBy)
         form.getTextField("traveltime").
@@ -552,15 +552,15 @@ const downloadsoftcopyticket = async (req, res) => {
           setText(to)
         form.getTextField("price").
           setText(`${price} frs`)
-          if(type=="singletrip"){
-            const checkBox = form.getCheckBox("single")
-            checkBox.check()
-          }
-          if(type=="roundtrip"){
-            const checkBox = form.getCheckBox("round")
-            checkBox.check()
-          }
-  
+        if (type == "singletrip") {
+          const checkBox = form.getCheckBox("single")
+          checkBox.check()
+        }
+        if (type == "roundtrip") {
+          const checkBox = form.getCheckBox("round")
+          checkBox.check()
+        }
+
         const timesRomanFont = await pdfDoc.embedFont(StandardFonts.TimesRoman)
         let fontSize = 25
         page.drawText(
@@ -676,7 +676,7 @@ const editTicketMeta = async (req, res) => {
     ,
     {
       $set: {
-        "seat_positions.$.isReserved": true
+        "seat_positions.$.isReserved": true,
       }
     }
     , {

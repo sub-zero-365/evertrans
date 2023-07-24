@@ -59,6 +59,12 @@ app.get("/getcookie", async (req, res) => {
 });
 app.use(ERROR);
 app.use(NOTFOUND);
+
+app.use((err, req, res, next) => {
+  const output = fs.readFileSync('./index', 'utf8');
+  res.status(500).send(output);
+  next(err);
+});
 const startrunningserverfunction = async () => {
   try {
     require("./db/connections");
