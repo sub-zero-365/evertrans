@@ -299,11 +299,9 @@ const getTickets = async (req, res) => {
     sort,
     ticketStatus,
     daterange,
-    price,
     boardingRange,
     triptype,
     traveltime,
-    _id
   }
     =
     req.query;
@@ -606,10 +604,10 @@ const downloadsoftcopyticket = async (req, res) => {
       img.scaleToFit(100, 100)
       console.log(width)
       page.drawImage(img, {
-        x: (width / 2) - 100,
-        y: height - 250,
-        width: 200,
-        height: 200
+        x: (width / 2) - 155,
+        y: height - 340,
+        width: 310,
+        height: 310
       })
       // page.drawImage(img, {
       //   x: width - 40,
