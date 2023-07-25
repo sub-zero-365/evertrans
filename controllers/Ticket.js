@@ -302,7 +302,8 @@ const getTickets = async (req, res) => {
     price,
     boardingRange,
     triptype,
-    traveltime
+    traveltime,
+    _id
   }
     =
     req.query;
@@ -557,26 +558,26 @@ const downloadsoftcopyticket = async (req, res) => {
         form.getTextField("price").
           setText(`${price} frs`)
         if (type == "singletrip") {
-          const checkBox = form.getCheckBox("single")
-          checkBox.check()
+          form.getTextField("triptype").
+            setText(`singletrip`)
         }
         if (type == "roundtrip") {
-          const checkBox = form.getCheckBox("round")
-          checkBox.check()
+          form.getTextField("triptype").
+            setText(`roundtrip`)
         }
 
         const timesRomanFont = await pdfDoc.embedFont(StandardFonts.TimesRoman)
         let fontSize = 25
-        page.drawText(
-          `Ticket N : ${_id}`,
-          {
-            x: 45,
-            y: (height / 2) - 150,
-            size: fontSize,
-            font: timesRomanFont,
-            color: rgb(0, 0.53, 0.71),
-            rotate: degrees(90)
-          })
+        // page.drawText(
+        //   `Ticket N : ${_id}`,
+        //   {
+        //     x: 45,
+        //     y: (height / 2) - 150,
+        //     size: fontSize,
+        //     font: timesRomanFont,
+        //     color: rgb(0, 0.53, 0.71),
+        //     rotate: degrees(90)
+        //   })
         // page.drawText(
         //   `Afrique-Con Ticket is Valid for a period of 1month for round trip`,
         //   {
@@ -605,10 +606,10 @@ const downloadsoftcopyticket = async (req, res) => {
       img.scaleToFit(100, 100)
       console.log(width)
       page.drawImage(img, {
-        x: (width / 2) - 72.5,
-        y: height - 195,
-        width: 145,
-        height: 145
+        x: (width / 2) - 100,
+        y: height - 250,
+        width: 200,
+        height: 200
       })
       // page.drawImage(img, {
       //   x: width - 40,
