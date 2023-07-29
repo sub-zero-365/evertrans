@@ -85,7 +85,12 @@ const createTicket = async (req, res) => {
 };
 
 const editTicket = async (req, res) => {
-  const user = req.user
+  const user = req.user;
+  console.log("user id", user)
+  if (!user) throw BadRequestError("Login as Assistant to validate tickets")
+  await checkPermissions(user.id)
+
+
   const { id } = req.params
   const { index } = req.query
   var isTicket = await Ticket.findOne({
@@ -106,7 +111,6 @@ const editTicket = async (req, res) => {
       ${formatDate(isTicket.traveldate).date}   please come back on the ${formatDate(isTicket.traveldate).date} date to travel thanks `)
   }
   // prevent further action
-  const userId = await checkPermissions(user?._id)
   if (isTicket && isTicket.type &&
     isTicket.type === "roundtrip" &&
     isTicket?.doubletripdetails &&
@@ -530,7 +534,7 @@ const downloadsoftcopyticket = async (req, res) => {
   if (process.env.NODE_ENV === "production") {
     url = `https://ntaribotaken.vercel.app/user/${id}?sound=true&xyz=secret&readonly=true`
   } else {
-    url = `http://192.168.43.68:3000/user/${id}?sound=true&xyz=secret&readonly=true`
+    url = `http://192.168.43.68:3000/assistant/${id}?sound=true&xyz=secret&readonly=7gu8dsutf8asdf`
 
   }
   const _path = path.resolve(__dirname, "../tickets")
@@ -659,7 +663,7 @@ const editTicketMeta = async (req, res) => {
     "seat_positions._id": Number(ticket_seatposition),
     _id: seat_id
   })
-  if (!seat) throw BadRequestError("coudnot find seat")
+  if (!seat) throw BadRequestError("coudnot find seat");
   if (seat.seat_positions[Number(seatposition)].isTaken == true
     ||
     seat.seat_positions[Number(seatposition)].isReserved == true) {
@@ -673,6 +677,7 @@ const editTicketMeta = async (req, res) => {
     {
       $set: {
         "seat_positions.$.isReserved": true,
+        "seat_positions.$.isTaken": false,
       }
     }
     , {
@@ -681,22 +686,22 @@ const editTicketMeta = async (req, res) => {
     }
   )
   // console.log(ticket_seatposition)
- 
-    seat = await Seat.findOneAndUpdate({
-      "seat_positions._id": Number(ticket_seatposition),
-      _id: ticket_id
-    },
-      {
-        $set: {
-          "seat_positions.$.isTaken": false,
-          "seat_positions.$.isReserved": false
-        }
-      })
-    // .catch((err) => console.log("update seat err", err))
+
+  seat = await Seat.findOneAndUpdate({
+    "seat_positions._id": Number(ticket_seatposition),
+    _id: ticket_id
+  },
+    {
+      $set: {
+        "seat_positions.$.isTaken": false,
+        "seat_positions.$.isReserved": false
+      }
+    })
+  // .catch((err) => console.log("update seat err", err))
 
 
   if (!seat) {
-    console.log("seat not found" ,seat)
+    console.log("seat not found", seat)
   }
   const updateObj = {};
   if (traveldate) {

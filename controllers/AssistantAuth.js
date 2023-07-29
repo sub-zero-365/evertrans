@@ -15,6 +15,7 @@ const createAssistant = async (req, res) => {
             _id: assistant._id,
             phone: assistant.phone
         })
+
     res.status(201).json({
         assistant: toJson("password", assistant),
         token
@@ -25,7 +26,7 @@ const LoginAssistant = async (req, res) => {
     const { phone, password } = req.body;
     if (!phone, !password) throw BadRequestError("Phone and password is need to login")
 
-    const assistant = await Assistant.findOne({password,phone});
+    const assistant = await Assistant.findOne({ password, phone });
     if (!assistant) throw NotFoundError(`No user with credentials`)
     const token = createJWT(
         {
@@ -34,7 +35,7 @@ const LoginAssistant = async (req, res) => {
         },
         process.env.jwtAssistant
     )
-
+    console.log("toeknn", token,"hiofhuisahgdfiugashdiugfiuasggu")
     res.status(201).json({
         assistant: toJson("password", assistant),
         token,
