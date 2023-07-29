@@ -17,20 +17,6 @@ const auth = async (req, _, next) => {
     try {
          jwt.verify(token,
             process.env.jwtAdminSecret);
-        // const isAdmin = await Admin.findOne({
-        //     _id: payload._id,
-        //     phone: payload.phone
-        // })
-        // if (!isAdmin) {
-        //     const error = new Error("Fail to find Admin");
-        //     error.status = 1234
-        //     throw error
-
-        // }else {
-        //     req.user = true
-        //     next()
-        // }
-
         req.admin = true
         next()
     } catch (err) {

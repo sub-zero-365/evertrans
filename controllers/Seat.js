@@ -1,11 +1,12 @@
 const Ticket = require("../models/Ticket")
+const Bus = require("../models/Bus")
 const Seat = require("../models/Seat")
 const fs = require("fs")
 const { PDFDocument, rgb, degrees } = require("pdf-lib");
 const { readFile, writeFile } = require("fs/promises");
 const path = require("path")
 const { BadRequestError, NotFoundError } = require("../error")
-const dayjs = require("dayjs")
+// const dayjs = require("dayjs")
 const createSeat = async (req, res) => {
     res.send("create seat route here")
 }
@@ -19,8 +20,8 @@ const getSpecificSeat = async (req, res) => {
 }
 const getStaticSeat = async (req, res) => {
     const { from, to, traveldate, traveltime } = req.query;
+    console.log(req.query)
     const queryObject = {}
-    console.log(req.params)
     const getNextDay = (date = new Date()) => {
         const next = new Date(date.getTime());
         next.setDate(date.getDate() + 1);
@@ -47,29 +48,43 @@ const getStaticSeat = async (req, res) => {
     }
     if (traveldate) {
         var date_ = {
-            $gte: new Date(traveldate).toLocaleDateString("en-CA"),
+            $gte: traveldate,
             $lte: getNextDay(new Date(traveldate)),
         }
         queryObject.traveldate = date_
     }
-    if (traveldate) {
-        if (dayjs(new Date(traveldate).toLocaleDateString("en-CA")).diff(new Date().toLocaleDateString("en-CA"), "day") > 7) {
-            throw BadRequestError(`No Bus Traveling on the
-             ${new Date(traveldate).toLocaleDateString("en-CA")} please chose a new previous date and try again `)
-        }
+    // if (traveldate) {
+    //     if (dayjs(new Date(traveldate).toLocaleDateString("en-CA")).diff(new Date().toLocaleDateString("en-CA"), "day") > 7) {
+    //         throw BadRequestError(`No Bus Traveling on the
+    //          ${new Date(traveldate).toLocaleDateString("en-CA")} please chose a new previous date and try again `)
+    //     }
 
-    }
-    let isSeat = await Seat.find({ ...queryObject })
+    // }
+
+    let isSeat = await Seat.find({ ...queryObject });
+    // console.log("all seats here",isSeat.length)
     if (isSeat.length == 0 && from && to && traveldate && traveltime) {
-        isSeat = await Seat.create({
-            from,
-            to,
-            traveldate,
-            traveltime
-        })
-        if (!isSeat) throw BadRequestError("fail to create a seats");
+        console.log("enter her where seat ==0")
+        try {
+            isSeat = await Seat.create({
+                from,
+                to,
+                traveldate,
+                traveltime
+            })
+            console.log("seat in try block", isSeat)
+        } catch (err) {
+            console.log("fail to create seat err", err)
+        }
+        console.log("newlyseasr", isSeat)
+        if (!isSeat) {
+            console.log("fail to create seat")
+            throw BadRequestError("fail to create a seats")
+        };
         isSeat = await Seat.find(queryObject);
     }
+    console.log(isSeat, queryObject)
+
     res.status(200).json({
         seats: isSeat,
         nHits: isSeat.length,
@@ -128,11 +143,7 @@ const specificTicketId = async (req, res) => {
 
 }
 const getAllSeats = async (req, res) => {
-    // const getNextDay = (date = new Date()) => {
-    //     const next = new Date(date.getTime());
-    //     next.setDate(date.getDate() + 1);
-    //     return next.toLocaleDateString("en-CA")
-    // }
+
     const {
         from,
         to,
@@ -144,6 +155,7 @@ const getAllSeats = async (req, res) => {
     const queryObject = {}
     if (daterange) {
         const decoded = decodeURIComponent(daterange)
+        console.log("dcoded", decoded)
         const [startdate, endDate] = decoded.
             split(",").
             map(arr => arr.split("="))
@@ -152,6 +164,7 @@ const getAllSeats = async (req, res) => {
                     [v]: t
                 }
             });
+        console.log("date range : ", decodeURIComponent(daterange))
 
         if ("start" in startdate && "end" in endDate) {
             const getNextDay = (date = new Date()) => {
@@ -162,9 +175,11 @@ const getAllSeats = async (req, res) => {
             if (startdate.start != "null" && endDate.end != "null") {
                 try {
                     var createdAt = {
-                        $gte: new Date(startdate.start),
-                        $lte: getNextDay(new Date(endDate.end)),
+                        $gte: startdate.start,
+                        // $lt: getNextDay(new Date(endDate.end)),
+                        $lte: endDate.end
                     }
+                    console.log("nextday", getNextDay(new Date(endDate.end)))
                     queryObject.traveldate = createdAt
 
                 } catch (err) {
@@ -175,8 +190,9 @@ const getAllSeats = async (req, res) => {
             }
             if (startdate.start != "null" && endDate.end == "null") {
                 var createdAt = {
-                    $gte: new Date(startdate.start),
-                    $lte: getNextDay(new Date(startdate.start)),
+                    $gte: startdate.start,
+                    // $lt: getNextDay(new Date(startdate.start)),
+                    $lte: startdate.start
                 }
                 queryObject.traveldate = createdAt
             }
@@ -214,7 +230,6 @@ const getAllSeats = async (req, res) => {
 
     if (queryObject?.sort) delete deleteTicket.sort
     const numberOfPages = Math.ceil(nDoc / limit);
-    console.log("nDoc", nDoc, limit)
     const distinc_field = await Seat.aggregate([
         {
             $match: {
@@ -232,7 +247,6 @@ const getAllSeats = async (req, res) => {
         },
 
     ])
-    console.log(seats)
     res.status(200).json({
         seats: seats.sort((a, b) => b.traveltime - a.traveltime),
         numberOfPages,
@@ -263,9 +277,53 @@ const updateSeatBus = async (req, res) => {
     if (!update) throw BadRequestError("something went wrong try gain later")
     res.status(200).json({ seat: update })
 }
+const ticketassociatedWithBus = async (req, res, next) => {
+    const { id } = req.params
+    let currentSeat = await Seat.findOne(
+        {
+            _id: id,
+
+        }
+    )
+    if (!currentSeat) throw NotFoundError(`No Seat found with id ${id}`)
+    let tickets = null;
+
+    tickets = await Ticket.find({
+        seat_id: currentSeat._id,
+
+    })
+
+    tickets = tickets.filter((ticket) => {
+        if (ticket.type === "roundtrip") {
+            if (ticket.doubletripdetails[1].active === false) {
+                return true
+            }
+            if (ticket.doubletripdetails[0].active === false) {
+                return true
+            }
+            return false
+        }
+        if (ticket.type === "singletrip") {
+            if (ticket.active === false) return true
+        }
+
+    })
+
+    res.status(200).json({
+        tickets,
+        nHits: tickets.length,
+        bus_id: id
+    })
+}
+
 
 const downloadboarderaux = async (req, res) => {
-    const { id } = req.params
+    const { id } = req.params;
+    ;
+    console.log("bus_id", req.query)
+    const { bus_id } = req.query;
+    const  currentBus  =await Bus.findOne({ _id: bus_id })
+    console.log("currentbus",currentBus)
     const currentSeat = await Seat.findOne(
         {
             _id: id,
@@ -273,25 +331,22 @@ const downloadboarderaux = async (req, res) => {
         }
     )
     if (!currentSeat) throw NotFoundError("coudnot find seat with id " + id);
-
+    const updates = await Seat.findOneAndUpdate({
+    _id:id
+    },
+        {
+            $set: {
+                bus: {
+                    bus: currentBus?.name,
+                    _id: req.query.bus_id
+                }
+            }
+        })
+    console.log("updates", updates)
     let tickets = null;
 
     tickets = await Ticket.find({
         seat_id: currentSeat._id,
-        // $or: [
-        //     {
-        //         "doubletripdetails$.0.active": false
-        //     },
-        //     {
-        //         "doubletripdetails$.1.active": false
-        //     },
-        //     // {
-        //     //     active: false
-        //     // }
-
-
-        // ]
-
 
     })
 
@@ -388,7 +443,7 @@ const downloadboarderaux = async (req, res) => {
                     res.end();
                     if (err) {
 
-                        console.log(err,"391")
+                        console.log(err, "391")
                         // throw err
                     }
 
@@ -402,7 +457,7 @@ const downloadboarderaux = async (req, res) => {
                             }
                         }
                     }
-                    
+
 
                 })
         } catch (err) {
@@ -424,5 +479,6 @@ module.exports = {
     updateSeatBus,
     getSpecificSeat,
     specificTicketId,
-    downloadboarderaux
+    downloadboarderaux,
+    ticketassociatedWithBus
 }

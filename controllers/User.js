@@ -1,6 +1,28 @@
 const User = require("../models/User");
 const Ticket = require("../models/Ticket");
 const { BadRequestError } = require("../error");
+const Assistant = require("../models/Assistant")
+
+const updatePassword = async (req, res) => {
+  const { oldpassword, newpassword, confirmpassword } = req.body;
+  if (newpassword !== confirmpassword) throw BadRequestError("password doesnot match ");
+  if (newpassword.length < 7) throw BadRequestError("Password must be greater or equal to 8")
+  let user = await User.findOne({
+    _id: req.userInfo._id,
+    password: oldpassword
+  })
+
+  if (!user) throw BadRequestError("Incorrect Password");
+  user = await User.findOneAndUpdate({
+    _id: req.userInfo._id,
+
+  }, { password: newpassword })
+  if (!user) throw BadRequestError("fail to updatepassword")
+  res.status(200).json({ status: true })
+
+}
+
+
 
 const Register = async (req, res) => {
   const isUserWithPhone = await User.findOne({ phone: req.body.phone });
@@ -22,16 +44,33 @@ const Login = async (req, res) => {
   if (!password || !phone) {
     throw BadRequestError("please phone  or password needed");
   }
-  const user = await User.findOne({ ...{ phone, password } });
+  let user = await User.findOne({ ...{ phone, password } });
+  let token = null
+  if(user) token= await user.createJWT();
   if (!user) {
-    throw BadRequestError("please check your login details");
+    // search assistant user
+    user = await Assistant.findOne({ ...{ phone, password } });
+    if (!user) throw BadRequestError("please check your login details");
+    user = user.toJSON()
+    user = {
+      ...user,
+      redirect: true
+    }
   }
-  const token = await user.createJWT();
+  delete user.password
+  // if (!user) {
+  //   throw BadRequestError("please check your login details");
+  // }
   res.status(200).json({
-    fullname: user.fullname,
+    // fullname: user.fullname,
+    user,
     token,
+    
   });
 };
+
+
+
 const getUsers = async (req, res) => {
   const obj = {};
 
@@ -169,5 +208,5 @@ module.exports = {
   userInfo,
   getStaticUser,
   getUserAndTicketLength
-
+  , updatePassword
 };
