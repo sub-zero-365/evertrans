@@ -3,7 +3,8 @@ const {
     edit,
     getTicket,
     getTickets
-    , downloadsoftcopyticket, editTicketMeta
+    , downloadsoftcopyticket,
+    editTicketMeta
 } = require("../controllers/Ticket");
 const { validateTicketInput,
     validateupdateTicket,
@@ -13,6 +14,7 @@ const { validateTicketInput,
 const IsUserRestricted = require("../middlewares/IsUserRestricted")
 const express = require("express")
 const router = express.Router()
+
 router.route("/").post(IsUserRestricted,
     validateTicketInput, create).get(getTickets)
 router.route("/:id").get(
@@ -25,7 +27,8 @@ router.route("/edit/:id").
     post(
         validateIdParam,
         validateupdateTicket,
-        validateEditTicket,
+        validateEditTicket
+        ,
         edit)
 router.
     route("/updateticket/:id").

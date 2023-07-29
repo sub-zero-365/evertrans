@@ -2,11 +2,13 @@
 const User = require("../models/User")
 const qrcode = require("qrcode");
 const path = require("path")
+const checkPermissions = require("../utils/checkPermission")
 const fs = require("fs")
 const { PDFDocument, degrees, StandardFonts, rgb } = require("pdf-lib");
 const { readFile, writeFile } = require("fs/promises");
 const Bus = require("../models/Bus")
 const Seat = require("../models/Seat")
+const Assistant = require("../models/Assistant")
 const {
   BadRequestError,
   NotFoundError
@@ -83,6 +85,7 @@ const createTicket = async (req, res) => {
 };
 
 const editTicket = async (req, res) => {
+  const user = req.user
   const { id } = req.params
   const { index } = req.query
   var isTicket = await Ticket.findOne({
@@ -102,6 +105,8 @@ const editTicket = async (req, res) => {
     throw BadRequestError(`This errors cause you are trying to validate a ticket on the ${formatDate(new Date()).date}  when the  travel date is 
       ${formatDate(isTicket.traveldate).date}   please come back on the ${formatDate(isTicket.traveldate).date} date to travel thanks `)
   }
+  // prevent further action
+  const userId = await checkPermissions(user?._id)
   if (isTicket && isTicket.type &&
     isTicket.type === "roundtrip" &&
     isTicket?.doubletripdetails &&
@@ -170,6 +175,7 @@ const editTicket = async (req, res) => {
   if (!isEdited) {
     throw BadRequestError("fail to update ticket");
   }
+
   res.status(200).json({
     status: true,
     updateTicket: isEdited
@@ -209,6 +215,7 @@ const getTicket = async (req, res) => {
   if (!ticket) {
     throw BadRequestError("please send a valid for to get the ticket");
   }
+
   // this get all ticket if you didnit create it 
   const createdBy = (await User.findOne({ _id: ticket.createdBy })
     .select("fullname")).fullname;
@@ -519,8 +526,13 @@ const downloadsoftcopyticket = async (req, res) => {
   if (!ticket) {
     throw BadRequestError("please send a valid for to get the ticket");
   }
-  const url = `https://ntaribotaken.vercel.app/user/${id}?sound=true&xyz=secret`
-  // const url = `http://192.168.43.68:3000/user/${id}?sound=true&xyz=secret`
+  let url = null;
+  if (process.env.NODE_ENV === "production") {
+    url = `https://ntaribotaken.vercel.app/user/${id}?sound=true&xyz=secret&readonly=true`
+  } else {
+    url = `http://192.168.43.68:3000/user/${id}?sound=true&xyz=secret&readonly=true`
+
+  }
   const _path = path.resolve(__dirname, "../tickets")
   const createdBy = (await User.findOne({ _id: ticket.createdBy }).select("fullname")).fullname;
   qrcode.toFile(path.join(_path, "qr2.png"),
@@ -534,7 +546,7 @@ const downloadsoftcopyticket = async (req, res) => {
       const page = pdfDoc.getPage(0)
       const { width, height } = page.getSize()
 
-      const fileNames = pdfDoc.getForm().getFields().map(f => f.getName())
+      // const fileNames = pdfDoc.getForm().getFields().map(f => f.getName())
       const form = pdfDoc.getForm()
       const { fullname, traveldate, traveltime, seatposition, from, to, type, _id, bus, price } = ticket.toJSON()
       try {
@@ -566,33 +578,7 @@ const downloadsoftcopyticket = async (req, res) => {
 
         const timesRomanFont = await pdfDoc.embedFont(StandardFonts.TimesRoman)
         let fontSize = 25
-        // page.drawText(
-        //   `Ticket N : ${_id}`,
-        //   {
-        //     x: 45,
-        //     y: (height / 2) - 150,
-        //     size: fontSize,
-        //     font: timesRomanFont,
-        //     color: rgb(0, 0.53, 0.71),
-        //     rotate: degrees(90)
-        //   })
-        // page.drawText(
-        //   `Afrique-Con Ticket is Valid for a period of 1month for round trip`,
-        //   {
-        //     x: width - 20,
-        //     y: (height / 2) - 300,
-        //     size: fontSize-6,
-        //     font: timesRomanFont,
-        //     color: rgb(0, 0.53, 0.71),
-        //     rotate: degrees(90)
-        //   })
-        //   );
-        // form.getTextField("triptype").
-        //   setText((triptype || "n/a"))
-        // form.getTextField("bus").
-        //   setText((bus || "n/a"))
-        // form.getTextField("ticket_id").
-        //   setText((String(_id) || "n/a"))
+
 
         form.flatten()
       } catch (err) {
@@ -652,8 +638,11 @@ const editTicketMeta = async (req, res) => {
     traveldate,
     traveltime,
     seatposition,
-    seat_id
+    seat_id,
+    from,
+    to
   } = req.body
+  console.log(req.body)
   const { id: _id } = req.params;
   let ticket_seatposition = null;
   let ticket_id = null
@@ -691,21 +680,24 @@ const editTicketMeta = async (req, res) => {
       new: true
     }
   )
+  // console.log(ticket_seatposition)
+ 
+    seat = await Seat.findOneAndUpdate({
+      "seat_positions._id": Number(ticket_seatposition),
+      _id: ticket_id
+    },
+      {
+        $set: {
+          "seat_positions.$.isTaken": false,
+          "seat_positions.$.isReserved": false
+        }
+      })
+    // .catch((err) => console.log("update seat err", err))
+
 
   if (!seat) {
-    throw BadRequestError("fail to update seat")
+    console.log("seat not found" ,seat)
   }
-  await Seat.findOneAndUpdate({
-    "seat_positions._id": Number(ticket_seatposition),
-    _id: ticket_id
-  },
-    {
-      $set: {
-        "seat_positions.$.isTaken": false,
-        "seat_positions.$.isReserved": false
-      }
-    }).catch((err) => console.log("update seat err", err))
-
   const updateObj = {};
   if (traveldate) {
     updateObj.traveldate = traveldate
@@ -718,6 +710,12 @@ const editTicketMeta = async (req, res) => {
   }
   if (seat_id) {
     updateObj.seat_id = seat_id
+  }
+  if (from) {
+    updateObj.from = from
+  }
+  if (to) {
+    updateObj.to = to
   }
   const isUpdate = await Ticket.findOneAndUpdate({ _id }, updateObj);
   if (!isUpdate) throw BadRequestError("fail to update ticket");

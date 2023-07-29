@@ -1,9 +1,7 @@
 const { Schema, model } = require("mongoose");
 const User = require("./User");
 const ticketSchema = new Schema(
-
   {
-
     fullname: {
       type: String,
       required: [true, "please enter fullname "],
@@ -51,7 +49,6 @@ const ticketSchema = new Schema(
       type: Schema.ObjectId,
       required: [true, "please send a created user id"],
       ref: "users",
-
     },
     doubletripdetails: {
       type: Array,

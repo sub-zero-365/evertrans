@@ -131,7 +131,7 @@ const validateTicketInput = withValidationErrors([
         .withMessage("bus sea should be in range of 0-67")
         .custom((seat, { req, loc, path }) => {
             const seatposition = Number(seat)
-            if (seatposition>53 ||seatposition==NaN || seatposition < 0) throw BadRequestError("please send a valid seat position");
+            if (seatposition > 53 || seatposition == NaN || seatposition < 0) throw BadRequestError("please send a valid seat position");
             if (req.body.type === "null" || req.body.type === "singletrip") {
                 if (seatposition < 20) req.body.price = 10000
                 if (seatposition > 19) req.body.price = 6500
@@ -139,7 +139,7 @@ const validateTicketInput = withValidationErrors([
             if (req.body.type === "round" || req.body.type === "roundtrip") {
                 if (seatposition < 20) req.body.price = 20000
                 if (seatposition > 19) req.body.price = 13000
-                    
+
             }
             return true
         })
@@ -197,6 +197,33 @@ const validateIdParam = withValidationErrors([
         })
         .withMessage('invalid MongoDB id'),
 ]);
+const validcreateAssistant = withValidationErrors([
+    body("fullname").
+        notEmpty()
+        .withMessage("please name is require to create an assisstant").
+        isLength({ min: 5 })
+        .withMessage('username must be greater or equal to 5')
+    ,
+    body("password").notEmpty().withMessage("please password is required").
+        isLength({ min: 8 })
+        .withMessage('password must be greater or equal to 8'),
+
+    body("phone").notEmpty().withMessage("please password is required").
+        isLength({ min: 9 })
+        .withMessage('phone  number must be greater  or equal to 9')
+        .isNumeric().withMessage("phone isnumber not text"),
+]
+)
+const validateUpdateUser = withValidationErrors([
+    body("newpassword")
+        .notEmpty().
+        withMessage("newpassword is required").isLength({ min: 8 }).withMessage("new Password must be greater ").
+        custom((value, { req, loc, path }) => {
+            if (value != req.confirmpassword) throw BadRequestError("password does not match ")
+            return true
+        })
+
+])
 const validateEditTicket = withValidationErrors([
     // working here
     query('index').
@@ -316,5 +343,7 @@ module.exports = {
     validateRegisterInput,
     validateupdateTicket,
     validateEditTicket,
-    busValidtionInput
+    busValidtionInput,
+    validcreateAssistant,
+    validateUpdateUser
 };

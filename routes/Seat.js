@@ -2,7 +2,7 @@ const router = require("express").Router();
 const { createSeat,
     getStaticSeat, updateSeat, getSpecificSeat,
     getAllSeats, 
-    specificTicketId
+    specificTicketId,ticketassociatedWithBus
     ,downloadboarderaux } = require("../controllers/Seat")
 router.route("/").
     post(createSeat)
@@ -14,4 +14,5 @@ router.route("/getstatic")
 router.route("/specific/:id").get(getSpecificSeat)
 router.route("/ticket/:id/:index").get(specificTicketId)
 router.route("/download/:id").get(downloadboarderaux)
+router.route("/seatdetails/:id").get(ticketassociatedWithBus)
 module.exports = router
