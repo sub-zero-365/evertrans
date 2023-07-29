@@ -52,6 +52,7 @@ const validateupdateTicket = withValidationErrors([
         .withMessage('search value required')
     ,
 ])
+
 const busValidtionInput = withValidationErrors([
     body('name').notEmpty().
         withMessage("please provide a bus name").
@@ -97,12 +98,14 @@ const validateTicketInput = withValidationErrors([
     body("traveldate")
         .notEmpty()
         .withMessage('travel date is required')
-        .custom(async (traveldate) => {
+        .custom(async (traveldate,{req}) => {
+            console.log("traveldate here : ",traveldate)
             const lettodaydate = formatDate(new Date()).date
             const ticketTravelDate = formatDate(traveldate).date;
             if ((dayjs(ticketTravelDate).diff(lettodaydate, "day")) < 0) {
                 throw BadRequestError(`fail cause the user is trying to back date the date`)
             }
+            // req.traveldate
             return true
 
         }),

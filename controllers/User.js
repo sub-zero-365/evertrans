@@ -2,7 +2,7 @@ const User = require("../models/User");
 const Ticket = require("../models/Ticket");
 const { BadRequestError } = require("../error");
 const Assistant = require("../models/Assistant")
-
+const { createJWT } = require("../utils/tokenUtils")
 const updatePassword = async (req, res) => {
   const { oldpassword, newpassword, confirmpassword } = req.body;
   if (newpassword !== confirmpassword) throw BadRequestError("password doesnot match ");
@@ -46,11 +46,16 @@ const Login = async (req, res) => {
   }
   let user = await User.findOne({ ...{ phone, password } });
   let token = null
-  if(user) token= await user.createJWT();
+  if (user) token = await user.createJWT();
+
   if (!user) {
     // search assistant user
     user = await Assistant.findOne({ ...{ phone, password } });
     if (!user) throw BadRequestError("please check your login details");
+    token = createJWT({
+      _id: user._id,
+      phone: user.phone
+    })
     user = user.toJSON()
     user = {
       ...user,
@@ -65,7 +70,7 @@ const Login = async (req, res) => {
     // fullname: user.fullname,
     user,
     token,
-    
+
   });
 };
 

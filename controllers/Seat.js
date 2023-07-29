@@ -129,6 +129,8 @@ const specificTicketId = async (req, res) => {
     //     seat_id: _id,
 
     // }))
+    
+    
     const ticket = await Ticket.findOne({
         seat_id: _id,
         seatposition: index
