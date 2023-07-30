@@ -1,5 +1,6 @@
 const Bus = require("../models/Bus");
-const Ticket = require("../models/Ticket")
+const Ticket = require("../models/Ticket");
+const Seat = require("../models/Seat")
 const fs = require("fs")
 const { PDFDocument, rgb, degrees } = require("pdf-lib");
 const { readFile, writeFile } = require("fs/promises");
@@ -17,25 +18,8 @@ const create = async (req, res) => {
 }
 
 const deleteBus = async (req, res) => {
-    var bus = await Bus.findOne({ _id: req.params.id });
-    if (!bus) {
-        throw NotFoundError("no  bus with id " + req.params.id)
-    }
-    const isActiveSeat = bus.toJSON().seat_positions.every((x) => x.isTaken == false);
-
-    if (isActiveSeat) {
-        bus = await Bus.findOneAndDelete({ _id: req.params.id });
-        if (!bus) {
-            throw BadRequestError("fail to delete bus with id " + req.params.id)
-        }
-        return res.status(200).json({ status: true })
-
-    }
-    const isAllFilled = bus.toJSON().seat_positions.every((x) => x.isTaken == true);
-    if (!isAllFilled) {
-        throw BadRequestError("you cannot delete a bus untill full or reset!!");
-    }
-    bus = await Bus.findOneAndDelete({ _id: req.params.id });
+  
+ var bus = await Bus.findOneAndDelete({ _id: req.params.id });
     if (!bus) {
         throw BadRequestError("fail to delete bus with id " + req.params.id)
     }
@@ -47,7 +31,14 @@ const getBus = async (req, res) => {
     const { id: _id } = req.params;
     const bus = await Bus.findOne({ _id });
     if (!bus) throw NotFoundError("Fail to get ticket with id " + _id)
-    res.status(200).json({ bus })
+    const assiocatedSeat = await Seat.countDocuments({
+        "bus._id": _id
+    }).select("_id")
+    console.log(assiocatedSeat, "eee", _id)
+    res.status(200).json({
+        bus,
+        seats: assiocatedSeat
+    })
 }
 
 const updateBus = async (req, res) => {
