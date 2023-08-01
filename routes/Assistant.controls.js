@@ -13,9 +13,10 @@ const validation = async (req, res, next) => {
     const token = authHeader.split(" ")[1];
     try {
         const payload = verifyJWT(token, process.env.jwtSecret);
-        console.log(payload, "payload her")
+        // console.log(payload, "payload her")
         req.user = {
-            id: payload._id
+            id: payload._id,
+
         }
         next()
     } catch (err) {
@@ -30,12 +31,17 @@ const {
 const { getTicket, edit } = require("../controllers/Ticket")
 const {
     GetAllAssistant,
-    DeleteAssistant,
+    DeleteAssistant
+    , updatePassword,
     getStaticAssistant } = require("../controllers/Assistant");
-router.route("/").get(adminauth, GetAllAssistant)
-router.route("/:id").get(
-    validateIdParam,
-    getStaticAssistant).delete(DeleteAssistant);
+router.route("/").get(adminauth
+    , GetAllAssistant).
+    patch(validation,
+        updatePassword)
+router.route("/user").get(
+    // validateIdParam,
+    validation,
+    getStaticAssistant).delete(adminauth, DeleteAssistant);
 router.route("/ticket/:id").get(
     validation,
     getTicket)
@@ -43,6 +49,7 @@ router.route("/ticket/:id").get(
 router.route("/edit/:id").post(
     validation,
     edit)
+// router.route("")
 // router.route("/ticket/:id").
 // router.route("")
 
