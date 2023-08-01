@@ -99,9 +99,12 @@ const validateTicketInput = withValidationErrors([
         .notEmpty()
         .withMessage('travel date is required')
         .custom(async (traveldate,{req}) => {
+            const lettodaydate = dayjs(new Date()).format("YYYY-MM-DD");
+            
+            const ticketTravelDate = traveldate;
             console.log("traveldate here : ",traveldate)
-            const lettodaydate = formatDate(new Date()).date
-            const ticketTravelDate = formatDate(traveldate).date;
+            console.log("todaydate here : ",lettodaydate)
+            console.log("traveldate here : ",ticketTravelDate)
             if ((dayjs(ticketTravelDate).diff(lettodaydate, "day")) < 0) {
                 throw BadRequestError(`fail cause the user is trying to back date the date`)
             }
