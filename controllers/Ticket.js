@@ -86,7 +86,7 @@ const createTicket = async (req, res) => {
 
 const editTicket = async (req, res) => {
   const user = req.user;
-  console.log("user id", user)
+  // console.log("user id", user)
   if (!user) throw BadRequestError("Login as Assistant to validate tickets")
    await checkPermissions(user.id)
 
@@ -161,6 +161,7 @@ const editTicket = async (req, res) => {
         , {
           ...tempObj
         }, { new: true })
+        // await Assistant.findOne({})
       return res.status(200).json({ updateTicket: updatevalue })
     }
     catch (err) {
