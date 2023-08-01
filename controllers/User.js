@@ -57,6 +57,7 @@ const Login = async (req, res) => {
       phone: user.phone
     })
     user = user.toJSON()
+    delete user.password
     user = {
       ...user,
       redirect: true

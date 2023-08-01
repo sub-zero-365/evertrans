@@ -532,9 +532,9 @@ const downloadsoftcopyticket = async (req, res) => {
   }
   let url = null;
   if (process.env.NODE_ENV === "production") {
-    url = `https://ntaribotaken.vercel.app/assistant/${id}?sound=true&xyz=secret&readonly=7gu8dsutf8asdf`
+    url = `https://ntaribotaken.vercel.app/assistant/${id}?sound=true&xyz=secret&readonly=7gu8dsutf8asdf&render_9368&beta47`
   } else {
-    url = `http://192.168.43.68:3000/assistant/${id}?sound=true&xyz=secret&readonly=7gu8dsutf8asdf`
+    url = `http://192.168.43.68:3000/assistant/${id}?sound=true&xyz=secret&readonly=7gu8dsutf8asdf&render_9368&beta47`
 
   }
   const _path = path.resolve(__dirname, "../tickets")
