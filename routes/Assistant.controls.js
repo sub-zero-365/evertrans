@@ -1,9 +1,11 @@
 const router = require("express").Router()
 const adminauth = require("../middlewares/Admin.auth");
 const { verifyJWT } = require("../utils/tokenUtils")
+const checkPermissions = require("../utils/checkPermission")
+
 const validation = async (req, res, next) => {
     const authHeader = req.headers.authorization;
-    console.log(authHeader)
+    // console.log(authHeader)
     if (!authHeader) {
         throw UnathorizedError("please provide an auth header")
     }
@@ -13,7 +15,7 @@ const validation = async (req, res, next) => {
     const token = authHeader.split(" ")[1];
     try {
         const payload = verifyJWT(token, process.env.jwtSecret);
-        // console.log(payload, "payload her")
+        console.log(payload, "everthing ok here")
         req.user = {
             id: payload._id,
 
@@ -41,9 +43,17 @@ router.route("/").get(adminauth
 router.route("/user").get(
     // validateIdParam,
     validation,
-    getStaticAssistant).delete(adminauth, DeleteAssistant);
+    getStaticAssistant)
+router.route("/:id").delete(adminauth, DeleteAssistant);
 router.route("/ticket/:id").get(
     validation,
+    async function (req, res, next) {
+        await checkPermissions(req.user.id)
+        
+        next()
+    }
+    ,
+    // [checkPermissions],
     getTicket)
 
 router.route("/edit/:id").post(

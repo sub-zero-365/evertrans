@@ -88,7 +88,7 @@ const editTicket = async (req, res) => {
   const user = req.user;
   console.log("user id", user)
   if (!user) throw BadRequestError("Login as Assistant to validate tickets")
-  await checkPermissions(user.id)
+   await checkPermissions(user.id)
 
 
   const { id } = req.params
