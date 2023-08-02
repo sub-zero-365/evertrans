@@ -88,7 +88,7 @@ const editTicket = async (req, res) => {
   const user = req.user;
   // console.log("user id", user)
   if (!user) throw BadRequestError("Login as Assistant to validate tickets")
-   await checkPermissions(user.id)
+  await checkPermissions(user.id)
 
 
   const { id } = req.params
@@ -161,7 +161,7 @@ const editTicket = async (req, res) => {
         , {
           ...tempObj
         }, { new: true })
-        // await Assistant.findOne({})
+      // await Assistant.findOne({})
       return res.status(200).json({ updateTicket: updatevalue })
     }
     catch (err) {
@@ -649,6 +649,7 @@ const editTicketMeta = async (req, res) => {
   } = req.body
   console.log(req.body)
   const { id: _id } = req.params;
+  console.log("id of the icket or bus", _id)
   let ticket_seatposition = null;
   let ticket_id = null
   const isTicket = await Ticket.findOne({
@@ -658,8 +659,9 @@ const editTicketMeta = async (req, res) => {
   if (!isTicket) {
     throw BadRequestError(`cannot find ticket with ${_id} and status ${active} `)
   }
-  ticket_seatposition = isTicket.seatposition
-  ticket_id = isTicket.seat_id
+  ticket_seatposition = isTicket.toJSON().seatposition
+  ticket_id = isTicket.toJSON().seat_id
+  console.log("seat position", ticket_seatposition, ticket_id, seatposition)
   let seat = await Seat.findOne({
     "seat_positions._id": Number(ticket_seatposition),
     _id: seat_id
@@ -687,7 +689,9 @@ const editTicketMeta = async (req, res) => {
     }
   )
   // console.log(ticket_seatposition)
-
+  if (!seat) {
+    console.log("seat not found 1", seat)
+  }
   seat = await Seat.findOneAndUpdate({
     "seat_positions._id": Number(ticket_seatposition),
     _id: ticket_id
@@ -711,7 +715,7 @@ const editTicketMeta = async (req, res) => {
   if (traveltime) {
     updateObj.traveltime = traveltime
   }
-  if (seatposition) {
+  if (seatposition == Number(0) || seatposition) {
     updateObj.seatposition = seatposition;
   }
   if (seat_id) {

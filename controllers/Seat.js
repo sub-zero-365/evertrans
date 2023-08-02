@@ -20,7 +20,7 @@ const getSpecificSeat = async (req, res) => {
 }
 const getStaticSeat = async (req, res) => {
     const { from, to, traveldate, traveltime } = req.query;
-    console.log(req.query)
+    // console.log(req.query)
     const queryObject = {}
     const getNextDay = (date = new Date()) => {
         const next = new Date(date.getTime());
@@ -62,9 +62,7 @@ const getStaticSeat = async (req, res) => {
     // }
 
     let isSeat = await Seat.find({ ...queryObject });
-    // console.log("all seats here",isSeat.length)
     if (isSeat.length == 0 && from && to && traveldate && traveltime) {
-        console.log("enter her where seat ==0")
         try {
             isSeat = await Seat.create({
                 from,
@@ -72,7 +70,7 @@ const getStaticSeat = async (req, res) => {
                 traveldate,
                 traveltime
             })
-            console.log("seat in try block", isSeat)
+            // console.log("seat in try block", isSeat)
         } catch (err) {
             console.log("fail to create seat err", err)
         }
@@ -125,10 +123,7 @@ const updateSeat = async (req, res) => {
 }
 const specificTicketId = async (req, res) => {
     const { id: _id, index } = req.params;
-    // console.log(await Ticket.find({
-    //     seat_id: _id,
-
-    // }))
+   console.log("this is the id and the index : ",_id,index)
     
     
     const ticket = await Ticket.findOne({
@@ -157,7 +152,7 @@ const getAllSeats = async (req, res) => {
     const queryObject = {}
     if (daterange) {
         const decoded = decodeURIComponent(daterange)
-        console.log("dcoded", decoded)
+        // console.log("dcoded", decoded)
         const [startdate, endDate] = decoded.
             split(",").
             map(arr => arr.split("="))
@@ -166,7 +161,7 @@ const getAllSeats = async (req, res) => {
                     [v]: t
                 }
             });
-        console.log("date range : ", decodeURIComponent(daterange))
+        // console.log("date range : ", decodeURIComponent(daterange))
 
         if ("start" in startdate && "end" in endDate) {
             const getNextDay = (date = new Date()) => {
@@ -181,7 +176,7 @@ const getAllSeats = async (req, res) => {
                         // $lt: getNextDay(new Date(endDate.end)),
                         $lte: endDate.end
                     }
-                    console.log("nextday", getNextDay(new Date(endDate.end)))
+                    // console.log("nextday", getNextDay(new Date(endDate.end)))
                     queryObject.traveldate = createdAt
 
                 } catch (err) {
@@ -199,7 +194,7 @@ const getAllSeats = async (req, res) => {
                 queryObject.traveldate = createdAt
             }
         }
-        console.log(queryObject)
+        // console.log(queryObject)
     }
     if (traveltime) {
         queryObject.traveltime = {
@@ -321,11 +316,10 @@ const ticketassociatedWithBus = async (req, res, next) => {
 
 const downloadboarderaux = async (req, res) => {
     const { id } = req.params;
-    ;
-    console.log("bus_id", req.query)
+    // console.log("bus_id", req.query)
     const { bus_id } = req.query;
     const  currentBus  =await Bus.findOne({ _id: bus_id })
-    console.log("currentbus",currentBus)
+    // console.log("currentbus",currentBus)
     const currentSeat = await Seat.findOne(
         {
             _id: id,
@@ -354,7 +348,7 @@ const downloadboarderaux = async (req, res) => {
 
     tickets = tickets.filter((ticket) => {
         if (ticket.type === "roundtrip") {
-            console.log("enter here")
+            // console.log("enter here")
             if (ticket.doubletripdetails[1].active === false) {
                 return true
             }
@@ -395,7 +389,7 @@ const downloadboarderaux = async (req, res) => {
         }
         try {
             form.getTextField(`bus_number`).
-                setText((String(currentSeat._id) || "n/a"))
+                setText(`${currentBus?. plate_number}`)
         } catch (err) {
             console.log(err)
         }
