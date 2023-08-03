@@ -731,7 +731,44 @@ const editTicketMeta = async (req, res) => {
   if (!isUpdate) throw BadRequestError("fail to update ticket");
   res.status(200).json({ status: true })
 }
+
+const getTicketForAnyUser = async (req, res, next) => {
+  const queryObject = {}
+  const {
+    id,
+    from,
+    to
+  } = req.body
+
+  if (id) {
+    queryObject.$expr = {
+      $eq: ['$_id', { $toObjectId: id }]
+    }
+  }
+  if (from) {
+    queryObject.from = {
+      $regex: from, $options: "i"
+    }
+
+  }
+  if (to) {
+    queryObject.to = {
+      $regex: to, $options: "i"
+    }
+
+  }
+  const ticket = await Ticket.findOne(queryObject);
+  console.log(from, to)
+  if (ticket) {
+    res.status(200).json({
+      ticket
+    })
+  }
+  if (!ticket) throw NotFoundError(`No ticket with information ${id}---${from}---${to}`)
+
+}
 module.exports = {
+  getTicketForAnyUser,
   create: createTicket,
   edit: editTicket,
   getTickets,

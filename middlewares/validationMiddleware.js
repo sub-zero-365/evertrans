@@ -203,6 +203,14 @@ const validateIdParam = withValidationErrors([
         })
         .withMessage('invalid MongoDB id'),
 ]);
+const validateIdBody = withValidationErrors([
+    body('id')
+        .custom((value) => {
+            console.log("mongoid", value)
+            return mongoose.Types.ObjectId.isValid(value)
+        })
+        .withMessage('invalid MongoDB id'),
+]);
 const validcreateAssistant = withValidationErrors([
     body("fullname").
         notEmpty()
@@ -351,5 +359,6 @@ module.exports = {
     validateEditTicket,
     busValidtionInput,
     validcreateAssistant,
-    validateUpdateUser
+    validateUpdateUser,
+    validateIdBody
 };
