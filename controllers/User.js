@@ -50,25 +50,26 @@ const Login = async (req, res) => {
 
   if (!user) {
     // search assistant user
-    user = await Assistant.findOne({ ...{ phone, password } });
+    user = await Assistant.findOne({ ...{ phone, password } }, { password: 0 });
     if (!user) throw BadRequestError("please check your login details");
     token = createJWT({
       _id: user._id,
       phone: user.phone
     })
-    user = user.toJSON()
     delete user.password
     user = {
       ...user,
       redirect: true
     }
+   return res.status(200).json({
+      user,
+      token,
+  
+    });
   }
+  user = user.toJSON()
   delete user.password
-  // if (!user) {
-  //   throw BadRequestError("please check your login details");
-  // }
   res.status(200).json({
-    // fullname: user.fullname,
     user,
     token,
 

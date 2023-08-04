@@ -207,7 +207,10 @@ const getTicket = async (req, res) => {
     const createdBy = (await User.findOne({ _id: ticket.createdBy }).select("fullname")).fullname;
     // console.log(createdBy)
     const usernameticket = ticket?.toJSON();
+
     usernameticket.username = createdBy;
+    console.log(ticket)
+    usernameticket.price = usernameticket.price + (usernameticket?.updatePrice || 0);
     res.status(200).json({
       ticket: usernameticket
     });
@@ -345,6 +348,7 @@ const getTickets = async (req, res) => {
     queryObject.$expr = {
       $eq: ['$createdBy', { $toObjectId: req.userInfo?._id }]
     }
+
   }
   if (daterange) {
     const decoded = decodeURIComponent(daterange)
@@ -456,7 +460,7 @@ const getTickets = async (req, res) => {
   if (queryObject?.sort) delete deleteTicket.sort
   const nDoc = await Ticket.countDocuments(queryObject);
 
-  var [totalActivePrice, totalInActivePrice] = (await Ticket.aggregate([{
+  var [totalActivePrice, totalInActivePrice,] = (await Ticket.aggregate([{
     $match: {
       ...queryObject,
     }
@@ -464,6 +468,7 @@ const getTickets = async (req, res) => {
     $group: {
       _id: "$active",
       sum: { $sum: "$price" },
+      sumUpdate: { $sum: "$updatePrice" },
       total: { $sum: 1 },
     }
   }, {
@@ -471,6 +476,7 @@ const getTickets = async (req, res) => {
       sum: 1,
       total: 1,
       _id: 1,
+      sumUpdate: 1,
       percentage: {
         $cond: [
           { $eq: [nDoc, 0] }, 1, {
@@ -482,7 +488,36 @@ const getTickets = async (req, res) => {
       }
     }
   }]
-  ))?.sort((a, b) => b._id - a._id)
+  ))?.sort((a, b) => b._id - a._id);
+  // this help for calculating the updated price when a user update a ticket from normal class to vip class
+  if (queryObject.$expr && !req.admin) {
+    queryObject.$expr = {
+      $eq: ['$updatedBy', { $toObjectId: req.userInfo._id }]
+    }
+  }
+
+
+
+  var totolupdateTicket = (await Ticket.aggregate([{
+    $match: {
+      ...queryObject
+    }
+  }, {
+    $group: {
+      _id: null,
+      sum: { $sum: "$updatePrice" },
+      total: { $sum: 1 },
+    }
+  }, {
+    $project: {
+      sum: 1,
+      total: 1,
+    }
+  }]
+  ))
+  // console.log("all prices here ", totolupdateTicket, req.userInfo._id)
+  const totalSumOfEditedTicket = totolupdateTicket[0]?.sum || 0;
+  const totalEditedTicket = totolupdateTicket[0]?.total || 0;
   if (totalActivePrice) {
     const { _id } = totalActivePrice;
     if (_id == false) {
@@ -509,6 +544,8 @@ const getTickets = async (req, res) => {
       currentPage: page,
       totalActiveTickets: totalActivePrice?.total || 0,
       totalInActiveTickets: totalInActivePrice?.total || 0,
+      totalSumOfEditedTicket,
+      totalEditedTicket,
       tickets,
 
     })
@@ -518,7 +555,6 @@ const getTickets = async (req, res) => {
 
 
 const deleteTicket = async (req, res) => {
-
   res.send("delete ticket routes");
 };
 
@@ -553,7 +589,7 @@ const downloadsoftcopyticket = async (req, res) => {
 
       // const fileNames = pdfDoc.getForm().getFields().map(f => f.getName())
       const form = pdfDoc.getForm()
-      const { fullname, traveldate, traveltime, seatposition, from, to, type, _id, bus, price } = ticket.toJSON()
+      const { fullname, traveldate, traveltime, seatposition, from, to, type, _id, bus, price, updatePrice } = ticket.toJSON()
       try {
         // console.log(fileNames)
         form.getTextField("fullname").
@@ -571,7 +607,7 @@ const downloadsoftcopyticket = async (req, res) => {
         form.getTextField("to").
           setText(to)
         form.getTextField("price").
-          setText(`${price} frs`)
+          setText(`${price + (updatePrice ? updatePrice : 0)} frs`)
         if (type == "singletrip") {
           form.getTextField("triptype").
             setText(`singletrip`)
@@ -580,10 +616,6 @@ const downloadsoftcopyticket = async (req, res) => {
           form.getTextField("triptype").
             setText(`roundtrip`)
         }
-
-        const timesRomanFont = await pdfDoc.embedFont(StandardFonts.TimesRoman)
-        let fontSize = 25
-
 
         form.flatten()
       } catch (err) {
@@ -594,6 +626,7 @@ const downloadsoftcopyticket = async (req, res) => {
       img = await pdfDoc.embedPng(img)
       img.scaleToFit(100, 100)
       console.log(width)
+      img.scale(1)
       page.drawImage(img, {
         x: (width / 2) - 155,
         y: height - 340,
@@ -639,6 +672,7 @@ const downloadsoftcopyticket = async (req, res) => {
   })
 }
 const editTicketMeta = async (req, res) => {
+  // const user = req.userInfo
   const {
     traveldate,
     traveltime,
@@ -647,9 +681,8 @@ const editTicketMeta = async (req, res) => {
     from,
     to
   } = req.body
-  console.log(req.body)
   const { id: _id } = req.params;
-  console.log("id of the icket or bus", _id)
+  // console.log("id of the icket or bus", _id)
   let ticket_seatposition = null;
   let ticket_id = null
   const isTicket = await Ticket.findOne({
@@ -661,6 +694,8 @@ const editTicketMeta = async (req, res) => {
   }
   ticket_seatposition = isTicket.toJSON().seatposition
   ticket_id = isTicket.toJSON().seat_id
+  price = Number(isTicket.toJSON().price)
+  let ticket_type = isTicket.toJSON().type
   console.log("seat position", ticket_seatposition, ticket_id, seatposition)
   let seat = await Seat.findOne({
     "seat_positions._id": Number(ticket_seatposition),
@@ -688,7 +723,6 @@ const editTicketMeta = async (req, res) => {
       new: true
     }
   )
-  // console.log(ticket_seatposition)
   if (!seat) {
     console.log("seat not found 1", seat)
   }
@@ -709,6 +743,21 @@ const editTicketMeta = async (req, res) => {
     console.log("seat not found", seat)
   }
   const updateObj = {};
+  console.log(ticket_seatposition, seatposition, "hihsifhasoiudh here")
+  if (ticket_seatposition > 19 && seatposition < 19) {
+    let price = 3500
+    console.log("enter here")
+    let updatedBy = req.userInfo._id
+    if (ticket_type == "singletrip") {
+      price = 3500;
+    }
+    if (ticket_type == "roundtrip") {
+      price = 3500;
+    }
+    updateObj.updatePrice = price;
+    updateObj.updatedBy = updatedBy;
+  }
+
   if (traveldate) {
     updateObj.traveldate = traveldate
   }
@@ -727,9 +776,13 @@ const editTicketMeta = async (req, res) => {
   if (to) {
     updateObj.to = to
   }
+
   const isUpdate = await Ticket.findOneAndUpdate({ _id }, updateObj);
   if (!isUpdate) throw BadRequestError("fail to update ticket");
-  res.status(200).json({ status: true })
+  console.log("updated ticket here "
+    , isUpdate)
+  res.status(200).
+    json({ status: true })
 }
 
 const getTicketForAnyUser = async (req, res, next) => {
