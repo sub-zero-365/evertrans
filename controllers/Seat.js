@@ -2,11 +2,10 @@ const Ticket = require("../models/Ticket")
 const Bus = require("../models/Bus")
 const Seat = require("../models/Seat")
 const fs = require("fs")
-const { PDFDocument, rgb, degrees } = require("pdf-lib");
+const { PDFDocument, degrees } = require("pdf-lib");
 const { readFile, writeFile } = require("fs/promises");
 const path = require("path")
 const { BadRequestError, NotFoundError } = require("../error")
-// const dayjs = require("dayjs")
 const createSeat = async (req, res) => {
     res.send("create seat route here")
 }
@@ -58,7 +57,6 @@ const getStaticSeat = async (req, res) => {
     //         throw BadRequestError(`No Bus Traveling on the
     //          ${new Date(traveldate).toLocaleDateString("en-CA")} please chose a new previous date and try again `)
     //     }
-
     // }
 
     let isSeat = await Seat.find({ ...queryObject });
@@ -123,9 +121,9 @@ const updateSeat = async (req, res) => {
 }
 const specificTicketId = async (req, res) => {
     const { id: _id, index } = req.params;
-   console.log("this is the id and the index : ",_id,index)
-    
-    
+    console.log("this is the id and the index : ", _id, index)
+
+
     const ticket = await Ticket.findOne({
         seat_id: _id,
         seatposition: index
@@ -194,7 +192,6 @@ const getAllSeats = async (req, res) => {
                 queryObject.traveldate = createdAt
             }
         }
-        // console.log(queryObject)
     }
     if (traveltime) {
         queryObject.traveltime = {
@@ -254,7 +251,6 @@ const getAllSeats = async (req, res) => {
     })
 }
 const updateSeatBus = async (req, res) => {
-    // update route here
     const { id: _id, bus_id } = req.params
     const isSeat = await Seat.findOne({ _id })
     if (!isSeat) throw NotFoundError("cound find seat with id " + _id);
@@ -316,10 +312,8 @@ const ticketassociatedWithBus = async (req, res, next) => {
 
 const downloadboarderaux = async (req, res) => {
     const { id } = req.params;
-    // console.log("bus_id", req.query)
     const { bus_id } = req.query;
-    const  currentBus  =await Bus.findOne({ _id: bus_id })
-    // console.log("currentbus",currentBus)
+    const currentBus = await Bus.findOne({ _id: bus_id })
     const currentSeat = await Seat.findOne(
         {
             _id: id,
@@ -328,7 +322,7 @@ const downloadboarderaux = async (req, res) => {
     )
     if (!currentSeat) throw NotFoundError("coudnot find seat with id " + id);
     const updates = await Seat.findOneAndUpdate({
-    _id:id
+        _id: id
     },
         {
             $set: {
@@ -366,11 +360,16 @@ const downloadboarderaux = async (req, res) => {
     })
     const _path = path.resolve(__dirname, "../boarderaux");
     const file = path.join(_path, "boarderauxafriquecon.pdf")
+    let img = fs.readFileSync(path.join(_path, "afrique-con.png"));
 
     try {
         const pdfDoc = await PDFDocument.load(await readFile(file));
         // const fileNames = pdfDoc.getForm().getFields().map(f => f.getName())
         // console.log(fileNames)
+        const page = pdfDoc.getPage(0)
+        const allpages = pdfDoc.getPages()
+
+
         const arr = [];
         for (let i = 0; i < currentSeat?.seat_positions.length; ++i) {
             if (tickets.some(({ seatposition }) => seatposition === i)) {
@@ -389,7 +388,7 @@ const downloadboarderaux = async (req, res) => {
         }
         try {
             form.getTextField(`bus_number`).
-                setText(`${currentBus?. plate_number}`)
+                setText(`${currentBus?.plate_number}`)
         } catch (err) {
             console.log(err)
         }
@@ -427,14 +426,27 @@ const downloadboarderaux = async (req, res) => {
         }
 
         form.flatten()
+
+
+        allpages.forEach(async (currentpage, index) => {
+            const { width, height } = currentpage.getSize()
+            img = await pdfDoc.embedPng(img)
+            img.scaleToFit(100, 100)
+            img.scale(1)
+            currentpage.drawImage(img, {
+                x: (width / 2) - (img.width / 2 + 100),
+                y: height / 2
+                , width: 600,
+                rotate: degrees(30),
+                opacity: 0.75,
+            })
+        })
+
         const pdfBytes = await pdfDoc.save()
-        // error here 
         await writeFile(path.join(_path, id + ".pdf"), pdfBytes);
         try {
-
             await res.sendFile(path.join(_path, id + ".pdf"),
                 null,
-
                 function (err) {
                     res.end();
                     if (err) {
@@ -442,7 +454,6 @@ const downloadboarderaux = async (req, res) => {
                         console.log(err, "391")
                         // throw err
                     }
-
                     else {
                         if (fs.existsSync(path.join(_path, id + ".pdf"))) {
                             try {
@@ -454,11 +465,9 @@ const downloadboarderaux = async (req, res) => {
                         }
                     }
 
-
                 })
         } catch (err) {
             console.log("causes the server to stop : ", err)
-
         }
     }
     catch (err) {
