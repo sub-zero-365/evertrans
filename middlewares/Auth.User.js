@@ -1,5 +1,5 @@
-const {
 
+const {
     UnathorizedError } = require("../error")
 const jwt = require("jsonwebtoken");
 

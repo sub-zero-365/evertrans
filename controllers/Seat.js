@@ -11,7 +11,6 @@ const createSeat = async (req, res) => {
 }
 const getSpecificSeat = async (req, res) => {
     const { id: _id } = req.params;
-
     const seat = await Seat.findOne({ _id })
     if (!seat) throw NotFoundError("fail to get seat with id " + _id)
     res.status(200).json({ seat })
@@ -171,8 +170,8 @@ const getAllSeats = async (req, res) => {
                 try {
                     var createdAt = {
                         $gte: startdate.start,
-                        // $lt: getNextDay(new Date(endDate.end)),
                         $lte: endDate.end
+                        // $lt: getNextDay(new Date(endDate.end)),
                     }
                     // console.log("nextday", getNextDay(new Date(endDate.end)))
                     queryObject.traveldate = createdAt

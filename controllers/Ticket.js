@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 
 const User = require("../models/User")
 const qrcode = require("qrcode");
@@ -11,11 +12,13 @@ const Seat = require("../models/Seat")
 const Assistant = require("../models/Assistant")
 const {
   BadRequestError,
-  NotFoundError
+  NotFoundError,
+  UnethenticatedError
 } = require("../error");
 const toJson = require("../utils/toJson");
 const dayjs = require("dayjs")
 const Ticket = require("../models/Ticket");
+const { toString } = require('express-validator/src/utils');
 function formatDate(date = new Date()) {
   const formateDate = new Date(date);
   return {
@@ -87,9 +90,10 @@ const createTicket = async (req, res) => {
 const editTicket = async (req, res) => {
   const user = req.user;
   // console.log("user id", user)
+  const demo_id = "64ce0086f793d0001861d076";
+
   if (!user) throw BadRequestError("Login as Assistant to validate tickets")
   await checkPermissions(user.id)
-
 
   const { id } = req.params
   const { index } = req.query
@@ -97,6 +101,9 @@ const editTicket = async (req, res) => {
     _id: id,
 
   });
+  console.log("ticket seatid ", isTicket.seat_id, demo_id)
+  if (toString(isTicket.seat_id) === demo_id) throw BadRequestError("This ticket does not have a bus seat ,please go get a bus seat before validating the ticket");
+
   if (!isTicket) {
     throw NotFoundError("cannot find ticket with this id " + id);
   }
@@ -351,6 +358,7 @@ const getTickets = async (req, res) => {
 
   }
   if (daterange) {
+    console.log("date rangehere : ", daterange)
     const decoded = decodeURIComponent(daterange)
     const [startdate, endDate] = decoded.
       split(",").
@@ -449,7 +457,7 @@ const getTickets = async (req, res) => {
 
   const sortKey = sortOptions[sort] || sortOptions.newest;
   const page = Number(req.query.page) || 1;
-  const limit = Number(req.query.limit) || 20;
+  const limit = Number(req.query.limit) || 100;
   const skip = (page - 1) * limit;
   const tickets = await Ticket.find(queryObject)
     .sort(sortKey)
@@ -468,7 +476,6 @@ const getTickets = async (req, res) => {
     $group: {
       _id: "$active",
       sum: { $sum: "$price" },
-      sumUpdate: { $sum: "$updatePrice" },
       total: { $sum: 1 },
     }
   }, {
@@ -476,7 +483,6 @@ const getTickets = async (req, res) => {
       sum: 1,
       total: 1,
       _id: 1,
-      sumUpdate: 1,
       percentage: {
         $cond: [
           { $eq: [nDoc, 0] }, 1, {
@@ -490,17 +496,31 @@ const getTickets = async (req, res) => {
   }]
   ))?.sort((a, b) => b._id - a._id);
   // this help for calculating the updated price when a user update a ticket from normal class to vip class
-  if (queryObject.$expr && !req.admin) {
-    queryObject.$expr = {
-      $eq: ['$updatedBy', { $toObjectId: req.userInfo._id }]
-    }
+  if (createdBy && req.admin === true) {
+    delete queryObject.$expr
+    queryObject.updatedBy = new mongoose.Types.ObjectId(createdBy)
+
+  }
+  // if (req.userInfo?._id && !createdBy) {
+  //   queryObject.$expr = {
+  //     $eq: ['$createdBy', { $toObjectId: req.userInfo?._id }]
+  //   }
+
+  // }
+  if (queryObject.$expr && req.userInfo?._id && !createdBy) {
+    delete queryObject.$expr
+    queryObject.updatedBy = new mongoose.Types.ObjectId(req.userInfo._id)
   }
 
-
+  const _tmp = queryObject.daterange
+  if (queryObject.boardingRange) delete queryObject.boardingRange;
+  if (queryObject.daterange) delete queryObject.daterange;
+  queryObject.updatedDate = _tmp
 
   var totolupdateTicket = (await Ticket.aggregate([{
     $match: {
-      ...queryObject
+      ...queryObject,
+
     }
   }, {
     $group: {
@@ -515,7 +535,7 @@ const getTickets = async (req, res) => {
     }
   }]
   ))
-  // console.log("all prices here ", totolupdateTicket, req.userInfo._id)
+  console.log("all prices here ", totolupdateTicket, req?.userInfo?._id)
   const totalSumOfEditedTicket = totolupdateTicket[0]?.sum || 0;
   const totalEditedTicket = totolupdateTicket[0]?.total || 0;
   if (totalActivePrice) {
@@ -525,13 +545,9 @@ const getTickets = async (req, res) => {
       totalActivePrice = {}
       totalInActivePrice = temp
     }
-
-
   }
   const _length = (totalActivePrice?.total || 0) + (totalInActivePrice?.total || 0)
   const numberOfPages = Math.ceil(_length / limit);
-
-
   res.
     status(200).json({
       totalPrice: (totalActivePrice?.sum || 0) + (totalInActivePrice?.sum || 0),
@@ -672,7 +688,9 @@ const downloadsoftcopyticket = async (req, res) => {
   })
 }
 const editTicketMeta = async (req, res) => {
-  // const user = req.userInfo
+  if (!req?.userInfo?._id) {
+    throw UnethenticatedError("you are not authorized to perform this operation ")
+  }
   const {
     traveldate,
     traveltime,
@@ -682,7 +700,6 @@ const editTicketMeta = async (req, res) => {
     to
   } = req.body
   const { id: _id } = req.params;
-  // console.log("id of the icket or bus", _id)
   let ticket_seatposition = null;
   let ticket_id = null
   const isTicket = await Ticket.findOne({
@@ -736,26 +753,23 @@ const editTicketMeta = async (req, res) => {
         "seat_positions.$.isReserved": false
       }
     })
-  // .catch((err) => console.log("update seat err", err))
 
 
   if (!seat) {
     console.log("seat not found", seat)
   }
   const updateObj = {};
-  console.log(ticket_seatposition, seatposition, "hihsifhasoiudh here")
   if (ticket_seatposition > 19 && seatposition < 19) {
     let price = 3500
-    console.log("enter here")
-    let updatedBy = req.userInfo._id
+    updateObj.updatedBy = req.userInfo._id
     if (ticket_type == "singletrip") {
       price = 3500;
     }
     if (ticket_type == "roundtrip") {
-      price = 3500;
+      price = 13000;
     }
     updateObj.updatePrice = price;
-    updateObj.updatedBy = updatedBy;
+    updateObj.updateDate = dayjs().format("YYYY/MM/DD");
   }
 
   if (traveldate) {
@@ -777,15 +791,15 @@ const editTicketMeta = async (req, res) => {
     updateObj.to = to
   }
 
+
   const isUpdate = await Ticket.findOneAndUpdate({ _id }, updateObj);
+  console.log("updated ticket", isUpdate)
   if (!isUpdate) throw BadRequestError("fail to update ticket");
-  console.log("updated ticket here "
-    , isUpdate)
   res.status(200).
     json({ status: true })
 }
 
-const getTicketForAnyUser = async (req, res, next) => {
+const getTicketForAnyUser = async (req, res) => {
   const queryObject = {}
   const {
     id,
@@ -802,24 +816,65 @@ const getTicketForAnyUser = async (req, res, next) => {
     queryObject.from = {
       $regex: from, $options: "i"
     }
-
   }
   if (to) {
     queryObject.to = {
       $regex: to, $options: "i"
     }
-
   }
   const ticket = await Ticket.findOne(queryObject);
-  console.log(from, to)
   if (ticket) {
     res.status(200).json({
       ticket
     })
   }
-  if (!ticket) throw NotFoundError(`No ticket with information ${id}---${from}---${to}`)
-
+  if (!ticket) throw NotFoundError(`No ticket with information ${id}---${from || ""}---${to || ""}`)
 }
+
+const removeSeatIdFromTicket = async (req, res) => {
+
+  const { seatposition, seat_id } = req.body;
+  // const { id: _id } = req.params;
+  let ticket = await Ticket.findOne({
+    seat_id,
+    seatposition,
+    active: true
+  })
+  if (!ticket) throw BadRequestError("fail top update ticket")
+  const demo_id = "64ce0086f793d0001861d076";
+  console.log("user edited box", req.body)
+  let seat = await Seat.findOneAndUpdate({
+    "seat_positions._id": Number(seatposition),
+    _id: seat_id
+  }
+    ,
+    {
+      $set: {
+        "seat_positions.$.isReserved": false,
+        "seat_positions.$.isTaken": false,
+      }
+    }
+    , {
+
+      new: true
+    }
+  )
+  if (!seat) throw BadRequestError("fail to update seat")
+
+  await Ticket.findOneAndUpdate({
+    seat_id,
+    seatposition
+  },
+    {
+      "$set": {
+        seat_id: demo_id
+      }
+    }
+  )
+
+  res.status(200).json({ status: true })
+}
+
 module.exports = {
   getTicketForAnyUser,
   create: createTicket,
@@ -829,5 +884,6 @@ module.exports = {
   getTicket,
   deleteTicket,
   downloadsoftcopyticket,
-  editTicketMeta
+  editTicketMeta,
+  removeSeatIdFromTicket
 };

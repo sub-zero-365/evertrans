@@ -37,10 +37,7 @@ const ticketSchema = new Schema(
       type: Number,
       required: [true, "please enter price"],
     },
-    updatePrice: {
-      type: Number,
-      required: false,
-    },
+
     traveltime: {
       type: String,
       required: [true, "please enter time"],
@@ -58,6 +55,14 @@ const ticketSchema = new Schema(
       type: Schema.ObjectId,
       required: false,
       ref: "users",
+    },
+    updatedDate: {
+      type: Date,
+      required: [false, "please enter date"],
+    },
+    updatePrice: {
+      type: Number,
+      required: false,
     },
     doubletripdetails: {
       type: Array,
