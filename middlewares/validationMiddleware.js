@@ -52,15 +52,15 @@ const validateupdateTicket = withValidationErrors([
         .withMessage('search value required')
     ,
 ])
-// const updateTicketMetaData = withValidationErrors([
-//     query('index')
-//         .optional()
-//         .isIn([1, 2])
-//         .trim()
-//         .notEmpty()
-//         .withMessage('search value required')
-//     ,
-// ])
+const updateTicketMetaData = withValidationErrors([
+    body("seat_id").
+    notEmpty().
+    withMessage("please provide a seat_id to update seat")
+    .custom((value) => mongoose.Types.ObjectId.isValid(value))
+    .withMessage('invalid MongoDB id'),
+    
+    
+])
 const busValidtionInput = withValidationErrors([
     body('name').notEmpty().
         withMessage("please provide a bus name").

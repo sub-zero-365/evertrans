@@ -4,7 +4,7 @@ const {
     getTicket,
     getTickets
     , downloadsoftcopyticket,
-    editTicketMeta
+    editTicketMeta, removeSeatIdFromTicket
 } = require("../controllers/Ticket");
 const { validateTicketInput,
     validateupdateTicket,
@@ -35,5 +35,6 @@ router.
     patch(
         validateIdParam,
         editTicketMeta)
+router.route("/removeticketfrombus").post(removeSeatIdFromTicket)
 
 module.exports = router
