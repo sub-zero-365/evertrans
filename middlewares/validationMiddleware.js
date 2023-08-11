@@ -152,7 +152,7 @@ const validateTicketInput = withValidationErrors([
             }
             if (req.body.type === "round" || req.body.type === "roundtrip") {
                 if (seatposition < 20) req.body.price = 20000
-                if (seatposition > 19) req.body.price = 13000
+                if (seatposition > 19) req.body.price = 10000
 
             }
             return true
