@@ -199,47 +199,24 @@ const getTicket = async (req, res) => {
   const {
     params: { id },
   } = req;
-
-  if (!req.userInfo) {
-
-    // the user is the admn of the pagge let him get the user information
-    // any register person can read and write the ticket
-    ticket = await Ticket.findOne({
-      _id: id,
-    });
-    if (!ticket) {
-      console.log()
-      throw BadRequestError("please send a valid for to get the ticket");
-    }
-    const createdBy = (await User.findOne({ _id: ticket.createdBy }).select("fullname")).fullname;
-    // console.log(createdBy)
-    const usernameticket = ticket?.toJSON();
-
-    usernameticket.username = createdBy;
-    console.log(ticket)
-    usernameticket.price = usernameticket.price + (usernameticket?.updatePrice || 0);
-    res.status(200).json({
-      ticket: usernameticket
-    });
-    return
-  }
   ticket = await Ticket.findOne({
-    // createdBy: req.userInfo._id,
     _id: id,
   });
   if (!ticket) {
     throw BadRequestError("please send a valid for to get the ticket");
   }
-
   // this get all ticket if you didnit create it 
   const createdBy = (await User.findOne({ _id: ticket.createdBy })
     .select("fullname")).fullname;
   const usernameticket = ticket?.toJSON();
+  const { price, updatePrice } = usernameticket
+  console.log("username ticket here : ", usernameticket)
   usernameticket.username = createdBy;
+  usernameticket.price = price + (updatePrice ?? 0)
   res.status(200).json({
     ticket: usernameticket
   });
-  return
+
 };
 
 const userTickets = async (req, res) => {
@@ -464,7 +441,40 @@ const getTickets = async (req, res) => {
     .skip(skip)
     .limit(limit);
 
+  // const calc = await Ticket.aggregate([
+  //   {
+  //     $match: {
+  //       ...queryObject,
+  //     }
+  //   },
 
+  //   {
+  //     $addFields: {
+  //       subtitle: "hello"
+  //     }
+  //   },
+  //   {
+  //     $project: {
+  //       _id: "$_id",
+  //       price: {
+  //         $sum: {
+  //           $add: [
+  //             "$price", {
+  //               $cond: [
+  //                 {
+  //                   $eq: ["$updatePrice", null]
+  //                 }, "$updatePrice", 0
+  //               ]
+  //             }
+  //           ]
+  //         }
+  //       }, fullname: 1, traveldtae: 1, traveltime: 1, updatePrice: 1,doubletripdetails:1,
+
+  //     }
+  //   },
+
+  // // ])
+  // console.log("updated price here ", calc)
   if (queryObject?.sort) delete deleteTicket.sort
   const nDoc = await Ticket.countDocuments(queryObject);
 
@@ -535,7 +545,7 @@ const getTickets = async (req, res) => {
     }
   }]
   ))
-  console.log("all prices here ", totolupdateTicket, req?.userInfo?._id)
+  // console.log("all prices here ", totolupdateTicket, req?.userInfo?._id)
   const totalSumOfEditedTicket = totolupdateTicket[0]?.sum || 0;
   const totalEditedTicket = totolupdateTicket[0]?.total || 0;
   if (totalActivePrice) {
@@ -766,7 +776,7 @@ const editTicketMeta = async (req, res) => {
       price = 3500;
     }
     if (ticket_type == "roundtrip") {
-      price = 13000;
+      price = 10000;
     }
     updateObj.updatePrice = price;
     updateObj.updateDate = dayjs().format("YYYY/MM/DD");
