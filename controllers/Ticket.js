@@ -642,7 +642,14 @@ const downloadsoftcopyticket = async (req, res) => {
           form.getTextField("triptype").
             setText(`roundtrip`)
         }
-
+        const fontSize = 40
+        page.drawText(`${_id}`, {
+          x: width - 30,
+          y: 4 * 16,
+          size: fontSize,
+          color: rgb(0, 0, 0),
+          rotate: degrees(90)
+        })
         form.flatten()
       } catch (err) {
         console.log(err)
