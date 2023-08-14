@@ -9,7 +9,8 @@ const {
 const { validateTicketInput,
     validateupdateTicket,
     validateIdParam,
-    validateEditTicket
+    validateGetTicket,
+    validateEditTicket,
 } = require("../middlewares/validationMiddleware")
 const IsUserRestricted = require("../middlewares/IsUserRestricted")
 const express = require("express")
@@ -19,6 +20,7 @@ router.route("/").post(IsUserRestricted,
     validateTicketInput, create).get(getTickets)
 router.route("/:id").get(
     validateIdParam,
+    // validateGetTicket,
     getTicket)
 router.route("/download/:id").
     get(validateIdParam,

@@ -196,12 +196,22 @@ const editTicket = async (req, res) => {
 const getTicket = async (req, res) => {
   // new implentation here//change the code to make  please the client
   var ticket = null;
+  let isString = req.isString || false;
+  console.log("isString", isString)
   const {
     params: { id },
   } = req;
-  ticket = await Ticket.findOne({
-    _id: id,
-  });
+  if (isString) {
+    ticket = await Ticket.findOne({
+      id
+    });
+
+  } else {
+    ticket = await Ticket.findOne({
+      _id: id
+    });
+  }
+
   if (!ticket) {
     throw BadRequestError("please send a valid for to get the ticket");
   }
@@ -209,10 +219,12 @@ const getTicket = async (req, res) => {
   const createdBy = (await User.findOne({ _id: ticket.createdBy })
     .select("fullname")).fullname;
   const usernameticket = ticket?.toJSON();
-  const { price, updatePrice } = usernameticket
-  console.log("username ticket here : ", usernameticket)
+  const { price, updatePrice, id: ticket_id, _id } = usernameticket
   usernameticket.username = createdBy;
   usernameticket.price = price + (updatePrice ?? 0)
+  usernameticket._id = ticket_id ?? _id
+  console.log("username ticket here : ", usernameticket)
+
   res.status(200).json({
     ticket: usernameticket
   });
@@ -615,7 +627,7 @@ const downloadsoftcopyticket = async (req, res) => {
 
       // const fileNames = pdfDoc.getForm().getFields().map(f => f.getName())
       const form = pdfDoc.getForm()
-      const { fullname, traveldate, traveltime, seatposition, from, to, type, _id, bus, price, updatePrice } = ticket.toJSON()
+      const { fullname, traveldate, traveltime, seatposition, from, to, type, _id, id, bus, price, updatePrice } = ticket.toJSON()
       try {
         // console.log(fileNames)
         form.getTextField("fullname").
@@ -643,11 +655,11 @@ const downloadsoftcopyticket = async (req, res) => {
             setText(`roundtrip`)
         }
         const fontSize = 40
-        page.drawText(`${_id}`, {
+        page.drawText(`${id ? id : _id}`, {
           x: width - 30,
-          y: 4 * 16,
+          y: (height / 2) - (fontSize * 8) / 2,
           size: fontSize,
-          color: rgb(0, 0, 0),
+          color: rgb(0, 1, 0),
           rotate: degrees(90)
         })
         form.flatten()
@@ -666,12 +678,7 @@ const downloadsoftcopyticket = async (req, res) => {
         width: 310,
         height: 310
       })
-      // page.drawImage(img, {
-      //   x: width - 40,
-      //   y: height - 40,
-      //   width: 40,
-      //   height: 40
-      // })
+
 
       const pdfBytes = await pdfDoc.save()
       await writeFile(path.join(_path, ticket._id + ".pdf"), pdfBytes);
@@ -719,6 +726,7 @@ const editTicketMeta = async (req, res) => {
   const { id: _id } = req.params;
   let ticket_seatposition = null;
   let ticket_id = null
+  let ticket_updatedPrice = null
   const isTicket = await Ticket.findOne({
     _id,
     active: true
@@ -728,6 +736,7 @@ const editTicketMeta = async (req, res) => {
   }
   ticket_seatposition = isTicket.toJSON().seatposition
   ticket_id = isTicket.toJSON().seat_id
+  ticket_updatedPrice = isTicket.toJSON().updatePrice
   price = Number(isTicket.toJSON().price)
   let ticket_type = isTicket.toJSON().type
   console.log("seat position", ticket_seatposition, ticket_id, seatposition)
@@ -776,6 +785,7 @@ const editTicketMeta = async (req, res) => {
     console.log("seat not found", seat)
   }
   const updateObj = {};
+
   if (ticket_seatposition > 19 && seatposition < 19) {
     let price = 3500
     updateObj.updatedBy = req.userInfo._id
@@ -788,7 +798,25 @@ const editTicketMeta = async (req, res) => {
     updateObj.updatePrice = price;
     updateObj.updateDate = dayjs().format("YYYY/MM/DD");
   }
+  console.log("this is the ticket here",
+    isTicket, "this is the seatposition here ",
+    seatposition,ticket_updatedPrice)
+    const condition=ticket_seatposition < 20 && seatposition < 19&& isTicket?.price <= 6500  && (ticket_updatedPrice != null || ticket_updatedPrice == 0)
+  console.log("this  is the condition ",condition)
+  if (condition) {
+    let price = 3500
+    console.log("updated ticket will enter here when the price met a condition thanks for the suport")
+    updateObj.updatedBy = req.userInfo._id
+    if (ticket_type == "singletrip") {
+      price = 3500;
+    }
+    if (ticket_type == "roundtrip") {
+      price = 10000;
+    }
+    updateObj.updatePrice = price;
+    updateObj.updateDate = dayjs().format("YYYY/MM/DD");
 
+  }
   if (traveldate) {
     updateObj.traveldate = traveldate
   }
@@ -820,32 +848,37 @@ const getTicketForAnyUser = async (req, res) => {
   const queryObject = {}
   const {
     id,
-    from,
-    to
-  } = req.body
 
-  if (id) {
-    queryObject.$expr = {
-      $eq: ['$_id', { $toObjectId: id }]
+  } = req.body
+  var ticket = null;
+  let isString = req.isString || false;
+  console.log("isString", isString)
+  if (!id) throw BadRequestError("no id")
+  if (req.isString) {
+    if (id) {
+      queryObject.id = id?.trim()
+      // {
+      //   $regex: id?.trim(), $options: "i"
+      // }
+    }
+
+
+  } else {
+    if (id) {
+      queryObject.$expr = {
+        $eq: ['$_id', { $toObjectId: id }]
+      }
     }
   }
-  if (from) {
-    queryObject.from = {
-      $regex: from, $options: "i"
-    }
-  }
-  if (to) {
-    queryObject.to = {
-      $regex: to, $options: "i"
-    }
-  }
-  const ticket = await Ticket.findOne(queryObject);
+
+
+  ticket = await Ticket.findOne(queryObject);
   if (ticket) {
     res.status(200).json({
       ticket
     })
   }
-  if (!ticket) throw NotFoundError(`No ticket with information ${id}---${from || ""}---${to || ""}`)
+  if (!ticket) throw NotFoundError(`No ticket with information ${id}`)
 }
 
 const removeSeatIdFromTicket = async (req, res) => {
