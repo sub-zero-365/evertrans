@@ -39,6 +39,27 @@ const withValidationErrors = (validateFn) => {
 //     .withMessage('name must be between 3 and 50 characters long')
 //     .trim(),
 // ]);
+const validateGetTicket = withValidationErrors([
+    body('id').custom((value, { req }) => {
+        console.log("8c", value)
+        if (value.length === 8) {
+            req.isString = true
+            return true
+        }
+        else if (value.length === 24) {
+            console.log("enter her wigasdfg")
+            const bool = mongoose.Types.ObjectId.isValid(value);
+            return bool
+        }
+        else {
+            throw BadRequestError("invalid id ")
+        }
+
+    })
+
+]
+
+)
 
 const validateupdateTicket = withValidationErrors([
     param('id')
@@ -54,12 +75,12 @@ const validateupdateTicket = withValidationErrors([
 ])
 const updateTicketMetaData = withValidationErrors([
     body("seat_id").
-    notEmpty().
-    withMessage("please provide a seat_id to update seat")
-    .custom((value) => mongoose.Types.ObjectId.isValid(value))
-    .withMessage('invalid MongoDB id'),
-    
-    
+        notEmpty().
+        withMessage("please provide a seat_id to update seat")
+        .custom((value) => mongoose.Types.ObjectId.isValid(value))
+        .withMessage('invalid MongoDB id'),
+
+
 ])
 const busValidtionInput = withValidationErrors([
     body('name').notEmpty().
@@ -110,9 +131,9 @@ const validateTicketInput = withValidationErrors([
             const lettodaydate = dayjs(new Date()).format("YYYY-MM-DD");
 
             const ticketTravelDate = traveldate;
-            console.log("traveldate here : ", traveldate)
-            console.log("todaydate here : ", lettodaydate)
-            console.log("traveldate here : ", ticketTravelDate)
+            // console.log("traveldate here : ", traveldate)
+            // console.log("todaydate here : ", lettodaydate)
+            // console.log("traveldate here : ", ticketTravelDate)
             if ((dayjs(ticketTravelDate).diff(lettodaydate, "day")) < 0) {
                 throw BadRequestError(`fail cause the user is trying to back date the date`)
             }
@@ -146,6 +167,16 @@ const validateTicketInput = withValidationErrors([
         .custom((seat, { req, loc, path }) => {
             const seatposition = Number(seat)
             if (seatposition > 53 || seatposition == NaN || seatposition < 0) throw BadRequestError("please send a valid seat position");
+
+            if (!req.body.busType) throw BadRequestError("missing bus type ")
+            if (req.body.busType && req.body.busType == "classic") {
+                if (req.body.type === "round" || req.body.type === "roundtrip") {
+                    req.body.price = 10000
+                    return true
+                }
+                req.body.price = 6500
+                return true
+            }
             if (req.body.type === "null" || req.body.type === "singletrip") {
                 if (seatposition < 20) req.body.price = 10000
                 if (seatposition > 19) req.body.price = 6500
@@ -153,7 +184,6 @@ const validateTicketInput = withValidationErrors([
             if (req.body.type === "round" || req.body.type === "roundtrip") {
                 if (seatposition < 20) req.body.price = 20000
                 if (seatposition > 19) req.body.price = 10000
-
             }
             return true
         })
@@ -368,5 +398,6 @@ module.exports = {
     busValidtionInput,
     validcreateAssistant,
     validateUpdateUser,
-    validateIdBody
+    validateIdBody,
+    validateGetTicket
 };

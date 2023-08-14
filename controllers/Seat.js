@@ -7,7 +7,52 @@ const { readFile, writeFile } = require("fs/promises");
 const path = require("path")
 const { BadRequestError, NotFoundError } = require("../error")
 const createSeat = async (req, res) => {
-    res.send("create seat route here")
+    const { seat_id, bus_id, from: starting, to: destination,traveltime:travel_time ,traveldate:travel_date} = req.body
+    console.log(req.body)
+    if (!bus_id) BadRequestError("please provide bus and seat id ");
+    const isBus = await Bus.findOne({ _id: bus_id }).select("number_of_seats name plate_number feature")
+    const { number_of_seats, name, _id, feature } = isBus.toJSON()
+
+    if (starting && destination) {
+        const seat = await Seat.create({
+            from: starting,
+            to: destination,
+            traveltime:travel_time,
+            traveldate:travel_date,
+            number_of_seats,
+            bus: {
+                bus: name,
+                _id,
+                feature
+            }
+        })
+        if (!seat) throw BadRequestError("something went wrong fail to create seat")
+
+        res.status(200).json({ status: true })
+        return
+    }
+    if (!seat_id) throw BadRequestError("please provide bus and seat id ");
+    const isSeat = await Seat.findOne({ _id: seat_id });
+    if (!isBus || !isSeat) throw BadRequestError("something went wrong");
+    const { from, to, traveltime, traveldate } = isSeat;
+    console.log("this is the bus where informarion is taken from ", isBus)
+    console.log("name of the bus is : ", name)
+    const seat = await Seat.create({
+        from,
+        to,
+        traveltime,
+        traveldate,
+        number_of_seats,
+        bus: {
+            bus: name,
+            _id,
+            feature
+
+        }
+    })
+    if (!seat) throw BadRequestError("something went wrong fail to create seat")
+
+    res.status(200).json({ status: true })
 }
 const getSpecificSeat = async (req, res) => {
     const { id: _id } = req.params;
@@ -18,7 +63,6 @@ const getSpecificSeat = async (req, res) => {
 }
 const getStaticSeat = async (req, res) => {
     const { from, to, traveldate, traveltime } = req.query;
-    // console.log(req.query)
     const queryObject = {}
     const getNextDay = (date = new Date()) => {
         const next = new Date(date.getTime());
@@ -36,7 +80,6 @@ const getStaticSeat = async (req, res) => {
         queryObject.to = {
             $regex: to, $options: "i"
         }
-
     }
     if (traveltime) {
         queryObject.traveltime = {
@@ -45,9 +88,14 @@ const getStaticSeat = async (req, res) => {
 
     }
     if (traveldate) {
+        console.log("travel date", traveldate)
         var date_ = {
             $gte: traveldate,
-            $lte: getNextDay(new Date(traveldate)),
+            $lte: traveldate,
+
+            // $lte: getNextDay(new Date(traveldate)),
+            // $lte: getNextDay(new Date(traveldate)),
+
         }
         queryObject.traveldate = date_
     }
@@ -59,15 +107,16 @@ const getStaticSeat = async (req, res) => {
     // }
 
     let isSeat = await Seat.find({ ...queryObject });
+
     if (isSeat.length == 0 && from && to && traveldate && traveltime) {
         try {
             isSeat = await Seat.create({
                 from,
                 to,
                 traveldate,
-                traveltime
+                traveltime,
+
             })
-            // console.log("seat in try block", isSeat)
         } catch (err) {
             console.log("fail to create seat err", err)
         }

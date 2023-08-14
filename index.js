@@ -36,7 +36,7 @@ const { getTicketForAnyUser } = require("./controllers/Ticket")
 const assistantRoute = require("./routes/Assistant")
 const assistantControlsRoute = require("./routes/Assistant.controls")
 const userSelf = require("./routes/User.self")
-const { validateIdBody } = require("./middlewares/validationMiddleware")
+const { validateIdBody, validateGetTicket } = require("./middlewares/validationMiddleware")
 app.use("/auth", User);
 app.use("/user", userSelf);
 app.use("/auth/assistant", assistantRoute);
@@ -49,7 +49,9 @@ app.use("/bus", busRouter);
 app.use("/contact", Admin_auth, contactRouter);
 app.use("/restricted", restrictedRouter);
 app.get("/downloadticket/:id", downloadsoftcopyticket)
-app.post("/public/ticket", validateIdBody, getTicketForAnyUser)
+app.post("/public/ticket",
+  validateGetTicket,
+  getTicketForAnyUser)
 
 app.get("/allcities", cityController);
 const server_running = (port) =>

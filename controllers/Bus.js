@@ -11,7 +11,7 @@ const {
 const { v4: uuid } = require("uuid");
 const { findOneAndUpdate } = require("../models/Routes");
 const create = async (req, res) => {
-    console.log(req.body)
+    // console.log(req.body)
     const bus = await Bus.create(req.body)
     res.status(201).
         json({ bus })

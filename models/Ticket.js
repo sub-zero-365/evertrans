@@ -1,11 +1,17 @@
 const { Schema, model } = require("mongoose");
 const User = require("./User");
+const generateRandonNumber = require("../utils/RandonGeneratedIds")
 const ticketSchema = new Schema(
   {
     fullname: {
       type: String,
       required: [true, "please enter fullname "],
     },
+    id: {
+      type: String,
+      required: [true, "please field is required "]
+    }
+    ,
     type: {
       type: String,
       default: "singletrip",
@@ -63,6 +69,7 @@ const ticketSchema = new Schema(
     updatePrice: {
       type: Number,
       required: false,
+      default: 0
     },
     doubletripdetails: {
       type: Array,
@@ -105,6 +112,16 @@ const ticketSchema = new Schema(
     seat_id: {
       type: Schema.ObjectId,
       require: [true, "every ticket needs a unique seat id "]
+    },
+    paymenttype: {
+      type: String,
+      require: false,
+      default: "Cash In",
+      emun: {
+        values: ["Cash In",
+          "CM"],
+
+      }
     }
 
   },
@@ -126,7 +143,8 @@ ticketSchema.pre(
     next();
   }
 );
-ticketSchema.pre("save", async function () {
+ticketSchema.pre("validate", async function () {
+  this.id = generateRandonNumber()
   if (this.type === "roundtrip") {
     this.doubletripdetails = [
       {

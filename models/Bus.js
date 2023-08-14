@@ -15,8 +15,18 @@ const busSchema = new Schema({
         type: Number,
         required: true
 
+    },
+    feature: {
+        type: String,
+        require: [true, "pleae bus feature  is required"],
+        enum: {
+            values: [
+                "classic", "vip"
+            ]
+        }
+
     }
-,
+    ,
 }, {
     timestamps: true,
     versionKey: false

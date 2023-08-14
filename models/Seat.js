@@ -19,9 +19,19 @@ const seatSchema = new Schema({
     },
     bus: {
         type: Object,
+        bus: {
+            type: String,
+            require:[true,"bus name is require please pass bus name "]
+        },
+        feature: {
+            type: String,
+            require:[true,"bus name is require please pass bus name "]
+        },
+      
         default: {
             bus: "demobus",
-            _id: "64b260e8ef94c7a1aa37a22b"
+            _id: "64b260e8ef94c7a1aa37a22b",
+            feature: "vip"
         }
     },
     seat_positions: [
@@ -38,26 +48,29 @@ const seatSchema = new Schema({
 
         }
     ],
+    number_of_seats: {
+        type: Number,
+        min: [49, "please seat should not be less than 45"],
+        default: 49
+    },
 }, {
-    timestamps: true, 
+    timestamps: true,
     versionKey: false
 })
 
 seatSchema.pre("validate", async function () {
-
-    const number_of_seats = 53
-
+    const number_of_seats = this.number_of_seats ?? 53
     this.seat_positions =
         Array.from(
-        { length: number_of_seats }, 
-        (arr, index) => {
-            return ({
-                _id: index,
-                isTaken: false,
-                isReserved:false
+            { length: number_of_seats },
+            (arr, index) => {
+                return ({
+                    _id: index,
+                    isTaken: false,
+                    isReserved: false
+                })
             })
-        })
-    
+
 })
 
 const seatschema = model("seats", seatSchema)
