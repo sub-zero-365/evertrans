@@ -218,9 +218,15 @@ const getTicket = async (req, res) => {
   // this get all ticket if you didnit create it 
   const createdBy = (await User.findOne({ _id: ticket.createdBy })
     .select("fullname")).fullname;
+  let busname = await Seat.findOne({
+    _id: ticket?.seat_id
+  }).select("bus")
+  busname = busname?.bus || "n/a"
+  // console.log("this is the bus name associated with the seat ", busname)
   const usernameticket = ticket?.toJSON();
   const { price, updatePrice, id: ticket_id, _id } = usernameticket
   usernameticket.username = createdBy;
+  usernameticket.busdetails = busname
   usernameticket.price = price + (updatePrice ?? 0)
   usernameticket._id = ticket_id ?? _id
   console.log("username ticket here : ", usernameticket)
@@ -304,7 +310,6 @@ const userTickets = async (req, res) => {
 };
 
 const getTickets = async (req, res) => {
-
   const { search,
     createdBy,
     sort,
@@ -334,11 +339,18 @@ const getTickets = async (req, res) => {
 
   }
 
-  if (createdBy && req.admin === true) {
+  if (createdBy && req?.admin?.role === "admin") {
     queryObject.$expr = {
       $eq: ['$createdBy', { $toObjectId: createdBy }]
     }
-
+  }
+  if (createdBy && req?.admin?.role === "user") {
+    // use is in here after implentation
+    queryObject.$expr = {
+      $eq: ['$createdBy', { $toObjectId: createdBy }]
+    }
+    throw BadRequestError("inalid ")
+    
   }
   if (req.userInfo?._id && !createdBy) {
     queryObject.$expr = {
@@ -347,7 +359,7 @@ const getTickets = async (req, res) => {
 
   }
   if (daterange) {
-    console.log("date rangehere : ", daterange)
+    // console.log("date rangehere : ", daterange)
     const decoded = decodeURIComponent(daterange)
     const [startdate, endDate] = decoded.
       split(",").
@@ -800,9 +812,9 @@ const editTicketMeta = async (req, res) => {
   }
   console.log("this is the ticket here",
     isTicket, "this is the seatposition here ",
-    seatposition,ticket_updatedPrice)
-    const condition=ticket_seatposition < 20 && seatposition < 19&& isTicket?.price <= 6500  && (ticket_updatedPrice != null || ticket_updatedPrice == 0)
-  console.log("this  is the condition ",condition)
+    seatposition, ticket_updatedPrice)
+  const condition = ticket_seatposition < 20 && seatposition < 19 && isTicket?.price <= 6500 && (ticket_updatedPrice != null || ticket_updatedPrice == 0)
+  console.log("this  is the condition ", condition)
   if (condition) {
     let price = 3500
     console.log("updated ticket will enter here when the price met a condition thanks for the suport")

@@ -1,12 +1,12 @@
 const router = require("express").Router();
-const { validateIdParam } = require("../middlewares/validationMiddleware")
+const { validateIdParam ,validatecreateseat} = require("../middlewares/validationMiddleware")
 const { createSeat,
     getStaticSeat, updateSeat, getSpecificSeat,
     getAllSeats,
     specificTicketId, ticketassociatedWithBus
     , downloadboarderaux } = require("../controllers/Seat")
 router.route("/").
-    post(createSeat)
+    post(validatecreateseat,createSeat)
     .get(getAllSeats);
 router.route("/updateseat/:id/:seat_number")
     .patch(updateSeat)

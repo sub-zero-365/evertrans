@@ -10,14 +10,18 @@ const auth = async (req, _, next) => {
         throw BadRequestError("please provide a valid auth  header")
     }
     const token = authHeader.split(" ")[1];
-    if(token==""|| token==null){
+    if (token == "" || token == null) {
         throw BadRequestError("please a valid token code")
-    
+
     }
     try {
-         jwt.verify(token,
+        const payload = jwt.verify(token,
             process.env.jwtAdminSecret);
-        req.admin = true
+        req.admin = {
+            phone: payload.phone,
+            role:payload.role,
+            _id:payload._id
+        }
         next()
     } catch (err) {
         throw BadRequestError("bad token")
