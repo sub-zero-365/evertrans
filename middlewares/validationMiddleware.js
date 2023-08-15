@@ -115,6 +115,22 @@ const busValidtionInput = withValidationErrors([
         .withMessage("please your bus seat number is greater 53 or less than 49")
     ,
 ])
+
+const validatecreateseat = withValidationErrors([
+
+    body("from").optional().
+        isIn(["buea", "yaounde"])
+        .withMessage('invalid trip type type').custom((value, { req }) => {
+            if (value == req.body.to) throw BadRequestError("city names can not be thesame that is ")
+            return true
+        }),
+    body("to").optional().
+        isIn(["buea", "yaounde"])
+        .withMessage('invalid trip type type').custom((value, { req }) => {
+            if (value == req.body.from) throw BadRequestError("city names can not be thesame that is ")
+            return true
+        }),
+])
 const validateTicketInput = withValidationErrors([
     body('seat_id').notEmpty().
         withMessage("please provide a bus id")
@@ -399,5 +415,5 @@ module.exports = {
     validcreateAssistant,
     validateUpdateUser,
     validateIdBody,
-    validateGetTicket
+    validateGetTicket,validatecreateseat
 };
