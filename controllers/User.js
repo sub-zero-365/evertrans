@@ -1,8 +1,9 @@
 const User = require("../models/User");
 const Ticket = require("../models/Ticket");
-const { BadRequestError } = require("../error");
+const { BadRequestError, UnethenticatedError } = require("../error");
 const Assistant = require("../models/Assistant")
 const { createJWT } = require("../utils/tokenUtils")
+const mongoose =require("mongoose")
 const updatePassword = async (req, res) => {
   const { oldpassword, newpassword, confirmpassword } = req.body;
   if (newpassword !== confirmpassword) throw BadRequestError("password doesnot match ");
@@ -25,11 +26,15 @@ const updatePassword = async (req, res) => {
 
 
 const Register = async (req, res) => {
+  const isAdmin_id = req?.admin?._id && req?.admin?.role == "user";
+  console.log("req.admin", req.admin)
+  if (!isAdmin_id) throw UnethenticatedError("not allowed to perform this action now");
   const isUserWithPhone = await User.findOne({ phone: req.body.phone });
   if (isUserWithPhone) {
     throw BadRequestError("user exist with the phone  number");
   }
   console.log(req.body)
+  req.body.createdBy = req.admin._id;
   const user = await User.create({ ...req.body });
   const token = await user.createJWT();
   res.status(200).json({
@@ -61,10 +66,10 @@ const Login = async (req, res) => {
       ...user,
       redirect: true
     }
-   return res.status(200).json({
+    return res.status(200).json({
       user,
       token,
-  
+
     });
   }
   user = user.toJSON()
@@ -138,18 +143,21 @@ const getUsers = async (req, res) => {
 };
 
 const getUserAndTicketLength = async (req, res) => {
+
   const { search } = req.query;
   const queryObject = {}
-
+  if (!req.admin) throw UnethenticatedError("not allow to perfom this operation")
+  const isSuper = req?.admin?.role == "admin"
+  if (!isSuper) {
+    queryObject.createdBy = new mongoose.Types.ObjectId(req.admin?._id)
+  }
   if (search) {
     queryObject.$or = [
       {
         fullname: {
           $regex: search, $options: "i"
         },
-        // email:{
-        //   $regex: search, $options: "i"
-        // }
+
       }
     ]
   }

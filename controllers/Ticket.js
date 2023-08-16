@@ -346,11 +346,24 @@ const getTickets = async (req, res) => {
   }
   if (createdBy && req?.admin?.role === "user") {
     // use is in here after implentation
+
     queryObject.$expr = {
       $eq: ['$createdBy', { $toObjectId: createdBy }]
     }
-    throw BadRequestError("inalid ")
-    
+    // throw BadRequestError("inalid ")
+
+  }
+  if (req?.admin?.role === "user" && !createdBy) {
+    let users_ids = await User.find({ createdBy: req.admin._id }).select("_id");
+    // console.log("user ids here", users_ids)
+    // new mongoose.Types.ObjectId(createdBy)
+    users_ids = users_ids.map(({ _id }) => new mongoose.Types.ObjectId(_id));
+    // console.log("this is the users ids here",users_ids)
+    queryObject.createdBy = {
+      $in: [...users_ids
+      ]
+    }
+
   }
   if (req.userInfo?._id && !createdBy) {
     queryObject.$expr = {
@@ -359,7 +372,6 @@ const getTickets = async (req, res) => {
 
   }
   if (daterange) {
-    // console.log("date rangehere : ", daterange)
     const decoded = decodeURIComponent(daterange)
     const [startdate, endDate] = decoded.
       split(",").
@@ -465,40 +477,6 @@ const getTickets = async (req, res) => {
     .skip(skip)
     .limit(limit);
 
-  // const calc = await Ticket.aggregate([
-  //   {
-  //     $match: {
-  //       ...queryObject,
-  //     }
-  //   },
-
-  //   {
-  //     $addFields: {
-  //       subtitle: "hello"
-  //     }
-  //   },
-  //   {
-  //     $project: {
-  //       _id: "$_id",
-  //       price: {
-  //         $sum: {
-  //           $add: [
-  //             "$price", {
-  //               $cond: [
-  //                 {
-  //                   $eq: ["$updatePrice", null]
-  //                 }, "$updatePrice", 0
-  //               ]
-  //             }
-  //           ]
-  //         }
-  //       }, fullname: 1, traveldtae: 1, traveltime: 1, updatePrice: 1,doubletripdetails:1,
-
-  //     }
-  //   },
-
-  // // ])
-  // console.log("updated price here ", calc)
   if (queryObject?.sort) delete deleteTicket.sort
   const nDoc = await Ticket.countDocuments(queryObject);
 
