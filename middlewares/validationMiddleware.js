@@ -6,8 +6,10 @@ const { BadRequestError } = require("../error");
 const mongoose = require("mongoose")
 const User = require("../models/User")
 const Ticket = require("../models/Ticket");
+const Admin = require("../models/Admin.js")
 const Bus = require("../models/Bus")
-const dayjs = require("dayjs")
+const dayjs = require("dayjs");
+const custom = require('../error/custom.js');
 function formatDate(date = new Date()) {
     const formateDate = new Date(date);
     return {
@@ -303,6 +305,34 @@ const validateEditTicket = withValidationErrors([
 
 
 ]);
+const validateCreateAdmin = withValidationErrors([
+    body('fullname').
+        notEmpty().
+        withMessage("fullname should not be empty")
+        .isLength({ min: 6 })
+        .withMessage("fullname should not be less than 6 characters"),
+    body("phone").
+        notEmpty()
+        .withMessage("please send a phone number").
+        isLength({ min: 9, max: 12 })
+        .withMessage('phone number must be at least 8 characters long and not greater than 12')
+        .custom(async (value) => {
+            const isUser = await Admin.findOne({phone: value});
+            if (isUser) throw BadRequestError("User already exist with phone number");
+            return true
+        }),
+    body('password')
+        .notEmpty()
+        .withMessage('password is required')
+        .isLength({ min: 8 })
+        .withMessage('password must be at least 8 characters long').
+        custom(async (value, { req }) => {
+            if (value != req.body.password2) throw BadRequestError("password doesnot match")
+            return trueF
+        }),
+
+]
+)
 const validateRegisterInput = withValidationErrors([
     body('fullname').
         notEmpty().
@@ -334,8 +364,6 @@ const validateRegisterInput = withValidationErrors([
         .withMessage('password must be at least 8 characters long'),
     body("email").isEmail()
         .withMessage('invalid email format')
-    // body('lastName').notEmpty().withMessage('last name is required'),
-    // body('location').notEmpty().withMessage('location is required'),
 ]);
 
 // const validateUpdateUserInput = withValidationErrors([
@@ -415,5 +443,5 @@ module.exports = {
     validcreateAssistant,
     validateUpdateUser,
     validateIdBody,
-    validateGetTicket,validatecreateseat
+    validateGetTicket, validatecreateseat,validateCreateAdmin
 };
