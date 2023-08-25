@@ -328,7 +328,7 @@ const validateCreateAdmin = withValidationErrors([
         .withMessage('password must be at least 8 characters long').
         custom(async (value, { req }) => {
             if (value != req.body.password2) throw BadRequestError("password doesnot match")
-            return trueF
+            return true
         }),
 
 ]
