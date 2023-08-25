@@ -18,13 +18,51 @@ const getStatic = async (req, res) => {
 const getAllUsers = async (req, res) => {
     const isSuperAdmin = req?.admin?.role == "admin"
     if (!isSuperAdmin) throw UnethenticatedError("Unethenticated error");
-    let users = await Admin.find({
-        _id: {
-            $ne: new mongoose.Types.ObjectId(req.admin._id)
+    // let users = await Admin.find({
+    //     _id: {
+    //         $ne: new mongoose.Types.ObjectId(req.admin._id)
+    //     }
+
+    // }, { password: 0 });
+    let users = null;
+
+    users = await Admin.aggregate([{
+        $match: {
+            _id: {
+                $ne: new mongoose.Types.ObjectId(req.admin._id)
+            }
+        },
+    },
+    {
+        $lookup: {
+            from: "users",
+            localField: "_id",
+            foreignField: "createdBy",
+            as: "users"
         }
+    },
 
-    }, { password: 0 });
+    {
+        $project: {
+            total: {
+                "$size": "$users"
+            },
+            fullname: 1,
+            _id: 1,
+            createdAt: 1,
+            phone: 1,
+            passord: 0
 
+        }
+    }, {
+        $sort: {
+            total: -1
+        }
+    }
+
+    ])
+
+    console.log("this is the new uses", users)
     res.status(200).json({ users })
 }
 module.exports = {
