@@ -6,15 +6,14 @@ const {
 const Assistant = require("../models/Assistant")
 
 const getStaticAssistant = async (req, res) => {
-    if ( !req.user) throw BadRequestError("Permission denied!!");
-    
+    if (!req.user) throw BadRequestError("Permission denied!!");
     const id = req.user.id
     const assistant = await Assistant.findOne({ _id: id });
     if (!assistant) throw NotFoundError(`No Assistant with id  ${id}`)
     res.status(200).json({ assistant })
 }
 const GetAllAssistant = async (req, res) => {
-    const assistants = await Assistant.find({})
+    const assistants = await Assistant.find({}, { password: 0 })
     res.status(200).json({
         assistants,
         nHits: assistants.length
@@ -42,7 +41,6 @@ const updatePassword = async (req, res) => {
     }, { password: newpassword }, { runValidators: true, new: true })
     if (!assistant) throw BadRequestError("fail to updatepassword")
     res.status(200).json({ status: true });
-
 }
 
 module.exports = {

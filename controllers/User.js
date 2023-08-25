@@ -3,7 +3,7 @@ const Ticket = require("../models/Ticket");
 const { BadRequestError, UnethenticatedError } = require("../error");
 const Assistant = require("../models/Assistant")
 const { createJWT } = require("../utils/tokenUtils")
-const mongoose =require("mongoose")
+const mongoose = require("mongoose")
 const updatePassword = async (req, res) => {
   const { oldpassword, newpassword, confirmpassword } = req.body;
   if (newpassword !== confirmpassword) throw BadRequestError("password doesnot match ");
@@ -161,21 +161,40 @@ const getUserAndTicketLength = async (req, res) => {
       }
     ]
   }
-  const allusers = await User.find(queryObject, { password: 0, __v: 0 }).sort("-createdAt");
-  var promiseawait = await Promise.all(
-    allusers.map(async (user) => {
-      const lenght = await Ticket.countDocuments({ createdBy: user._id });
-      return {
-        ...{
-          user
-        },
-        nHits: lenght
-      };
-    })
-  )
-  const sortdata = promiseawait.sort((a, b) => b.nHits - a.nHits);
-  res.status(200).
-    json({ userdetails: sortdata, nHits: sortdata.length })
+  // const allusers = await User.find(queryObject, { password: 0, __v: 0 }).sort("-createdAt");
+  // var promiseawait = await Promise.all(
+  //   allusers.map(async (user) => {
+  //     const lenght = await Ticket.countDocuments({ createdBy: user._id });
+  //     return {
+  //       ...{
+  //         user
+  //       },
+  //       nHits: lenght
+  //     };
+  //   })
+  // )
+  // const sortdata = promiseawait.sort((a, b) => b.nHits - a.nHits);
+  // res.status(200).
+  //   json({ userdetails: sortdata, nHits: sortdata.length })
+  const usertickets = await User.
+    aggregate([
+      {
+        $match: {
+          ...queryObject
+
+        }
+      },
+      {
+        $lookup: {
+          from: "tickets",
+          localField: "_id", foreignField: "createdBy",
+          as: "users"
+        }
+      },
+      { "$project": { total: { $size: "$users" }, fullname: 1, _id: 1, createdAt: 1, phone: 1 } },
+      { $sort: { total: -1 } }])
+  console.log("this is the user ticket here", usertickets)
+  res.status(200).json({ userdetails: usertickets })
 }
 
 
