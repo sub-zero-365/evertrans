@@ -51,8 +51,6 @@ const getAllUsers = async (req, res) => {
             _id: 1,
             createdAt: 1,
             phone: 1,
-            passord: 0
-
         }
     }, {
         $sort: {
