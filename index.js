@@ -11,7 +11,9 @@ const cors = require("cors");
 app.use(cors({
   origin: ["http://localhost:3000",
     "http://192.168.43.68:3000",
-    "https://ntaribotaken.vercel.app"],
+    "https://ntaribotaken.vercel.app",
+    "https://evertrans.onrender.com"
+  ],
   // credentials: true,
   // origin: true,
   credentials: true,
