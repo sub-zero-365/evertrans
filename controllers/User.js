@@ -25,91 +25,13 @@ const updatePassword = async (req, res) => {
 
 
 
-const Register = async (req, res) => {
-  const isAdmin_id = req?.admin?._id && req?.admin?.role == "user";
-  console.log("req.admin", req.admin)
-  if (!isAdmin_id) throw UnethenticatedError("not allowed to perform this action now");
-  const isUserWithPhone = await User.findOne({ phone: req.body.phone });
-  if (isUserWithPhone) {
-    throw BadRequestError("user exist with the phone  number");
-  }
-  console.log(req.body)
-  req.body.createdBy = req.admin._id;
-  const user = await User.create({ ...req.body });
-  const token = await user.createJWT();
-  res.status(200).json({
-    fullname: user.fullname,
-    token,
-  });
-};
-const Login = async (req, res) => {
-  const {
-    body: { password, phone },
-  } = req;
-  if (!password || !phone) {
-    throw BadRequestError("please phone  or password needed");
-  }
-  let user = await User.findOne({ ...{ phone, password } });
-  let token = null
-  if (user) token = await user.createJWT();
-
-  if (!user) {
-    // search assistant user
-    user = await Assistant.findOne({ ...{ phone, password } }, { password: 0 });
-    if (!user) throw BadRequestError("please check your login details");
-    token = createJWT({
-      _id: user._id,
-      phone: user.phone
-    })
-    delete user.password
-    user = {
-      ...user,
-      redirect: true
-    }
-    return res.status(200).json({
-      user,
-      token,
-
-    });
-  }
-  user = user.toJSON()
-  delete user.password
-  res.status(200).json({
-    user,
-    token,
-
-  });
-};
 
 
 
 const getUsers = async (req, res) => {
   const obj = {};
 
-  //   query: { fullname, password, phone },
-  // } = req;
-  // if (fullname) {
-  //   obj.fullname = {
-  //     $regex: fullname,
-  //     $options: "i",
-  //   };
-  // }
-  // if (password) {
-  //   obj.password = password;
-  // }
-  // if (phone) {
-  //   obj.phone = {
-  //     $regex: phone,
-  //     $options: "i",
-  //   };
-  // }
-
-  // const users = await User.find({ ...obj }
-  //   , { password: 0 });
-  // res.status(200).json({
-  //   users,
-  //   nHits: users.length,
-  // });
+  
   const { search } = req.query;
 
   const queryObject = {};
@@ -235,8 +157,6 @@ const getStaticUser = async (req, res) => {
 
 
 module.exports = {
-  Register,
-  Login,
   getAlluser: getUsers,
   uniqueUsers,
   userInfo,

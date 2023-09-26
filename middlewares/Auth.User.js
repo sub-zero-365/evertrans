@@ -1,17 +1,11 @@
 
 const {
-    UnathorizedError } = require("../error")
+    UnathorizedError, UnethenticatedError } = require("../error")
 const jwt = require("jsonwebtoken");
 
 const Auth = async (req, res, next) => {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) {
-        throw UnathorizedError("please provide an auth header")
-    }
-    if (!authHeader.startsWith(process.env.jwtSecret)) {
-        throw UnathorizedError("please provide a valid auth  header")
-    }
-    const token = authHeader.split(" ")[1];
+    const { token } = req.cookies;
+    if (!token) throw UnethenticatedError('authentication invalid');
     try {
         const payload = jwt.verify(token, process.env.jwtSecret);
         req.userInfo = {

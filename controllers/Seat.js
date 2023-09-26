@@ -7,7 +7,7 @@ const { readFile, writeFile } = require("fs/promises");
 const path = require("path")
 const { BadRequestError, NotFoundError } = require("../error")
 const createSeat = async (req, res) => {
-    const { seat_id, bus_id, from: starting, to: destination,traveltime:travel_time ,traveldate:travel_date} = req.body
+    const { seat_id, bus_id, from: starting, to: destination, traveltime: travel_time, traveldate: travel_date } = req.body
     console.log(req.body)
     if (!bus_id) BadRequestError("please provide bus and seat id ");
     const isBus = await Bus.findOne({ _id: bus_id }).select("number_of_seats name plate_number feature")
@@ -17,8 +17,8 @@ const createSeat = async (req, res) => {
         const seat = await Seat.create({
             from: starting,
             to: destination,
-            traveltime:travel_time,
-            traveldate:travel_date,
+            traveltime: travel_time,
+            traveldate: travel_date,
             number_of_seats,
             bus: {
                 bus: name,
@@ -62,13 +62,13 @@ const getSpecificSeat = async (req, res) => {
 
 }
 const getStaticSeat = async (req, res) => {
-    const { from, to, traveldate, traveltime } = req.query;
+    const { from, to, date: traveldate, time: traveltime } = req.query;
     const queryObject = {}
-    const getNextDay = (date = new Date()) => {
-        const next = new Date(date.getTime());
-        next.setDate(date.getDate() + 1);
-        return next.toLocaleDateString("en-CA")// name if ghe fuke abx ghe  jde abd neami  gfhef u abekx ghe  jde abd 
-    }
+    // const getNextDay = (date = new Date()) => {
+    //     const next = new Date(date.getTime());
+    //     next.setDate(date.getDate() + 1);
+    //     return next.toLocaleDateString("en-CA")// name if ghe fuke abx ghe  jde abd neami  gfhef u abekx ghe  jde abd 
+    // }
 
     if (from) {
         queryObject.from = {
@@ -88,28 +88,22 @@ const getStaticSeat = async (req, res) => {
 
     }
     if (traveldate) {
-        console.log("travel date", traveldate)
         var date_ = {
             $gte: traveldate,
             $lte: traveldate,
 
-            // $lte: getNextDay(new Date(traveldate)),
-            // $lte: getNextDay(new Date(traveldate)),
-
         }
         queryObject.traveldate = date_
     }
-    // if (traveldate) {
-    //     if (dayjs(new Date(traveldate).toLocaleDateString("en-CA")).diff(new Date().toLocaleDateString("en-CA"), "day") > 7) {
-    //         throw BadRequestError(`No Bus Traveling on the
-    //          ${new Date(traveldate).toLocaleDateString("en-CA")} please chose a new previous date and try again `)
-    //     }
-    // }
+
 
     let isSeat = await Seat.find({ ...queryObject });
-
+    // console.log("this is seats", isSeat)
+    console.log("this is the seat count here", isSeat.length)
+    // console.log("this is params", req.query, isSeat)
     if (isSeat.length == 0 && from && to && traveldate && traveltime) {
         try {
+            console.log("enter here")
             isSeat = await Seat.create({
                 from,
                 to,
@@ -127,7 +121,7 @@ const getStaticSeat = async (req, res) => {
         };
         isSeat = await Seat.find(queryObject);
     }
-    console.log(isSeat, queryObject)
+    // console.log(isSeat, queryObject)
 
     res.status(200).json({
         seats: isSeat,

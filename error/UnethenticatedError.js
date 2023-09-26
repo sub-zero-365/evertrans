@@ -1,2 +1,2 @@
 const customError = require("./custom");
-module.exports = (msg) => customError(msg, 403)
+module.exports = (msg) => customError(msg, 401)
