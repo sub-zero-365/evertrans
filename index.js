@@ -1,24 +1,26 @@
 require("dotenv").config();
 require("express-async-errors");
 const cookieParser = require("cookie-parser");
-
-const cors = require("cors");
 const express = require("express");
 const app = express();
-app.use(express.json());
-app.use(cookieParser());
+const cors = require("cors");
+// app.use(cookieParser());
+// app.use(express.json());
 
 
 app.use(cors({
   origin: ["http://localhost:3000",
     "http://192.168.43.68:3000",
     "https://ntaribotaken.vercel.app"],
+  // credentials: true,
+  // origin: true,
   credentials: true,
-  optionsSuccessStatus: 200
 }));
+app.use(cookieParser());
+app.use(express.json())
 const cityController = require("./controllers/City").getCitys
 const port = process.env.PORT || 5000;
-const User = require("./routes/User");
+const userRouter = require("./routes/User");
 const routesRouter = require("./routes/Route")
 const Ticket = require("./routes/Ticket");
 const ERROR = require("./middlewares/error");
@@ -36,10 +38,12 @@ const { getTicketForAnyUser } = require("./controllers/Ticket")
 const assistantRoute = require("./routes/Assistant")
 const assistantControlsRoute = require("./routes/Assistant.controls")
 const userSelf = require("./routes/User.self")
-const { validateIdBody, 
-validateGetTicket } = require("./middlewares/validationMiddleware")
-const AdminUser = require("./routes/Admin")
-app.use("/auth", User);
+const userRoute = require("./routes/authUserRoute")
+const { validateIdBody,
+  validateGetTicket } = require("./middlewares/validationMiddleware")
+// const AdminUser = require("./routes/Admin")
+app.use("/users", userAuth, userRouter)
+app.use("/auth", userRoute);
 app.use("/user", userSelf);
 app.use("/auth/assistant", assistantRoute);
 app.use("/assistant", assistantControlsRoute);
@@ -47,7 +51,6 @@ app.use("/seat", seatRouter);
 app.use("/route", routesRouter);
 app.use("/ticket", userAuth, IsUserRestricted, Ticket);
 app.use("/admin", Admin_auth, adminControl);
-// app.use("/admin", AdminUser)
 app.use("/bus", busRouter);
 app.use("/contact", Admin_auth, contactRouter);
 app.use("/restricted", restrictedRouter);
