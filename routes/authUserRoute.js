@@ -6,6 +6,6 @@ const Admin_auth = require("../middlewares/Admin.auth")
 router.route("/login").post(Login)
 router.route("/logout").get(logout)
 router.route("/admin/login").post(AdminLogin)
-router.route("/admin/logout").post(adminLogout)
+router.route("/admin/logout").get(adminLogout)
 router.route("/register").post(Admin_auth, Register)
 module.exports = router

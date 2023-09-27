@@ -41,28 +41,35 @@ const Login = async (req, res) => {
         res.cookie('token', token, {
             httpOnly: true,
             expires: new Date(Date.now() + oneDay),
-            secure: process.env.NODE_ENV === 'production',
+            // secure: process.env.NODE_ENV === 'production',
+            sameSite: "none",
+            secure: true
+
         });
         res.status(StatusCodes.OK).json({ msg: 'user logged in', user });
     }
 
-   
+
 
     res.cookie('token', token, {
         httpOnly: true,
         expires: new Date(Date.now() + oneDay),
-        secure: process.env.NODE_ENV === 'production',
+        // secure: process.env.NODE_ENV === 'production',
+        sameSite: "none",
+        secure: true
+
     });
     res.status(StatusCodes.OK).json({ msg: 'user logged in', user });
 };
 const logout = (req, res) => {
     res.cookie('token', 'logout', {
-      httpOnly: true,
-      expires: new Date(Date.now()),
+        httpOnly: true,
+        expires: new Date(Date.now()),
+        sameSite: "none"
     });
     res.status(StatusCodes.OK).json({ msg: 'user logged out!' });
-  };
+};
 module.exports = {
     Register,
-    Login,logout
+    Login, logout
 }

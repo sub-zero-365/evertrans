@@ -4,9 +4,9 @@ const cookieParser = require("cookie-parser");
 const express = require("express");
 const app = express();
 const cors = require("cors");
-// app.use(cookieParser());
-// app.use(express.json());
 
+app.use(cookieParser());
+app.use(express.json())
 
 app.use(cors({
   // origin: ["http://localhost:3000",
@@ -18,8 +18,8 @@ app.use(cors({
   origin: true,
   credentials: true,
 }));
-app.use(cookieParser());
-app.use(express.json())
+// app.set("trust proxy", 1)
+
 const cityController = require("./controllers/City").getCitys
 const port = process.env.PORT || 5000;
 const userRouter = require("./routes/User");
