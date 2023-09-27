@@ -19,7 +19,7 @@ const login = async (req, res) => {
   const token = await user.createJWT();
   res.status(200)
   res.cookie('token', token, {
-    // httpOnly: true,
+    httpOnly: true,
     expires: new Date(Date.now() + oneDay),
     secure: process.env.NODE_ENV === 'production',
   }).json({ msg: "user logged in success!!!" });

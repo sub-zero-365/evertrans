@@ -39,10 +39,9 @@ const Login = async (req, res) => {
             redirect: true
         }
         res.cookie('token', token, {
-            // httpOnly: true,
+            httpOnly: true,
             expires: new Date(Date.now() + oneDay),
-            // secure: process.env.NODE_ENV === 'production',
-            secure: false
+            secure: process.env.NODE_ENV === 'production',
         });
         res.status(StatusCodes.OK).json({ msg: 'user logged in', user });
     }
@@ -50,10 +49,9 @@ const Login = async (req, res) => {
    
 
     res.cookie('token', token, {
-        // httpOnly: true,
+        httpOnly: true,
         expires: new Date(Date.now() + oneDay),
-        // secure: process.env.NODE_ENV === 'production',
-        secure: false
+        secure: process.env.NODE_ENV === 'production',
     });
     res.status(StatusCodes.OK).json({ msg: 'user logged in', user });
 };
