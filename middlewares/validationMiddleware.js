@@ -185,23 +185,11 @@ const validateTicketInput = withValidationErrors([
         .custom((seat, { req, loc, path }) => {
             const seatposition = Number(seat)
             if (seatposition > 53 || seatposition == NaN || seatposition < 0) throw BadRequestError("please send a valid seat position");
-
-            if (!req.body.busType) throw BadRequestError("missing bus type ")
-            if (req.body.busType && req.body.busType == "classic") {
-                if (req.body.type === "round" || req.body.type === "roundtrip") {
-                    req.body.price = 10000
-                    return true
-                }
-                req.body.price = 6500
-                return true
+            if (req.body.triptype === "null" || req.body.triptype === "singletrip") {
+                req.body.price = 3500
             }
-            if (req.body.type === "null" || req.body.type === "singletrip") {
-                if (seatposition < 20) req.body.price = 10000
-                if (seatposition > 19) req.body.price = 6500
-            }
-            if (req.body.type === "round" || req.body.type === "roundtrip") {
-                if (seatposition < 20) req.body.price = 20000
-                if (seatposition > 19) req.body.price = 10000
+            if (req.body.triptype === "round" || req.body.triptype === "roundtrip") {
+                req.body.price = 6000
             }
             return true
         })
@@ -317,7 +305,7 @@ const validateCreateAdmin = withValidationErrors([
         isLength({ min: 9, max: 12 })
         .withMessage('phone number must be at least 8 characters long and not greater than 12')
         .custom(async (value) => {
-            const isUser = await Admin.findOne({phone: value});
+            const isUser = await Admin.findOne({ phone: value });
             if (isUser) throw BadRequestError("User already exist with phone number");
             return true
         }),
@@ -443,5 +431,5 @@ module.exports = {
     validcreateAssistant,
     validateUpdateUser,
     validateIdBody,
-    validateGetTicket, validatecreateseat,validateCreateAdmin
+    validateGetTicket, validatecreateseat, validateCreateAdmin
 };

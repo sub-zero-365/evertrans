@@ -1,4 +1,4 @@
-const Ticket = require("../models/Ticket")
+ Ticket = require("../models/Ticket")
 const Bus = require("../models/Bus")
 const Seat = require("../models/Seat")
 const fs = require("fs")
@@ -64,6 +64,7 @@ const getSpecificSeat = async (req, res) => {
 const getStaticSeat = async (req, res) => {
     const { from, to, date: traveldate, time: traveltime } = req.query;
     const queryObject = {}
+    console.log(req.query.date)
     // const getNextDay = (date = new Date()) => {
     //     const next = new Date(date.getTime());
     //     next.setDate(date.getDate() + 1);
@@ -89,8 +90,8 @@ const getStaticSeat = async (req, res) => {
     }
     if (traveldate) {
         var date_ = {
-            $gte: traveldate,
-            $lte: traveldate,
+            $gte: traveldate.toString(),
+            $lte: traveldate.toString(),
 
         }
         queryObject.traveldate = date_
@@ -100,7 +101,7 @@ const getStaticSeat = async (req, res) => {
     let isSeat = await Seat.find({ ...queryObject });
     // console.log("this is seats", isSeat)
     console.log("this is the seat count here", isSeat.length)
-    // console.log("this is params", req.query, isSeat)
+    console.log("this is params", traveldate)
     if (isSeat.length == 0 && from && to && traveldate && traveltime) {
         try {
             console.log("enter here")

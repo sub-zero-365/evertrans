@@ -237,77 +237,7 @@ const getTicket = async (req, res) => {
 
 };
 
-const userTickets = async (req, res) => {
-  const { userInfo } = req
-  const {
-    createdBy,
-    sort,
-    ticketStatus,
-    daterange,
-    triptype,
-    traveltime
-
-  }
-    =
-    req.query;
-
-  const queryObject = {
-    createdBy: req.userInfo._id
-  }
-  if (ticketStatus && ticketStatus !== "all") {
-    if (ticketStatus == "active") {
-      queryObject.active = true
-    }
-    if (ticketStatus == "inactive") {
-      queryObject.active = false
-    }
-  }
-  if (triptype && triptype !== "all" && ["roundtrip", "singletrip"].some(x => x == triptype)) {
-    queryObject.type = triptype
-  }
-  const sortOptions = {
-    newest: "-createdAt",
-    oldest: "createdAt",
-    new_traveldate: "-traveldate",
-    old_traveldate: "traveldate",
-
-  }
-
-  const sortKey = sortOptions[sort] || sortOptions.newest;
-  const page = Number(req.query.page) || 1;
-  const limit = Number(req.query.limit) || 100;
-  const skip = (page - 1) * limit;
-  const tickets = await Ticket.find(queryObject)
-    .sort(sortKey)
-    .skip(skip)
-    .limit(limit)
-  const totalTickets = await Ticket.countDocuments(queryObject);
-  const alltickets = await Ticket.countDocuments({ createdBy: req.userInfo._id });
-  const totalActiveTickets = await Ticket.countDocuments({
-    ...queryObject,
-    active: true
-  });
-
-  const totalInActiveTickets = await Ticket.countDocuments({
-    ...queryObject,
-    active: false
-  });
-  // const totalPrice=await Ticket.find(queryObject).select("price").
-  const numberOfPages = Math.ceil(totalTickets / limit);
-
-  res.
-    status(200).json({
-      totalTickets,
-      alltickets,
-      numberOfPages,
-      currentPage: page,
-      tickets,
-      totalActiveTickets,
-      totalInActiveTickets
-    })
-
-
-};
+// 
 
 const getTickets = async (req, res) => {
   const { search,
@@ -453,7 +383,7 @@ const getTickets = async (req, res) => {
 
   }
   if (ticketStatus && ticketStatus !== "all") {
-    console.log(ticketStatus)
+    // console.log(ticketStatus)
     if (ticketStatus == "active") {
       queryObject.active = true
     }
@@ -513,12 +443,7 @@ const getTickets = async (req, res) => {
     queryObject.updatedBy = new mongoose.Types.ObjectId(createdBy)
 
   }
-  // if (req.userInfo?._id && !createdBy) {
-  //   queryObject.$expr = {
-  //     $eq: ['$createdBy', { $toObjectId: req.userInfo?._id }]
-  //   }
 
-  // }
   if (queryObject.$expr && req.userInfo?._id && !createdBy) {
     delete queryObject.$expr
     queryObject.updatedBy = new mongoose.Types.ObjectId(req.userInfo._id)
@@ -529,27 +454,6 @@ const getTickets = async (req, res) => {
   if (queryObject.daterange) delete queryObject.daterange;
   queryObject.updatedDate = _tmp
 
-  var totolupdateTicket = (await Ticket.aggregate([{
-    $match: {
-      ...queryObject,
-
-    }
-  }, {
-    $group: {
-      _id: null,
-      sum: { $sum: "$updatePrice" },
-      total: { $sum: 1 },
-    }
-  }, {
-    $project: {
-      sum: 1,
-      total: 1,
-    }
-  }]
-  ))
-  // console.log("all prices here ", totolupdateTicket, req?.userInfo?._id)
-  const totalSumOfEditedTicket = totolupdateTicket[0]?.sum || 0;
-  const totalEditedTicket = totolupdateTicket[0]?.total || 0;
   if (totalActivePrice) {
     const { _id } = totalActivePrice;
     if (_id == false) {
@@ -572,8 +476,6 @@ const getTickets = async (req, res) => {
       currentPage: page,
       totalActiveTickets: totalActivePrice?.total || 0,
       totalInActiveTickets: totalInActivePrice?.total || 0,
-      totalSumOfEditedTicket,
-      totalEditedTicket,
       tickets,
 
     })
@@ -713,6 +615,8 @@ const editTicketMeta = async (req, res) => {
     from,
     to
   } = req.body
+
+  console.log(req.body)
   const { id: _id } = req.params;
   let ticket_seatposition = null;
   let ticket_id = null
@@ -721,20 +625,21 @@ const editTicketMeta = async (req, res) => {
     _id,
     active: true
   })
+  console.log("this is the seat id here", seat_id)
   if (!isTicket) {
     throw BadRequestError(`cannot find ticket with ${_id} and status ${active} `)
   }
   ticket_seatposition = isTicket.toJSON().seatposition
   ticket_id = isTicket.toJSON().seat_id
-  ticket_updatedPrice = isTicket.toJSON().updatePrice
-  price = Number(isTicket.toJSON().price)
-  let ticket_type = isTicket.toJSON().type
-  console.log("seat position", ticket_seatposition, ticket_id, seatposition)
+  console.log("this is ticket seat position here", ticket_seatposition)
+
+  console.log("seat position", ticket_seatposition, Number(ticket_seatposition), seat_id)
   let seat = await Seat.findOne({
-    "seat_positions._id": Number(ticket_seatposition),
+    // "seat_positions._id": Number(ticket_seatposition),
     _id: seat_id
   })
   if (!seat) throw BadRequestError("coudnot find seat");
+  // return res.send("ok")
   if (seat.seat_positions[Number(seatposition)].isTaken == true
     ||
     seat.seat_positions[Number(seatposition)].isReserved == true) {
@@ -776,37 +681,12 @@ const editTicketMeta = async (req, res) => {
   }
   const updateObj = {};
 
-  if (ticket_seatposition > 19 && seatposition < 19) {
-    let price = 3500
-    updateObj.updatedBy = req.userInfo._id
-    if (ticket_type == "singletrip") {
-      price = 3500;
-    }
-    if (ticket_type == "roundtrip") {
-      price = 10000;
-    }
-    updateObj.updatePrice = price;
-    updateObj.updateDate = dayjs().format("YYYY/MM/DD");
-  }
+
   console.log("this is the ticket here",
     isTicket, "this is the seatposition here ",
     seatposition, ticket_updatedPrice)
-  const condition = ticket_seatposition < 20 && seatposition < 19 && isTicket?.price <= 6500 && (ticket_updatedPrice != null || ticket_updatedPrice == 0)
-  console.log("this  is the condition ", condition)
-  if (condition) {
-    let price = 3500
-    console.log("updated ticket will enter here when the price met a condition thanks for the suport")
-    updateObj.updatedBy = req.userInfo._id
-    if (ticket_type == "singletrip") {
-      price = 3500;
-    }
-    if (ticket_type == "roundtrip") {
-      price = 10000;
-    }
-    updateObj.updatePrice = price;
-    updateObj.updateDate = dayjs().format("YYYY/MM/DD");
+  // const condition = ticket_seatposition < 20 && seatposition < 19 && isTicket?.price <= 6500 && (ticket_updatedPrice != null || ticket_updatedPrice == 0)
 
-  }
   if (traveldate) {
     updateObj.traveldate = traveldate
   }
@@ -847,9 +727,7 @@ const getTicketForAnyUser = async (req, res) => {
   if (req.isString) {
     if (id) {
       queryObject.id = id?.trim()
-      // {
-      //   $regex: id?.trim(), $options: "i"
-      // }
+
     }
 
 
@@ -920,7 +798,6 @@ module.exports = {
   create: createTicket,
   edit: editTicket,
   getTickets,
-  userTickets,
   getTicket,
   deleteTicket,
   downloadsoftcopyticket,

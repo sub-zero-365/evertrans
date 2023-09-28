@@ -4,10 +4,18 @@ const cookieParser = require("cookie-parser");
 const express = require("express");
 const app = express();
 const cors = require("cors");
-
+const session = require("express-session")
 app.use(cookieParser());
 app.use(express.json())
+// app.use(session({
+//   secret: "thisismysecret",
+//   cookie: {
+//     secure: true,
+//     sameSite: "None"
+//   }
 
+
+// }))
 app.use(cors({
   // origin: ["http://localhost:3000",
   //   "http://192.168.43.68:3000",
