@@ -57,20 +57,20 @@ const ticketSchema = new Schema(
       required: [true, "please send a created user id"],
       ref: "users",
     },
-    updatedBy: {
-      type: Schema.ObjectId,
-      required: false,
-      ref: "users",
-    },
-    updatedDate: {
-      type: Date,
-      required: [false, "please enter date"],
-    },
-    updatePrice: {
-      type: Number,
-      required: false,
-      default: 0
-    },
+    // updatedBy: {
+    //   type: Schema.ObjectId,
+    //   required: false,
+    //   ref: "users",
+    // },
+    // updatedDate: {
+    //   type: Date,
+    //   required: [false, "please enter date"],
+    // },
+    // updatePrice: {
+    //   type: Number,
+    //   required: false,
+    //   default: 0
+    // },
     doubletripdetails: {
       type: Array,
       required: true,

@@ -41,9 +41,9 @@ const Login = async (req, res) => {
         res.cookie('token', token, {
             httpOnly: true,
             expires: new Date(Date.now() + oneDay),
-            // secure: process.env.NODE_ENV === 'production',
+            secure: process.env.NODE_ENV === 'production',
             sameSite: "none",
-            secure: true
+         
 
         });
         res.status(StatusCodes.OK).json({ msg: 'user logged in', user });
@@ -54,9 +54,9 @@ const Login = async (req, res) => {
     res.cookie('token', token, {
         httpOnly: true,
         expires: new Date(Date.now() + oneDay),
-        // secure: process.env.NODE_ENV === 'production',
+        secure: process.env.NODE_ENV === 'production',
         sameSite: "none",
-        secure: true
+     
 
     });
     res.status(StatusCodes.OK).json({ msg: 'user logged in', user });
