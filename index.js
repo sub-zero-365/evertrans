@@ -7,15 +7,7 @@ const cors = require("cors");
 const session = require("express-session")
 app.use(cookieParser());
 app.use(express.json())
-// app.use(session({
-//   secret: "thisismysecret",
-//   cookie: {
-//     secure: true,
-//     sameSite: "None"
-//   }
-
-
-// }))
+const fs=require("fs")
 app.use(cors({
   // origin: ["http://localhost:3000",
   //   "http://192.168.43.68:3000",
@@ -26,7 +18,6 @@ app.use(cors({
   origin: true,
   credentials: true,
 }));
-// app.set("trust proxy", 1)
 
 const cityController = require("./controllers/City").getCitys
 const port = process.env.PORT || 5000;
@@ -84,19 +75,15 @@ app.get("/getcookie", async (req, res) => {
 app.use(ERROR);
 app.use(NOTFOUND);
 
-app.use((err, req, res, next) => {
-  const output = fs.readFileSync('./index', 'utf8');
-  res.status(500).send(output);
-  next(err);
-});
+// app.use((err, req, res, next) => {
+//   const output = fs.readFileSync('./index', 'utf8');
+//   res.status(500).send(output);
+//   next(err);
+// });
 const startrunningserverfunction = async () => {
   try {
     require("./db/connections");
-    // await Admin.deleteMany({});
-    // await Admin.create({
-    //   phone: process.env.admin_phone,
-    //   password: process.env.admin_password,
-    // });
+  
     app.listen(port, server_running(port));
   } catch (err) {
     console.log(err);

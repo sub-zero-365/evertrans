@@ -20,7 +20,7 @@ router.route("/").post(IsUserRestricted,
     validateTicketInput, create).get(getTickets)
 router.route("/:id").get(
     validateIdParam,
-    // validateGetTicket,
+
     getTicket)
 router.route("/download/:id").
     get(validateIdParam,

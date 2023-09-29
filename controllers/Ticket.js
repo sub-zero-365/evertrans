@@ -197,7 +197,6 @@ const getTicket = async (req, res) => {
   // new implentation here//change the code to make  please the client
   var ticket = null;
   let isString = req.isString || false;
-  console.log("isString", isString)
   const {
     params: { id },
   } = req;
@@ -224,12 +223,10 @@ const getTicket = async (req, res) => {
   busname = busname?.bus || "n/a"
   // console.log("this is the bus name associated with the seat ", busname)
   const usernameticket = ticket?.toJSON();
-  const { price, updatePrice, id: ticket_id, _id } = usernameticket
+  const {  id: ticket_id, _id } = usernameticket
   usernameticket.username = createdBy;
   usernameticket.busdetails = busname
-  usernameticket.price = price + (updatePrice ?? 0)
   usernameticket._id = ticket_id ?? _id
-  console.log("username ticket here : ", usernameticket)
 
   res.status(200).json({
     ticket: usernameticket

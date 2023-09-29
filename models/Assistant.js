@@ -1,4 +1,5 @@
 const { Schema, model } = require("mongoose");
+const jwt = require("jsonwebtoken");
 
 const assistantSchema = new Schema(
     {
@@ -38,6 +39,12 @@ const assistantSchema = new Schema(
         timestamps: true,
     }
 );
+
+assistantSchema.methods.createJWT = function () {
+    return jwt.sign({ _id: this._id, phone: this.phone },
+        process.env.jwtSecret, { expiresIn: "24h" })
+
+}
 
 const assistantschema = model("assistant", assistantSchema);
 

@@ -34,7 +34,7 @@ const Login = async (req, res) => {
         // search assistant user
         user = await Assistant.findOne({ ...{ phone, password } }, { password: 0 });
         if (!user) throw BadRequestError("please check your login details");
-
+        token = await user.createJWT()
         user = {
             redirect: true
         }
@@ -43,7 +43,7 @@ const Login = async (req, res) => {
             expires: new Date(Date.now() + oneDay),
             secure: process.env.NODE_ENV === 'production',
             sameSite: "none",
-         
+
 
         });
         res.status(StatusCodes.OK).json({ msg: 'user logged in', user });
@@ -56,7 +56,7 @@ const Login = async (req, res) => {
         expires: new Date(Date.now() + oneDay),
         secure: process.env.NODE_ENV === 'production',
         sameSite: "none",
-     
+
 
     });
     res.status(StatusCodes.OK).json({ msg: 'user logged in', user });
@@ -65,7 +65,8 @@ const logout = (req, res) => {
     res.cookie('token', 'logout', {
         httpOnly: true,
         expires: new Date(Date.now()),
-        sameSite: "none"
+        sameSite: "none",
+        secure: process.env.NODE_ENV === 'production',
     });
     res.status(StatusCodes.OK).json({ msg: 'user logged out!' });
 };
