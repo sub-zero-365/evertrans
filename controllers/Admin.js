@@ -45,6 +45,7 @@ const logout = (req, res) => {
     httpOnly: true,
     expires: new Date(Date.now()),
     sameSite: "none",
+    secure: process.env.NODE_ENV === 'production',
     
   });
   res.status(StatusCodes.OK).json({ msg: 'user logged out!' });
