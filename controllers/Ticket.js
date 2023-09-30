@@ -502,6 +502,7 @@ const downloadsoftcopyticket = async (req, res) => {
 
   }
   const _path = path.resolve(__dirname, "../tickets")
+  
   const createdBy = (await User.findOne({ _id: ticket.createdBy }).select("fullname")).fullname;
   qrcode.toFile(path.join(_path, "qr2.png"),
     url, {
@@ -557,16 +558,25 @@ const downloadsoftcopyticket = async (req, res) => {
       }
 
       let img = fs.readFileSync(path.join(_path, "qr2.png"));
+      let logo=fs.readFileSync(path.join(_path, "logo.png"))
       img = await pdfDoc.embedPng(img)
+      logo=await pdfDoc.embedPng(logo)
       img.scaleToFit(100, 100)
-      console.log(width)
       img.scale(1)
+      logo.scaleToFit(100, 100)
+      logo.scale(1)
       page.drawImage(img, {
         x: (width / 2) - 155,
         y: height - 340,
         width: 310,
         height: 310
       })
+      // page.drawImage(logo, {
+      //   x: (width / 2) - 155,
+      //   y: height - 140,
+      //   width: 310,
+      //   height: 310
+      // })
 
 
       const pdfBytes = await pdfDoc.save()
