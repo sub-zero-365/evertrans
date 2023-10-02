@@ -5,9 +5,11 @@ const express = require("express");
 const app = express();
 const cors = require("cors");
 const session = require("express-session")
+const cloudinary = require('cloudinary');
+
 app.use(cookieParser());
 app.use(express.json())
-const fs=require("fs")
+const fs = require("fs")
 app.use(cors({
   // origin: ["http://localhost:3000",
   //   "http://192.168.43.68:3000",
@@ -18,6 +20,12 @@ app.use(cors({
   origin: true,
   credentials: true,
 }));
+
+cloudinary.config({
+  cloud_name: "dnuqptnuq",
+  api_key: "483645365462527",
+  api_secret: "9-wnbRSZcEgQuco8AHMj6FjiVGk",
+});
 
 const cityController = require("./controllers/City").getCitys
 const port = process.env.PORT || 5000;
@@ -42,6 +50,7 @@ const userSelf = require("./routes/User.self")
 const userRoute = require("./routes/authUserRoute")
 const { validateIdBody,
   validateGetTicket } = require("./middlewares/validationMiddleware")
+const mailRouter = require("./routes/mailRoute")
 // const AdminUser = require("./routes/Admin")
 app.use("/users", userAuth, userRouter)
 app.use("/auth", userRoute);
@@ -55,6 +64,7 @@ app.use("/admin", Admin_auth, adminControl);
 app.use("/bus", busRouter);
 app.use("/contact", Admin_auth, contactRouter);
 app.use("/restricted", restrictedRouter);
+app.use("/mails", mailRouter)
 app.get("/downloadticket/:id", downloadsoftcopyticket)
 app.post("/public/ticket",
   validateGetTicket,
@@ -83,7 +93,7 @@ app.use(NOTFOUND);
 const startrunningserverfunction = async () => {
   try {
     require("./db/connections");
-  
+
     app.listen(port, server_running(port));
   } catch (err) {
     console.log(err);
