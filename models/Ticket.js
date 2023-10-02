@@ -1,5 +1,4 @@
 const { Schema, model } = require("mongoose");
-const User = require("./User");
 const generateRandonNumber = require("../utils/RandonGeneratedIds")
 const ticketSchema = new Schema(
   {
@@ -57,20 +56,7 @@ const ticketSchema = new Schema(
       required: [true, "please send a created user id"],
       ref: "users",
     },
-    // updatedBy: {
-    //   type: Schema.ObjectId,
-    //   required: false,
-    //   ref: "users",
-    // },
-    // updatedDate: {
-    //   type: Date,
-    //   required: [false, "please enter date"],
-    // },
-    // updatePrice: {
-    //   type: Number,
-    //   required: false,
-    //   default: 0
-    // },
+   
     doubletripdetails: {
       type: Array,
       required: true,
@@ -132,17 +118,7 @@ const ticketSchema = new Schema(
 
 );
 
-ticketSchema.pre(
-  "deleteOne",
-  { document: true, query: false },
-  async function (next) {
-    console.log("this : ", this);
-    const user = await User.findOne({ _id: this.createdBy });
-    console.log("you have delete this user ticket : ", user.fullname);
 
-    next();
-  }
-);
 ticketSchema.pre("validate", async function () {
   this.id = generateRandonNumber()
   if (this.type === "roundtrip") {

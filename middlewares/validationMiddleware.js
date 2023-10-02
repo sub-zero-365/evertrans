@@ -1,6 +1,6 @@
 const { body, validationResult, param, query } = require('express-validator');
 const { TICKET_STATUS,
-    TICKET_SORT_BY } = require('../utils/constants.js');
+    TICKET_SORT_BY, CITY_TYPE } = require('../utils/constants.js');
 const { BadRequestError } = require("../error");
 
 const mongoose = require("mongoose")
@@ -74,6 +74,60 @@ const validateupdateTicket = withValidationErrors([
         .notEmpty()
         .withMessage('search value required')
     ,
+])
+const validateMailInput = withValidationErrors([
+
+    body("from").optional().
+        isIn(CITY_TYPE)
+        .withMessage('invalid city chosen').custom((value, { req }) => {
+            if (value == req.body.to) throw BadRequestError("city names can not be thesame that is ")
+            return true
+        }),
+    body("to").optional().
+        isIn(CITY_TYPE)
+        .withMessage('invalid city chosen').custom((value, { req }) => {
+            if (value == req.body.from) throw BadRequestError("city names can not be thesame that is ")
+            return true
+        }),
+    body("registerdate")
+        .notEmpty()
+        .withMessage('travel date is required')
+        .custom(async (traveldate, { req }) => {
+            const lettodaydate = dayjs(new Date()).format("YYYY-MM-DD");
+            const ticketTravelDate = traveldate;
+            if ((dayjs(ticketTravelDate).diff(lettodaydate, "day")) < 0) {
+                throw BadRequestError(`fail cause the user is trying to back date the date`)
+            }
+            return true
+        }),
+    body('name').
+        notEmpty().
+        withMessage('please provide the name of the product is required'),
+    body('senderfullname').
+        notEmpty().
+        withMessage('senders  fullname is required'),
+    body("senderphonenumber")
+        .notEmpty()
+        .withMessage("senders phone number is required please send").
+        isLength({ min: 9, max: 12 })
+        .withMessage('phone number must be at least 8 characters long and not greater than 12')
+    ,
+    body('recieverphonenumber').
+        notEmpty().
+        withMessage('reciever phone number is required'),
+    body("senderidcardnumber")
+        .notEmpty()
+        .withMessage("sender id card number is required please send").
+        isLength({ min: 6, max: 12 })
+        .withMessage('sender number must be at least 8 characters long and not greater than 12')
+    ,
+    // body("recieveridcardnumber")
+    //     .notEmpty()
+    //     .withMessage("reciever id card number is required please send").
+    //     isLength({ min: 6, max: 12 })
+    //     .withMessage('reciever  id card must be at least 8 characters long and not greater than 12')
+    // ,
+
 ])
 const updateTicketMetaData = withValidationErrors([
     body("seat_id").
@@ -431,5 +485,6 @@ module.exports = {
     validcreateAssistant,
     validateUpdateUser,
     validateIdBody,
-    validateGetTicket, validatecreateseat, validateCreateAdmin
+    validateGetTicket, validatecreateseat, validateCreateAdmin,
+    validateMailInput
 };

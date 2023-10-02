@@ -59,7 +59,7 @@ const Login = async (req, res) => {
 
 
     });
-    res.status(StatusCodes.OK).json({ msg: 'user logged in', user });
+    res.status(StatusCodes.OK).json({ msg: 'user logged in', user: {} });
 };
 const logout = (req, res) => {
     res.cookie('token', 'logout', {
