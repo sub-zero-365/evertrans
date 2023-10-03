@@ -77,15 +77,20 @@ const validateupdateTicket = withValidationErrors([
 ])
 const validateMailInput = withValidationErrors([
 
-    body("from").optional().
-        isIn(CITY_TYPE)
-        .withMessage('invalid city chosen').custom((value, { req }) => {
+    body("from")
+    // .optional().
+        // isIn(CITY_TYPE)
+        // .withMessage('invalid city chosen')
+        .
+        custom((value, { req }) => {
             if (value == req.body.to) throw BadRequestError("city names can not be thesame that is ")
             return true
         }),
-    body("to").optional().
-        isIn(CITY_TYPE)
-        .withMessage('invalid city chosen').custom((value, { req }) => {
+    body("to")
+    // .optional().
+        // isIn(CITY_TYPE)
+        // .withMessage('invalid city chosen')
+        .custom((value, { req }) => {
             if (value == req.body.from) throw BadRequestError("city names can not be thesame that is ")
             return true
         }),
