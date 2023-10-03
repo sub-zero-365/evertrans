@@ -25,3 +25,6 @@ module.exports = {
   TICKET_SORT_BY,
   CITY_TYPE
 }
+const MAILS_STATUS={
+
+}

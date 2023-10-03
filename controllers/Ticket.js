@@ -7,9 +7,7 @@ const checkPermissions = require("../utils/checkPermission")
 const fs = require("fs")
 const { PDFDocument, degrees, StandardFonts, rgb } = require("pdf-lib");
 const { readFile, writeFile } = require("fs/promises");
-const Bus = require("../models/Bus")
 const Seat = require("../models/Seat")
-const Assistant = require("../models/Assistant")
 const {
   BadRequestError,
   NotFoundError,
