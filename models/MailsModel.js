@@ -56,7 +56,7 @@ const mailsSchema = new Schema(
             type: String,
             required: true,
         },
-        img: String,
+        imgUrl: String,
         avatarPublicId: String,
     },
     {
