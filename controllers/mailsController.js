@@ -10,8 +10,8 @@ const Mail = require("../models/MailsModel")
 const { formatImage } = require("../utils/multerMiddleware")
 const cloudinary = require('cloudinary');
 const { StatusCodes } = require("http-status-codes")
-import mongoose from 'mongoose';
-
+// import mongoose from 'mongoose';
+const mongoose = require("mongoose")
 const createMail = async (req, res) => {
     // const newMail = { ...req.body };
     req.body.createdBy = req?.userInfo?._id
@@ -61,45 +61,45 @@ const getAllMails = async (req, res) => {
     if (daterange) {
         const decoded = decodeURIComponent(daterange)
         const [startdate, endDate] = decoded.
-          split(",").
-          map(arr => arr.split("="))
-          .map(([v, t]) => {
-            return {
-              [v]: t
-            }
-          });
-    
+            split(",").
+            map(arr => arr.split("="))
+            .map(([v, t]) => {
+                return {
+                    [v]: t
+                }
+            });
+
         if ("start" in startdate && "end" in endDate) {
-          const getPreviousDay = (date) => {
-            const previous = new Date(date.getTime());
-            previous.setDate(date.getDate() + 1);
-            return previous
-          }
-          if (startdate.start != "null" && endDate.end != "null") {
-            try {
-              var createdAt = {
-                $gte: new Date(startdate.start),
-                $lte: getPreviousDay(new Date(endDate.end)),
-              }
-              queryObject.createdAt = createdAt
-    
-            } catch (err) {
-              console.log(err)
+            const getPreviousDay = (date) => {
+                const previous = new Date(date.getTime());
+                previous.setDate(date.getDate() + 1);
+                return previous
             }
-    
-    
-          }
-          if (startdate.start != "null" && endDate.end == "null") {
-    
-            var createdAt = {
-              $gte: new Date(startdate.start),
-              $lte: getPreviousDay(new Date(startdate.start)),
+            if (startdate.start != "null" && endDate.end != "null") {
+                try {
+                    var createdAt = {
+                        $gte: new Date(startdate.start),
+                        $lte: getPreviousDay(new Date(endDate.end)),
+                    }
+                    queryObject.createdAt = createdAt
+
+                } catch (err) {
+                    console.log(err)
+                }
+
+
             }
-            queryObject.createdAt = createdAt
-          }
+            if (startdate.start != "null" && endDate.end == "null") {
+
+                var createdAt = {
+                    $gte: new Date(startdate.start),
+                    $lte: getPreviousDay(new Date(startdate.start)),
+                }
+                queryObject.createdAt = createdAt
+            }
         }
-    
-      }
+
+    }
     if (productname) {
         // if the user passes the product name
         queryObject.name =
