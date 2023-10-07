@@ -5,7 +5,7 @@ const fs = require("fs")
 const { PDFDocument, degrees, StandardFonts, rgb } = require("pdf-lib");
 const { readFile, writeFile } = require("fs/promises");
 const User = require("../models/User")
-const { BadRequestError } = require("../error");
+const { BadRequestError, NotFoundError } = require("../error");
 const Mail = require("../models/MailsModel")
 const { formatImage } = require("../utils/multerMiddleware")
 const cloudinary = require('cloudinary');
@@ -38,24 +38,53 @@ const getStaticMail = async (req, res, next) => {
     const id = req.params.id
     const mail = await Mail.findOne({ _id: id })
     if (!mail) throw BadRequestError("couldnot find mail with id " + id)
-    res.status(StatusCodes.OK).json({ mail })
+    const createdBy = (await User.findOne({ _id: mail.createdBy }).select("fullname"))?.fullname || "n/a";
+    const mailWithCreatedBy = {
+        ...mail.toJSON(),
+        doneby: createdBy
+
+    }
+    res.status(StatusCodes.OK).json({ mail: mailWithCreatedBy })
 }
 const getAllMails = async (req, res) => {
     const {
-        productname,
+        search,
         createdBy,
         sort,
         mailStatus,
         daterange,
-        boardingRange,
-        traveltime,
-        senderphone
+        quickdatesort
+
     }
         =
         req.query;
     const queryObject = {}
     if (createdBy) {
         queryObject.createdBy = new mongoose.Types.ObjectId(createdBy)
+    }
+
+    if (search) {
+        // console.log(decodeURIComponent(search).split("+").join(" "))
+        queryObject.$or = [
+            {
+                name: {
+                    $regex: decodeURIComponent(search).split("+").join(" ").trim(), $options: "i"
+                }
+            },
+            {
+                senderfullname: {
+                    $regex: decodeURIComponent(search).split("+").join(" ").trim(), $options: "i"
+                }
+            },
+            {
+                recieverfullname: {
+                    $regex: decodeURIComponent(search).split("+").join(" ").trim(), $options: "i"
+                }
+            },
+
+
+        ]
+
     }
     // this check for hte roduct ame
     if (daterange) {
@@ -100,16 +129,18 @@ const getAllMails = async (req, res) => {
         }
 
     }
-    if (productname) {
-        // if the user passes the product name
-        queryObject.name =
-        {
-            $regex: productname, $options: "i"
+    if (quickdatesort) {
+        queryObject.createdAt = {
+            $gte: quickdatesort,
+            // $lte: getPreviousDay(new Date(startdate.start)),
         }
+
     }
     if (mailStatus && mailStatus != "all") {
         //check for the mail status 
-        queryObject.collected = mailStatus
+        queryObject.status = {
+            $regex: decodeURIComponent(mailStatus).split("+").join(" ").trim(), $options: "i"
+        }
     }
     const sortOptions = {
         newest: "-createdAt",
@@ -124,7 +155,7 @@ const getAllMails = async (req, res) => {
         .skip(skip)
         .limit(limit);
 
-    res.status(StatusCodes.OK).json({ mails })
+    res.status(StatusCodes.OK).json({ mails, nHits: mails.length })
 
 }
 
@@ -138,14 +169,15 @@ const downloadsoftcopy = async (req, res) => {
     }
     let url = null;
     if (process.env.NODE_ENV === "production") {
-        url = `https://ntaribotaken.vercel.app/assistant/${id}?sound=true&xyz=secret&readonly=7gu8dsutf8asdf&render_9368&beta47`
+        url = `https://ntaribotaken.vercel.app/assistant/mail/${id}?sound=true&xyz=secret&readonly=7gu8dsutf8asdf&render_9368&beta47`
     } else {
-        url = `http://192.168.43.68:3000/assistant/${id}?sound=true&xyz=secret&readonly=7gu8dsutf8asdf&render_9368&beta47`
+        url = `http://192.168.43.68:3000/assistant/mail/${id}?sound=true&xyz=secret&readonly=7gu8dsutf8asdf&render_9368&beta47`
 
     }
-    const _path = path.resolve(__dirname, "../mails")
+    // const _path = path.resolve(__dirname, "../mails")
 
-    const createdBy = (await User.findOne({ _id: Mail.createdBy }).select("fullname"))?.fullname;
+    const _path = path.resolve(__dirname, "../tickets")
+    const createdBy = (await User.findOne({ _id: mail.createdBy }).select("fullname"))?.fullname || "n/a";
     qrcode.toFile(path.join(_path, "qr2.png"),
         url, {
         type: "terminal",
@@ -153,41 +185,55 @@ const downloadsoftcopy = async (req, res) => {
     }, async function (err, code) {
         if (err) return console.log(err)
         try {
-            const pdfDoc = await PDFDocument.load(await readFile(path.resolve(__dirname, "../mails", "sampleMail.pdf")));
+            const pdfDoc = await PDFDocument.load(await readFile(path.resolve(__dirname, "../tickets", "mailtemplate-1.pdf")));
             const page = pdfDoc.getPage(0)
             const { width, height } = page.getSize()
 
-            // const fileNames = pdfDoc.getForm().getFields().map(f => f.getName())
+            const fileNames = pdfDoc.getForm().getFields().map(f => f.getName())
+            console.log(fileNames)
             const form = pdfDoc.getForm()
-            const { fullname, traveldate, traveltime, seatposition, from, to, type, _id, id, bus, price, updatePrice } = Mail.toJSON()
+            const { name,
+                from,
+                to,
+                _id, id,
+                senderfullname,
+                senderphonenumber,
+                senderidcardnumber,
+                recieverfullname,
+                recieverphonenumber,
+                estimatedprice
+
+            } =
+                mail.toJSON()
             try {
                 // console.log(fileNames)
-                form.getTextField("fullname").
-                    setText(fullname)
-                form.getTextField("traveldate").
-                    setText(formatDate(traveldate).date)
-                form.getTextField("seatposition").
-                    setText(`${seatposition + 1}`)
-                form.getTextField("createdby").
-                    setText(createdBy)
-                form.getTextField("traveltime").
-                    setText(traveltime)
+                form.getTextField("product_name").
+                    setText(name)
                 form.getTextField("from").
                     setText(from)
                 form.getTextField("to").
-                    setText(to)
-                form.getTextField("price").
-                    setText(`${price + (updatePrice ? updatePrice : 0)} frs`)
-                if (type == "singletrip") {
-                    form.getTextField("triptype").
-                        setText(`singletrip`)
-                }
-                if (type == "roundtrip") {
-                    form.getTextField("triptype").
-                        setText(`roundtrip`)
-                }
+                    setText(`${to}`)
+                form.getTextField("senderfullname").
+                    setText(`${senderfullname || "n/a"}`)
+                form.getTextField("senderidcardnumber").
+                    setText(`${senderidcardnumber || "n/a"}`)
+                form.getTextField("senderphonenumber").
+                    setText(`${senderphonenumber || "n/a"}`)
+                form.getTextField("recieverfullname").
+                    setText(`${recieverfullname || "n/a"}`)
+                form.getTextField("recieverphonenumber").
+                    setText(`${recieverphonenumber || "n/a"}`)
+                form.getTextField("registered_time").
+                    setText(`${"textfield here" || "n/a"}`)
+                form.getTextField("registered_time").
+                    setText(`${"time here" || "n/a"}`)
+                form.getTextField("estimated_price").
+                    setText(`${estimatedprice || 0} frs`)
+                form.getTextField("done_by").
+                    setText(`${createdBy || "n/a"}`)
+
                 const fontSize = 40
-                page.drawText(`${id ? id : _id}`, {
+                page.drawText(`${id || _id}`, {
                     x: width - 30,
                     y: (height / 2) - (fontSize * 8) / 2,
                     size: fontSize,
@@ -209,16 +255,11 @@ const downloadsoftcopy = async (req, res) => {
             logo.scale(1)
             page.drawImage(img, {
                 x: (width / 2) - 155,
-                y: height - 340,
+                y: height - 500,
                 width: 310,
                 height: 310
             })
-            // page.drawImage(logo, {
-            //   x: (width / 2) - 155,
-            //   y: height - 140,
-            //   width: 310,
-            //   height: 310
-            // })
+
 
 
             const pdfBytes = await pdfDoc.save()
@@ -228,9 +269,7 @@ const downloadsoftcopy = async (req, res) => {
                 function (err) {
                     res.end()
                     if (err) {
-                        console.log(err, "391 mail download")
-
-                        // throw err
+                        console.log(err)
                     }
                     else {
                         if (fs.existsSync(path.join(_path, "qr2.png")) && fs.existsSync(path.join(_path, Mail._id + ".pdf"))) {
@@ -252,9 +291,21 @@ const downloadsoftcopy = async (req, res) => {
 
     })
 }
+const editMail = async (req, res) => {
+    const mail = await Mail.findOneAndUpdate({ _id: req.params.id }, {
+        $set: {
+            status: req.body.status
+        }
+    })
+    if (!mail) throw NotFoundError("No mail with id")
+    console.log(req.body, req.params)
+
+    res.send("ok")
+
+}
 
 module.exports = {
     createMail,
     getStaticMail,
-    getAllMeals: getAllMails, downloadsoftcopy
+    getAllMeals: getAllMails, downloadsoftcopy, editMail
 }
