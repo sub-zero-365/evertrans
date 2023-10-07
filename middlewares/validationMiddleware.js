@@ -78,18 +78,19 @@ const validateupdateTicket = withValidationErrors([
 const validateMailInput = withValidationErrors([
 
     body("from")
-    // .optional().
-        // isIn(CITY_TYPE)
-        // .withMessage('invalid city chosen')
+        .notEmpty().withMessage("please starting point is required").
+        isIn(CITY_TYPE)
+        .withMessage('invalid city chosen')
         .
         custom((value, { req }) => {
             if (value == req.body.to) throw BadRequestError("city names can not be thesame that is ")
             return true
         }),
     body("to")
-    // .optional().
-        // isIn(CITY_TYPE)
-        // .withMessage('invalid city chosen')
+        .notEmpty()
+        .withMessage("please destination  is required").
+        isIn(CITY_TYPE)
+        .withMessage('invalid city chosen')
         .custom((value, { req }) => {
             if (value == req.body.from) throw BadRequestError("city names can not be thesame that is ")
             return true
@@ -129,12 +130,6 @@ const validateMailInput = withValidationErrors([
         isLength({ min: 6, max: 12 })
         .withMessage('sender number must be at least 8 characters long and not greater than 12')
     ,
-    // body("recieveridcardnumber")
-    //     .notEmpty()
-    //     .withMessage("reciever id card number is required please send").
-    //     isLength({ min: 6, max: 12 })
-    //     .withMessage('reciever  id card must be at least 8 characters long and not greater than 12')
-    // ,
 
 ])
 const updateTicketMetaData = withValidationErrors([
@@ -229,11 +224,21 @@ const validateTicketInput = withValidationErrors([
         notEmpty().withMessage("sex is require bro").
         isIn(["female", "male"])
         .withMessage(`age is lessthan 2 or greater than 80`),
+    body("to")
+        .notEmpty()
+        .withMessage("from is required please send").
+        isIn(CITY_TYPE).withMessage("Invalid City").
+        custom((value, { req, loc, path }) => {
+            // console.log(value, req.body.to, loc, path)
+            if (value === req.body.from) throw BadRequestError("Cities should not be thesame ")
+            return true
+        }),
     body("from")
         .notEmpty()
         .withMessage("from is required please send").
+        isIn(CITY_TYPE).withMessage("Invalid City").
         custom((value, { req, loc, path }) => {
-            console.log(value, req.body.to, loc, path)
+            // console.log(value, req.body.to, loc, path)
             if (value === req.body.to) throw BadRequestError("Cities should not be thesame ")
             return true
         }),
@@ -245,13 +250,16 @@ const validateTicketInput = withValidationErrors([
         isFloat({ min: 0, max: 67 })
         .withMessage("bus sea should be in range of 0-67")
         .custom((seat, { req, loc, path }) => {
+            console.log(req.body)
             const seatposition = Number(seat)
             if (seatposition > 53 || seatposition == NaN || seatposition < 0) throw BadRequestError("please send a valid seat position");
-            if (req.body.triptype === "null" || req.body.triptype === "singletrip") {
+            if (req.body.type === "singletrip") {
                 req.body.price = 3500
+                req.body.type = "singletrip"
             }
-            if (req.body.triptype === "round" || req.body.triptype === "roundtrip") {
+            if (req.body.type === "roundtrip") {
                 req.body.price = 6000
+                req.body.type = "roundtrip"
             }
             return true
         })

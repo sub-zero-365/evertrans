@@ -65,12 +65,7 @@ const getStaticSeat = async (req, res) => {
     const { from, to, date: traveldate, time: traveltime } = req.query;
     const queryObject = {}
     console.log(req.query.date)
-    // const getNextDay = (date = new Date()) => {
-    //     const next = new Date(date.getTime());
-    //     next.setDate(date.getDate() + 1);
-    //     return next.toLocaleDateString("en-CA")// name if ghe fuke abx ghe  jde abd neami  gfhef u abekx ghe  jde abd 
-    // }
-
+   
     if (from) {
         queryObject.from = {
             $regex: from, $options: "i"

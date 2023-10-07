@@ -17,7 +17,7 @@ const TICKET_SORT_BY = {
   DESCENDING: 'z-a',
 };
 const CITY_TYPE = [
-  "buea", "yaounde"
+  "Buea", "Douala"
 ]
 
 module.exports = {
