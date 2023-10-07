@@ -111,6 +111,9 @@ const validateMailInput = withValidationErrors([
     body('senderfullname').
         notEmpty().
         withMessage('senders  fullname is required'),
+    body('recieverfullname').
+        notEmpty().
+        withMessage('senders  fullname is required'),
     body("senderphonenumber")
         .notEmpty()
         .withMessage("senders phone number is required please send").

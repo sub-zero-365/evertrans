@@ -27,10 +27,7 @@ const mailsSchema = new Schema(
             type: String,
             required: [true, "please enter to"],
         },
-        // price: {
-        //     type: Number,
-        //     required: [true, "please enter price"],
-        // },
+
         estimatedprice: {
             type: Number,
             required: [true, "please enter price"],
@@ -48,6 +45,17 @@ const mailsSchema = new Schema(
             type: String,
             required: true,
         },
+        status: {
+            type: String,
+            default: "pending",
+            enum: {
+                values: ["pending",
+                    "sent", 
+                    "recieved"],
+            },
+        },
+        senderfullname: String
+        ,
         recieverphonenumber: {
             type: String,
             required: true,
@@ -56,6 +64,7 @@ const mailsSchema = new Schema(
             type: String,
             required: true,
         },
+        recieverfullname: String,
         imgUrl: String,
         avatarPublicId: String,
     },
