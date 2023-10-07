@@ -50,8 +50,8 @@ const seatSchema = new Schema({
     ],
     number_of_seats: {
         type: Number,
-        min: [49, "please seat should not be less than 45"],
-        default: 49
+        min: [9, "please seat should not be less than 9"],
+        default: 9
     },
 }, {
     timestamps: true,
@@ -59,7 +59,7 @@ const seatSchema = new Schema({
 })
 
 seatSchema.pre("validate", async function () {
-    const number_of_seats = this.number_of_seats ?? 53
+    const number_of_seats = this.number_of_seats ?? 9
     this.seat_positions =
         Array.from(
             { length: number_of_seats },
