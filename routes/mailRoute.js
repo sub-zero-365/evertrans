@@ -8,7 +8,9 @@ router.route("/new").post(
     validateMailInput, userauth,
     createMail, editMail)
 router.route("/:id").get(getStaticMail)
-router.route("/edit/:id").patch(editMail)
+router.route("/edit/:id").patch(
+    userauth,
+    editMail)
 router.route("/").get(getAllMeals)
 router.route("/download/:id").get(downloadsoftcopy)
 module.exports = router

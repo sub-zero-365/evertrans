@@ -169,7 +169,7 @@ const downloadsoftcopy = async (req, res) => {
     }
     let url = null;
     if (process.env.NODE_ENV === "production") {
-        url = `https://ntaribotaken.vercel.app/assistant/mail/${id}?sound=true&xyz=secret&readonly=7gu8dsutf8asdf&render_9368&beta47`
+        url = `https://evertrans.vercel.app/assistant/mail/${id}?sound=true&xyz=secret&readonly=7gu8dsutf8asdf&render_9368&beta47`
     } else {
         url = `http://192.168.43.68:3000/assistant/mail/${id}?sound=true&xyz=secret&readonly=7gu8dsutf8asdf&render_9368&beta47`
 
@@ -292,15 +292,26 @@ const downloadsoftcopy = async (req, res) => {
     })
 }
 const editMail = async (req, res) => {
+    const status = req.body.status || ""
+
+    if (status == "sent") {
+        // if the mail doesnt belongs to me  con
+        // throw an error
+        const requestUserId = req?.userInfo?._id;
+        const mail = requestUserId && await Mail.findOne({
+            _id: req.params.id,
+            createdBy: requestUserId
+        })
+        if (!mail) throw BadRequestError("You can only mark sent to the items you create !!!")
+
+    }
     const mail = await Mail.findOneAndUpdate({ _id: req.params.id }, {
         $set: {
             status: req.body.status
         }
     })
     if (!mail) throw NotFoundError("No mail with id")
-    console.log(req.body, req.params)
-
-    res.send("ok")
+    res.status(200).json({ msg: "success" })
 
 }
 
