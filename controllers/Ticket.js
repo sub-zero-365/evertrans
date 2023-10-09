@@ -221,7 +221,7 @@ const getTicket = async (req, res) => {
   busname = busname?.bus || "n/a"
   // console.log("this is the bus name associated with the seat ", busname)
   const usernameticket = ticket?.toJSON();
-  const {  id: ticket_id, _id } = usernameticket
+  const { id: ticket_id, _id } = usernameticket
   usernameticket.username = createdBy;
   usernameticket.busdetails = busname
   usernameticket._id = ticket_id ?? _id
@@ -500,7 +500,7 @@ const downloadsoftcopyticket = async (req, res) => {
 
   }
   const _path = path.resolve(__dirname, "../tickets")
-  
+
   const createdBy = (await User.findOne({ _id: ticket.createdBy }).select("fullname")).fullname;
   qrcode.toFile(path.join(_path, "qr2.png"),
     url, {
@@ -556,9 +556,9 @@ const downloadsoftcopyticket = async (req, res) => {
       }
 
       let img = fs.readFileSync(path.join(_path, "qr2.png"));
-      let logo=fs.readFileSync(path.join(_path, "logo.png"))
+      let logo = fs.readFileSync(path.join(_path, "logo.png"))
       img = await pdfDoc.embedPng(img)
-      logo=await pdfDoc.embedPng(logo)
+      logo = await pdfDoc.embedPng(logo)
       img.scaleToFit(100, 100)
       img.scale(1)
       logo.scaleToFit(100, 100)
@@ -798,6 +798,80 @@ const removeSeatIdFromTicket = async (req, res) => {
   res.status(200).json({ status: true })
 }
 
+const getRankUsers = async (req, res) => {
+  const { quickdatesort, search } = req.query
+  const queryObject = {}
+  if (search) {
+    // console.log(decodeURIComponent(search).split("+").join(" "))
+    queryObject.$or = [
+      {
+        fullname: {
+          $regex: decodeURIComponent(search).split("+").join(" ").trim(), $options: "i"
+        }
+      },
+    ]
+
+  }
+  if (quickdatesort) {
+    queryObject.createdAt = {
+      $gte: new Date(quickdatesort),
+      // $lte: getPreviousDay(new Date(endDate.end)),
+    }
+    // queryObject.createdAt = {
+    //   $gte:
+    //     // dayjs(quickdatesort).toISOString(),
+    //     quickdatesort
+    //   // $lte: dayjs(quickdatesort).toISOString(),
+    // }
+
+  }
+  console.log("this i quick date sort", quickdatesort,
+    queryObject, req.query)
+
+  const rankUsers = await Ticket.aggregate([
+    {
+
+      $match: {
+        ...queryObject
+      }
+    }, {
+      $group: {
+        _id: "$phone",
+        sum: { $sum: "$price" },
+        total: { $sum: 1 },
+        fullname: {
+          $first: "$fullname"
+        },
+        age: {
+          $first: "$age"
+        },
+        sex: {
+          $first: "$sex"
+        },
+        phone: {
+          $first: "$phone"
+        },
+        idcardnumber: {
+          $first: "$email"
+        },
+      }
+    },
+    {
+      $project: {
+        sum: 1,
+        total: 1,
+        _id: 1,
+        idcardnumber: 1,
+        fullname: 1, age: 1, sex: 1,
+        phone: 1
+      }
+    },
+    { $sort: { total: -1 } }]).limit(10)
+  console.log("this is the most ranked users of all times ", rankUsers.length)
+  res.status(200).json({ rankUsers })
+
+}
+
 module.exports = {
   getTicketForAnyUser,
   create: createTicket,
@@ -807,5 +881,6 @@ module.exports = {
   deleteTicket,
   downloadsoftcopyticket,
   editTicketMeta,
-  removeSeatIdFromTicket
+  removeSeatIdFromTicket,
+  getRankUsers
 };
