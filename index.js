@@ -48,8 +48,10 @@ const assistantRoute = require("./routes/Assistant")
 const assistantControlsRoute = require("./routes/Assistant.controls")
 const userSelf = require("./routes/User.self")
 const userRoute = require("./routes/authUserRoute")
-const { validateIdBody,
+const {
   validateGetTicket } = require("./middlewares/validationMiddleware")
+const { getRankUsers } = require("./controllers/Ticket")
+
 const mailRouter = require("./routes/mailRoute")
 // const AdminUser = require("./routes/Admin")
 app.use("/users", userAuth, userRouter)
@@ -69,27 +71,14 @@ app.get("/downloadticket/:id", downloadsoftcopyticket)
 app.post("/public/ticket",
   validateGetTicket,
   getTicketForAnyUser)
+app.get("/ranked-users", getRankUsers)
 
 app.get("/allcities", cityController);
 const server_running = (port) =>
   console.log(`server is running on port ${port}`);
-app.get("/", async (req, res) => {
-  res
-    .cookie("foo", "bar")
-    .send("welcome to the homepage ");
-});
-app.get("/getcookie", async (req, res) => {
-  res
-    .send("get cookie page here ");
-});
+
 app.use(ERROR);
 app.use(NOTFOUND);
-
-// app.use((err, req, res, next) => {
-//   const output = fs.readFileSync('./index', 'utf8');
-//   res.status(500).send(output);
-//   next(err);
-// });
 const startrunningserverfunction = async () => {
   try {
     require("./db/connections");
