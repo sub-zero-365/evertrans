@@ -257,10 +257,18 @@ const getTickets = async (req, res) => {
   }
   if (search) {
     // console.log(decodeURIComponent(search).split("+").join(" "))
-    queryObject.fullname =
-    {
-      $regex: decodeURIComponent(search).split("+").join(" ").trim(), $options: "i"
-    }
+    queryObject.$or = [
+      {
+        fullname:
+        {
+          $regex: decodeURIComponent(search).split("+").join(" ").trim(), $options: "i"
+        }
+
+      }, 
+      // {
+      //   customerPhone: { $regex: decodeURIComponent(search).split("+").join(" ").trim(), $options: "i" }
+      // }
+    ]
 
   }
 
@@ -405,32 +413,41 @@ const getTickets = async (req, res) => {
   if (queryObject?.sort) delete deleteTicket.sort
   const nDoc = await Ticket.countDocuments(queryObject);
 
-  var [totalActivePrice, totalInActivePrice,] = (await Ticket.aggregate([{
-    $match: {
-      ...queryObject,
-    }
-  }, {
-    $group: {
-      _id: "$active",
-      sum: { $sum: "$price" },
-      total: { $sum: 1 },
-    }
-  }, {
-    $project: {
-      sum: 1,
-      total: 1,
-      _id: 1,
-      percentage: {
-        $cond: [
-          { $eq: [nDoc, 0] }, 1, {
-            $multiply: [
-              { $divide: [100, nDoc || 1] }, "$total"
-            ]
-          }],
-
+  var [totalActivePrice, totalInActivePrice,] = (await Ticket.aggregate([
+    {
+      $addFields: {
+        customerPhone: {
+          $toString: "$phone"
+        }
       }
     }
-  }]
+    , {
+
+      $match: {
+        ...queryObject,
+      }
+    }, {
+      $group: {
+        _id: "$active",
+        sum: { $sum: "$price" },
+        total: { $sum: 1 },
+      }
+    }, {
+      $project: {
+        sum: 1,
+        total: 1,
+        _id: 1,
+        percentage: {
+          $cond: [
+            { $eq: [nDoc, 0] }, 1, {
+              $multiply: [
+                { $divide: [100, nDoc || 1] }, "$total"
+              ]
+            }],
+
+        }
+      }
+    }]
   ))?.sort((a, b) => b._id - a._id);
   // this help for calculating the updated price when a user update a ticket from normal class to vip class
   if (createdBy && req.admin === true) {
@@ -799,8 +816,11 @@ const removeSeatIdFromTicket = async (req, res) => {
 }
 
 const getRankUsers = async (req, res) => {
-  const { quickdatesort, search } = req.query
+  const { quickdatesort, search, numberFilter } = req.query
   const queryObject = {}
+  if (numberFilter) {
+    queryObject.customerPhone = { $regex: decodeURIComponent(numberFilter).split("+").join(" ").trim(), $options: "i" }
+  }
   if (search) {
     // console.log(decodeURIComponent(search).split("+").join(" "))
     queryObject.$or = [
@@ -809,6 +829,7 @@ const getRankUsers = async (req, res) => {
           $regex: decodeURIComponent(search).split("+").join(" ").trim(), $options: "i"
         }
       },
+
     ]
 
   }
@@ -829,6 +850,14 @@ const getRankUsers = async (req, res) => {
     queryObject, req.query)
 
   const rankUsers = await Ticket.aggregate([
+    {
+      $addFields: {
+        customerPhone: {
+          $toString: "$phone"
+        }
+      }
+    }
+    ,
     {
 
       $match: {
