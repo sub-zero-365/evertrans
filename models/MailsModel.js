@@ -27,7 +27,10 @@ const mailsSchema = new Schema(
             type: String,
             required: [true, "please enter to"],
         },
-
+        price: {
+            type: Number,
+            required: [true, "please enter price"],
+        },
         estimatedprice: {
             type: Number,
             required: [true, "please enter price"],
