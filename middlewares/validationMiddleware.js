@@ -168,8 +168,8 @@ const busValidtionInput = withValidationErrors([
     , body('number_of_seats')
         .notEmpty().
         withMessage("please provide a bus seat number").isFloat({
-            min: 49,
-            max: 53
+            min: 4,
+            max: 15
         })
         .withMessage("please your bus seat number is greater 53 or less than 49")
     ,

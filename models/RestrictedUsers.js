@@ -2,11 +2,6 @@ const { Schema, model } = require("mongoose");
 
 const restrictedSchema = new Schema(
     {
-        name: {
-            type: String,
-            required: [true, "please provide a user  name"],
-            min: [2, "name  should be greater than 2"],
-        },
         user_id: {
             type: Schema.ObjectId,
             required: [true, "please send a created user id"],
@@ -19,6 +14,6 @@ const restrictedSchema = new Schema(
     }
 );
 
-const restrictedschema = model("restricted", restrictedSchema);
+const restrictedschema = model("restricteds", restrictedSchema);
 
 module.exports = restrictedschema;

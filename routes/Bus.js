@@ -1,7 +1,7 @@
 const router = require("express").Router();
 const {
     create, deleteBus, updateBus, getBus, getAllBus, updateBusSeat, resetBusData,
-    downloadboarderaux, setActive
+    downloadboarderaux, setActive, editBus
 
 } = require("../controllers/Bus");
 const { busValidtionInput } = require("../middlewares/validationMiddleware")
@@ -17,5 +17,8 @@ router.route("/:id/:seat_number").
 router.route("/reset/:id").patch(Admin_auth, resetBusData)
 router.route("/active/:id").patch(Admin_auth, setActive);
 router.route("/download/:id").get(downloadboarderaux)
+router.route("/edit/:id")
+.patch(Admin_auth,
+editBus)
 
 module.exports = router

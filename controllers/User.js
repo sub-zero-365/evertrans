@@ -31,7 +31,7 @@ const updatePassword = async (req, res) => {
 const getUsers = async (req, res) => {
   const obj = {};
 
-  
+
   const { search } = req.query;
 
   const queryObject = {};
@@ -108,12 +108,48 @@ const getUserAndTicketLength = async (req, res) => {
       },
       {
         $lookup: {
-          from: "tickets",
-          localField: "_id", foreignField: "createdBy",
-          as: "users"
+          from: "restricteds",
+          localField: "user_id",
+          foreignField: "_id",
+          as: "restrictedsRole"
         }
       },
-      { "$project": { total: { $size: "$users" }, fullname: 1, _id: 1, createdAt: 1, phone: 1 } },
+      {
+        $lookup: {
+          from: "tickets",
+          localField: "_id",
+          foreignField: "createdBy",
+          as: "usersRole"
+        }
+      },
+
+
+
+
+      {
+        "$project": {
+          total:
+            { $size: "$usersRole" },
+          fullname: 1,
+          _id: 1,
+          createdAt: 1,
+          phone: 1,
+          isrestricted: {
+            $cond: [
+              {
+                $eq:
+                  [{
+                    $size: "$restrictedsRole"
+                  }, 0]
+              },
+              false,
+              true],
+          },
+          username: { $size: "$restrictedsRole" },
+          user_id: 1,
+
+        }
+      },
       { $sort: { total: -1 } }])
   console.log("this is the user ticket here", usertickets)
   res.status(200).json({ userdetails: usertickets })

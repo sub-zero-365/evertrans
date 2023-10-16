@@ -8,10 +8,10 @@ const {
 const express = require("express")
 const router = express.Router()
 router.route("/").
-post(addRestrictedUsers)
+    post(addRestrictedUsers)
     .get(getRestrictedUsers)
 router
-.route("/:id")
+    .route("/:id")
     .delete(removeRestrictedUsers)
     .get(getStaticRestrictedUsers)
 module.exports = router

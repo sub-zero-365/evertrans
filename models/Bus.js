@@ -8,8 +8,8 @@ const busSchema = new Schema({
     },
     number_of_seats: {
         type: Number,
-        min: [49, "please seat should not be less than 45"],
-        default: 49
+        min: [4, "please seat should not be less than 9 and greater than 15"],
+        default: 4
     },
     plate_number: {
         type: Number,
