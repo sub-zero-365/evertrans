@@ -154,8 +154,61 @@ const getAllMails = async (req, res) => {
         .sort(sortKey)
         .skip(skip)
         .limit(limit);
+    const nDoc = await Mail.countDocuments(queryObject);
 
-    res.status(StatusCodes.OK).json({ mails, nHits: mails.length })
+    var statuses = (await Mail.aggregate([
+        {
+            $match: {
+                ...queryObject,
+            }
+        }, {
+            $group: {
+                _id: "$status",
+                sum: { $sum: "$price" },
+                total: { $sum: 1 },
+            }
+        }, {
+            $project: {
+                sum: 1,
+                total: 1,
+                _id: 1,
+                percentage: {
+                    $cond: [
+                        { $eq: [nDoc, 0] }, 1, {
+                            $multiply: [
+                                { $divide: [100, nDoc || 1] }, "$total"
+                            ]
+                        }],
+
+                }
+            }
+        }]
+    ))?.sort((a, b) => b._id - a._id);
+    const obj = {}
+    statuses?.map((status) => {
+        obj[status._id] = status
+    })
+    const totalMailsSum = (obj?.pending?.sum || 0) +
+        (obj?.sent?.sum || 0) +
+        (obj?.recieved?.sum || 0)
+    const totalSentMails = (obj?.sent?.total || 0)
+    const totalPendingMails = (obj?.pending?.total || 0)
+    const totalRecievedMails = (obj?.recieved?.total || 0)
+
+    console.log("this is the statuses ", statuses, obj, 
+    totalMailsSum,
+    totalSentMails,
+    totalPendingMails,
+    totalRecievedMails)
+    res.status(StatusCodes.OK).json({
+        mails,
+        nHits: mails.length,
+        totalMailsSum,
+        totalSentMails,
+        totalPendingMails,
+        totalRecievedMails
+
+    })
 
 }
 

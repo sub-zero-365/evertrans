@@ -10,16 +10,20 @@ const {
 } = require("../error")
 const { v4: uuid } = require("uuid");
 const { findOneAndUpdate } = require("../models/Routes");
+const validateBus = async (id) => {
+    const bus = await Bus.findOne({ _id: id });
+    if (!bus) throw NotFoundError("Fail to get ticket with id " + id)
+    return bus
+}
 const create = async (req, res) => {
-    // console.log(req.body)
     const bus = await Bus.create(req.body)
     res.status(201).
         json({ bus })
 }
 
 const deleteBus = async (req, res) => {
-  
- var bus = await Bus.findOneAndDelete({ _id: req.params.id });
+
+    var bus = await Bus.findOneAndDelete({ _id: req.params.id });
     if (!bus) {
         throw BadRequestError("fail to delete bus with id " + req.params.id)
     }
@@ -29,8 +33,9 @@ const deleteBus = async (req, res) => {
 
 const getBus = async (req, res) => {
     const { id: _id } = req.params;
-    const bus = await Bus.findOne({ _id });
-    if (!bus) throw NotFoundError("Fail to get ticket with id " + _id)
+    // const bus = await Bus.findOne({ _id });
+    // if (!bus) throw NotFoundError("Fail to get ticket with id " + _id)
+    const bus = await validateBus(_id)
     const assiocatedSeat = await Seat.countDocuments({
         "bus._id": _id
     }).select("_id")
@@ -341,6 +346,18 @@ const downloadboarderaux = async (req, res) => {
     }
 
 }
+const editBus = async (req, res) => {
+    const id = req.params.id
+    var bus = await validateBus(id);
+    //   all good here
+    bus = await Bus.findOneAndUpdate({ _id: id }, {
+        ...req.body
+    })
+    if (!bus) throw BadRequestError("fail to update bus")
+    res.
+        json({ status: "success" }).
+        status(200)
+}
 
 module.exports = {
     create,
@@ -351,5 +368,6 @@ module.exports = {
     updateBusSeat,
     resetBusData,
     downloadboarderaux,
-    setActive
+    setActive,
+    editBus
 }
