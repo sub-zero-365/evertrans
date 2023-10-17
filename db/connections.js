@@ -25,6 +25,8 @@ if (process.env.NODE_ENV === "production") {
     connectWithDB(PROD_URL)
 } else {
     connectWithDB(LOCAL_URL)
+    // connectWithDB(PROD_URL)
+    
 
 }
 module.exports = connectWithDB
