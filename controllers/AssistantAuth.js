@@ -3,6 +3,8 @@ const User = require("../models/User");
 const { createJWT, } = require("../utils/tokenUtils")
 const toJson = require("../utils/toJson")
 const { BadRequestError, NotFoundError } = require("../error")
+const { StatusCodes } = require("http-status-codes")
+
 const createAssistant = async (req, res) => {
     const { phone, password } = req.body;
     if (!phone, !password) throw BadRequestError("Phone and password is needed")
@@ -44,7 +46,17 @@ const LoginAssistant = async (req, res) => {
 
 
 }
+const logout = (req, res) => {
+    res.cookie('token', 'logout', {
+        httpOnly: true,
+        expires: new Date(Date.now()),
+        sameSite: "none",
+        secure: process.env.NODE_ENV === 'production',
+    });
+    res.status(StatusCodes.OK).json({ msg: 'user logged out!' });
+};
 module.exports = {
     LoginAssistant,
-    createAssistant
+    createAssistant,
+    logout
 }
