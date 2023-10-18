@@ -9,7 +9,7 @@ const {
     NotFoundError, BadRequestError
 } = require("../error")
 const { v4: uuid } = require("uuid");
-const { findOneAndUpdate } = require("../models/Routes");
+// const { findOneAndUpdate } = require("../models/Routes");
 const validateBus = async (id) => {
     const bus = await Bus.findOne({ _id: id });
     if (!bus) throw NotFoundError("Fail to get ticket with id " + id)
@@ -33,8 +33,6 @@ const deleteBus = async (req, res) => {
 
 const getBus = async (req, res) => {
     const { id: _id } = req.params;
-    // const bus = await Bus.findOne({ _id });
-    // if (!bus) throw NotFoundError("Fail to get ticket with id " + _id)
     const bus = await validateBus(_id)
     const assiocatedSeat = await Seat.countDocuments({
         "bus._id": _id
@@ -49,7 +47,7 @@ const getBus = async (req, res) => {
 const updateBus = async (req, res) => {
     const { body: { name }, params: { id: _id } } = req;
 
-    const updatebus = await findOneAndUpdate({ _id }, {
+    const updatebus = await Bus.findOneAndUpdate({ _id }, {
         $set: {
             name
         }
@@ -60,74 +58,6 @@ const updateBus = async (req, res) => {
 }
 const resetBusData = async (req, res) => {
     return res.send("reset bus route here")
-    const { id } = req.params;
-    const { from, to } = req.body
-    const bus = await Bus.findOne({
-        _id: id
-    })
-    if (!bus) {
-        throw BadRequestError("couldnt  find bus with id " + id)
-    }
-    // if (bus.toJSON().seat_positions.some((x) => x.isTaken == true)) {
-
-    // }
-    const isAllFilled = bus.toJSON().seat_positions.every((x) => x.isTaken == true);
-    if (!isAllFilled) {
-        console.log("fail to update")
-        throw BadRequestError("wait admin bus is not yet full")
-    }
-
-    const { number_of_seats: n_seats,
-        travel_count,
-        trips
-    } = bus.toJSON();
-    console.log(n_seats, "end seats here")
-    const updateObj = {}
-    updateObj.tracking_id = uuid()
-    updateObj.active = false
-    updateObj.travel_count = travel_count + 1;
-    if (from) {
-        updateObj.from = from
-    }
-    if (to) {
-        updateObj.to = to
-    }
-    updateObj.trips = [
-        ...trips,
-        {
-            tracking_id: updateObj.tracking_id,
-            date: new Date()
-        }
-    ]
-    updateObj.seat_positions = [
-        ...Array.from({ length: n_seats },
-            (arr, index) => {
-                return ({
-                    _id: index,
-                    isTaken: false,
-                    isReserved: false
-                })
-            })
-
-
-    ]
-    console.log("update obj", updateObj)
-
-
-    const updateBus = await Bus.findOneAndUpdate({
-        _id: id
-    }
-        , {
-            ...updateObj
-        }
-
-    )
-
-    if (!updateBus) {
-        console.log("fail to update bus")
-    }
-    res.status(200).json({ status: true })
-
 }
 const updateBusSeat = async (req, res) => {
     const { id, seat_number } = req.params;

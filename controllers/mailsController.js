@@ -36,7 +36,27 @@ const createMail = async (req, res) => {
 }
 const getStaticMail = async (req, res, next) => {
     const id = req.params.id
-    const mail = await Mail.findOne({ _id: id })
+    const queryObject = {}
+    let isString = req.isString || false;
+    console.log("isString", isString)
+    if (!id) throw BadRequestError("no id")
+    if (req.isString) {
+        if (id) {
+            queryObject.id = id?.trim()
+
+        }
+
+
+    } else {
+        if (id) {
+            queryObject.$expr = {
+                $eq: ['$_id', { $toObjectId: id }]
+            }
+        }
+    }
+
+
+    const mail = await Mail.findOne({ ...queryObject })
     if (!mail) throw BadRequestError("couldnot find mail with id " + id)
     const createdBy = (await User.findOne({ _id: mail.createdBy }).select("fullname"))?.fullname || "n/a";
     const mailWithCreatedBy = {
@@ -195,11 +215,11 @@ const getAllMails = async (req, res) => {
     const totalPendingMails = (obj?.pending?.total || 0)
     const totalRecievedMails = (obj?.recieved?.total || 0)
 
-    console.log("this is the statuses ", statuses, obj, 
-    totalMailsSum,
-    totalSentMails,
-    totalPendingMails,
-    totalRecievedMails)
+    console.log("this is the statuses ", statuses, obj,
+        totalMailsSum,
+        totalSentMails,
+        totalPendingMails,
+        totalRecievedMails)
     res.status(StatusCodes.OK).json({
         mails,
         nHits: mails.length,

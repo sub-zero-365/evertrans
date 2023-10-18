@@ -8,15 +8,13 @@ const User = require("../models/User")
 const Ticket = require("../models/Ticket");
 const Admin = require("../models/Admin.js")
 const Bus = require("../models/Bus")
+const Route = require("../models/RouteModel")
 const dayjs = require("dayjs");
-const custom = require('../error/custom.js');
-function formatDate(date = new Date()) {
-    const formateDate = new Date(date);
-    return {
-        date: formateDate.toLocaleDateString('en-ZA'),
-        time: formateDate.toLocaleTimeString('en-ZA'),
-    }
-}
+const City = require("../models/Cities")
+const getAllCities = async () => {
+    const cities = await City.find();
+    return cities.map(({ value }) => value)
+};
 const withValidationErrors = (validateFn) => {
     return [
         validateFn,
@@ -33,14 +31,7 @@ const withValidationErrors = (validateFn) => {
     ];
 };
 
-// const validateTest = withValidationErrors([
-//   body('name')
-//     .notEmpty()
-//     .withMessage('name is required')
-//     .isLength({ min: 3, max: 50 })
-//     .withMessage('name must be between 3 and 50 characters long')
-//     .trim(),
-// ]);
+
 const validateGetTicket = withValidationErrors([
     body('id').custom((value, { req }) => {
         console.log("8c", value)
@@ -49,7 +40,28 @@ const validateGetTicket = withValidationErrors([
             return true
         }
         else if (value.length === 24) {
-            console.log("enter her wigasdfg")
+
+            const bool = mongoose.Types.ObjectId.isValid(value);
+            return bool
+        }
+        else {
+            throw BadRequestError("invalid id ")
+        }
+
+    })
+
+]
+
+)
+const validateGetSingleMail = withValidationErrors([
+    param('id').custom((value, { req }) => {
+        console.log("8c", value)
+        if (value.length === 8) {
+            req.isString = true
+            return true
+        }
+        else if (value.length === 24) {
+
             const bool = mongoose.Types.ObjectId.isValid(value);
             return bool
         }
@@ -77,22 +89,25 @@ const validateupdateTicket = withValidationErrors([
 ])
 const validateMailInput = withValidationErrors([
 
-    body("from")
-        .notEmpty().withMessage("please starting point is required").
-        isIn(CITY_TYPE)
-        .withMessage('invalid city chosen')
-        .
-        custom((value, { req }) => {
-            if (value == req.body.to) throw BadRequestError("city names can not be thesame that is ")
-            return true
-        }),
     body("to")
         .notEmpty()
-        .withMessage("please destination  is required").
-        isIn(CITY_TYPE)
-        .withMessage('invalid city chosen')
-        .custom((value, { req }) => {
-            if (value == req.body.from) throw BadRequestError("city names can not be thesame that is ")
+        // .withMessage("from is required please send").
+        // isIn(CITY_TYPE).withMessage("Invalid City")
+        .
+        custom(async (value, { req, loc, path }) => {
+            const cities = await getAllCities()
+            if (!(cities.includes(value))) throw BadRequestError("Invalid City sent")
+            if (value === req.body.from) throw BadRequestError("Cities should not be thesame ")
+            return true
+        }),
+    body("from")
+        .notEmpty()
+        .withMessage("from is required please send").
+        // isIn(CITY_TYPE).withMessage("Invalid City").
+        custom(async (value, { req, loc, path }) => {
+            const cities = await getAllCities()
+            if (!(cities.includes(value))) throw BadRequestError("Invalid City sent")
+            if (value === req.body.to) throw BadRequestError("Cities should not be thesame ")
             return true
         }),
     body("registerdate")
@@ -132,15 +147,7 @@ const validateMailInput = withValidationErrors([
     ,
 
 ])
-const updateTicketMetaData = withValidationErrors([
-    body("seat_id").
-        notEmpty().
-        withMessage("please provide a seat_id to update seat")
-        .custom((value) => mongoose.Types.ObjectId.isValid(value))
-        .withMessage('invalid MongoDB id'),
 
-
-])
 const busValidtionInput = withValidationErrors([
     body('name').notEmpty().
         withMessage("please provide a bus name").
@@ -226,19 +233,22 @@ const validateTicketInput = withValidationErrors([
         .withMessage(`age is lessthan 2 or greater than 80`),
     body("to")
         .notEmpty()
-        .withMessage("from is required please send").
-        isIn(CITY_TYPE).withMessage("Invalid City").
-        custom((value, { req, loc, path }) => {
-            // console.log(value, req.body.to, loc, path)
+        // .withMessage("from is required please send").
+        // isIn(CITY_TYPE).withMessage("Invalid City")
+        .
+        custom(async (value, { req, loc, path }) => {
+            const cities = await getAllCities()
+            if (!(cities.includes(value))) throw BadRequestError("Invalid City sent")
             if (value === req.body.from) throw BadRequestError("Cities should not be thesame ")
             return true
         }),
     body("from")
         .notEmpty()
         .withMessage("from is required please send").
-        isIn(CITY_TYPE).withMessage("Invalid City").
-        custom((value, { req, loc, path }) => {
-            // console.log(value, req.body.to, loc, path)
+        // isIn(CITY_TYPE).withMessage("Invalid City").
+        custom(async (value, { req, loc, path }) => {
+            const cities = await getAllCities()
+            if (!(cities.includes(value))) throw BadRequestError("Invalid City sent")
             if (value === req.body.to) throw BadRequestError("Cities should not be thesame ")
             return true
         }),
@@ -249,18 +259,28 @@ const validateTicketInput = withValidationErrors([
         withMessage("seat position should be numerical").
         isFloat({ min: 0, max: 67 })
         .withMessage("bus sea should be in range of 0-67")
-        .custom((seat, { req, loc, path }) => {
-            console.log(req.body)
+        .custom(async (seat, { req, loc, path }) => {
+            // console.log(req.body)
+            const { from, to, type } = req.body
             const seatposition = Number(seat)
             if (seatposition > 53 || seatposition == NaN || seatposition < 0) throw BadRequestError("please send a valid seat position");
-            if (req.body.type === "singletrip") {
-                req.body.price = 3500
-                req.body.type = "singletrip"
+
+            const route = await Route.findOne({ from, to });
+            if (!route) throw BadRequestError("sorry coudnot found route");
+            if (type == "singletrip") {
+                req.body.price = route.singletripprice
+            } else {
+                req.body.price = route.roundtripprice
             }
-            if (req.body.type === "roundtrip") {
-                req.body.price = 6000
-                req.body.type = "roundtrip"
-            }
+
+            // if (req.body.type === "singletrip") {
+            //     req.body.price = 3500
+            //     req.body.type = "singletrip"
+            // }
+            // if (req.body.type === "roundtrip") {
+            //     req.body.price = 6000
+            //     req.body.type = "roundtrip"
+            // }
             return true
         })
     ,
@@ -502,5 +522,6 @@ module.exports = {
     validateUpdateUser,
     validateIdBody,
     validateGetTicket, validatecreateseat, validateCreateAdmin,
-    validateMailInput
+    validateMailInput,
+    validateGetSingleMail
 };
