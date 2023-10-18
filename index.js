@@ -30,7 +30,7 @@ cloudinary.config({
 const cityController = require("./controllers/City").getCitys
 const port = process.env.PORT || 5000;
 const userRouter = require("./routes/User");
-const routesRouter = require("./routes/Route")
+const routesRouter = require("./routes/routesRoute")
 const Ticket = require("./routes/Ticket");
 const ERROR = require("./middlewares/error");
 const NOTFOUND = require("./middlewares/notfound");
@@ -60,7 +60,7 @@ app.use("/user", userSelf);
 app.use("/auth/assistant", assistantRoute);
 app.use("/assistant", assistantControlsRoute);
 app.use("/seat", seatRouter);
-app.use("/route", routesRouter);
+app.use("/routes", routesRouter);
 app.use("/ticket", userAuth, IsUserRestricted, Ticket);
 app.use("/admin", Admin_auth, adminControl);
 app.use("/bus", busRouter);

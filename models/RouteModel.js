@@ -8,13 +8,16 @@ const routeSechema = new Schema({
         type: String,
         required: [true, "to is required"]
     },
-    cost: {
+    singletripprice: {
         type: Number,
-        default: 6500
+        require:[true,"please sigletripprice is required"]
+    },
+    roundtripprice: {
+        type: Number,
+        require:[true,"please roundtripprice is required"]
     }
 
 }, {
-
     timestamps: true, versionKey: false
 })
 const routesschema = model("routes", routeSechema)

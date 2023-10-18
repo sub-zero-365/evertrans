@@ -64,7 +64,7 @@ const getSpecificSeat = async (req, res) => {
 const getStaticSeat = async (req, res) => {
     const { from, to, date: traveldate, time: traveltime } = req.query;
     const queryObject = {}
-    console.log(req.query.date)
+    
    
     if (from) {
         queryObject.from = {
@@ -94,9 +94,8 @@ const getStaticSeat = async (req, res) => {
 
 
     let isSeat = await Seat.find({ ...queryObject });
-    // console.log("this is seats", isSeat)
-    console.log("this is the seat count here", isSeat.length)
-    console.log("this is params", traveldate)
+    // console.log("this is the seat count here", isSeat.length)
+    // console.log("this is params", traveldate)
     if (isSeat.length == 0 && from && to && traveldate && traveltime) {
         try {
             console.log("enter here")
