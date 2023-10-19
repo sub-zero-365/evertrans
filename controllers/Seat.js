@@ -64,24 +64,15 @@ const getSpecificSeat = async (req, res) => {
 const getStaticSeat = async (req, res) => {
     const { from, to, date: traveldate, time: traveltime } = req.query;
     const queryObject = {}
-    
-   
     if (from) {
         queryObject.from = {
             $regex: from, $options: "i"
         }
-
     }
     if (to) {
         queryObject.to = {
             $regex: to, $options: "i"
         }
-    }
-    if (traveltime) {
-        queryObject.traveltime = {
-            $regex: traveltime, $options: "i"
-        }
-
     }
     if (traveldate) {
         var date_ = {
@@ -94,22 +85,16 @@ const getStaticSeat = async (req, res) => {
 
 
     let isSeat = await Seat.find({ ...queryObject });
-    // console.log("this is the seat count here", isSeat.length)
-    // console.log("this is params", traveldate)
-    if (isSeat.length == 0 && from && to && traveldate && traveltime) {
-        try {
-            console.log("enter here")
+   
+    if (isSeat.length == 0 && from && to && traveldate) {
+
             isSeat = await Seat.create({
                 from,
                 to,
                 traveldate,
-                traveltime,
-
             })
-        } catch (err) {
-            console.log("fail to create seat err", err)
-        }
-        console.log("newlyseasr", isSeat)
+        
+        // console.log("newlyseasr", isSeat)
         if (!isSeat) {
             console.log("fail to create seat")
             throw BadRequestError("fail to create a seats")

@@ -4,8 +4,9 @@ const Assistant = require("../models/Assistant");
 const { BadRequestError, UnethenticatedError } = require("../error");
 const { StatusCodes } = require("http-status-codes")
 const Register = async (req, res) => {
+    console.log("hit the registe route here")
     const isAdmin_id = req?.admin?._id && req?.admin?.role == "user";
-    if (!isAdmin_id) throw UnethenticatedError("not allowed to perform this action now");
+    if (!isAdmin_id) throw BadRequestError("not allowed to perform this action now");
     const isUserWithPhone = await User.findOne({ phone: req.body.phone });
     if (isUserWithPhone) {
         throw BadRequestError("user exist with the phone  number");
@@ -33,7 +34,7 @@ const Login = async (req, res) => {
     if (!user) {
         // search assistant user
         user = await Assistant.findOne({ ...{ phone, password } }, { password: 0 });
-        if (!user) throw BadRequestError("please check your login details");
+        if (!user) throw BadRequestError("please check your login details and try again");
         token = await user.createJWT()
         user = {
             redirect: true
@@ -46,7 +47,10 @@ const Login = async (req, res) => {
 
 
         });
-        res.status(StatusCodes.OK).json({ msg: 'user logged in', user });
+        res.status(StatusCodes.OK).json({
+            msg: 'assistant logged in',
+            user
+        });
     }
 
 
@@ -59,7 +63,10 @@ const Login = async (req, res) => {
 
 
     });
-    res.status(StatusCodes.OK).json({ msg: 'user logged in', user: {} });
+    res.status(StatusCodes.OK).json({
+        msg: 'user logged in',
+        user: { role: user.role }
+    });
 };
 const logout = (req, res) => {
     res.cookie('token', 'logout', {

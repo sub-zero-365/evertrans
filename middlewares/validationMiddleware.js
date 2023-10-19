@@ -211,11 +211,7 @@ const validateTicketInput = withValidationErrors([
         .withMessage('travel date is required')
         .custom(async (traveldate, { req }) => {
             const lettodaydate = dayjs(new Date()).format("YYYY-MM-DD");
-
             const ticketTravelDate = traveldate;
-            // console.log("traveldate here : ", traveldate)
-            // console.log("todaydate here : ", lettodaydate)
-            // console.log("traveldate here : ", ticketTravelDate)
             if ((dayjs(ticketTravelDate).diff(lettodaydate, "day")) < 0) {
                 throw BadRequestError(`fail cause the user is trying to back date the date`)
             }
@@ -223,10 +219,10 @@ const validateTicketInput = withValidationErrors([
             return true
 
         }),
-    body("age").
-        notEmpty().withMessage("age is require bro").
-        isFloat({ min: 2, max: 80 })
-        .withMessage(`age is lessthan 2 or greater than 80`),
+    // body("age").
+    //     notEmpty().withMessage("age is require bro").
+    //     isFloat({ min: 2, max: 80 })
+    //     .withMessage(`age is lessthan 2 or greater than 80`),
     body("sex").
         notEmpty().withMessage("sex is require bro").
         isIn(["female", "male"])

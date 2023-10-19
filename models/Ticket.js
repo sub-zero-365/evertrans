@@ -43,10 +43,10 @@ const ticketSchema = new Schema(
       required: [true, "please enter price"],
     },
 
-    traveltime: {
-      type: String,
-      required: [true, "please enter time"],
-    },
+    // traveltime: {
+    //   type: String,
+    //   required: [true, "please enter time"],
+    // },
     traveldate: {
       type: Date,
       required: [true, "please enter date"],
@@ -75,10 +75,10 @@ const ticketSchema = new Schema(
       type: String,
       required: false,
     },
-    age: {
-      type: Number,
-      required: [true, "Please your age is needed or required"],
-    },
+    // age: {
+    //   type: Number,
+    //   required: [true, "Please your age is needed or required"],
+    // },
 
     sex: {
       type: String,

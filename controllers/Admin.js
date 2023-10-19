@@ -27,14 +27,17 @@ const login = async (req, res) => {
 
 };
 const register = async (req, res) => {
-
+  const { phone, password } = req.body;
+  if (!phone || !password) throw BadRequestError("please provide a phone or a password")
   const isFirstAccount = (await Admin.countDocuments()) === 0;
   // if (!isFirstAccount && req?.admin.role == "user") {
 
   // }
   const isPhone = await Admin.findOne({ phone: req.body.phone })
+
   if (isPhone) throw BadRequestError("phone number already exist")
   req.body.role = isFirstAccount ? 'admin' : 'user';
+
   const hashedPassword = await hashPassword(req.body.password);
   req.body.password = hashedPassword;
   const user = await Admin.create(req.body);
@@ -46,7 +49,7 @@ const logout = (req, res) => {
     expires: new Date(Date.now()),
     sameSite: "none",
     secure: process.env.NODE_ENV === 'production',
-    
+
   });
   res.status(StatusCodes.OK).json({ msg: 'user logged out!' });
 };
