@@ -18,13 +18,19 @@ const UserSchema = new Schema({
         required: [true, "please provide a password"],
         min: [4, "please passwords should be greater than 5"],
     },
+    role: {
+        type: String,
+        enum: ['tickets',
+            'mails'],
+        default: 'tickets',
+    }
+    ,
     createdBy: {
         type: Schema.ObjectId,
         required: [true, "please send a created user id"],
         ref: "admins",
     }
 }, {
-
     timestamps: true
 }
 
@@ -36,8 +42,13 @@ const UserSchema = new Schema({
 
 
 UserSchema.methods.createJWT = function () {
-    return jwt.sign({ _id: this._id, phone: this.phone },
-        process.env.jwtSecret, { expiresIn: "24h" })
+    return jwt.sign({
+        _id: this._id,
+        phone: this.phone,
+        role: this.role
+    },
+        process.env.jwtSecret, 
+        { expiresIn: "24h" })
 
 }
 

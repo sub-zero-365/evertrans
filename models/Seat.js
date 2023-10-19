@@ -9,10 +9,10 @@ const seatSchema = new Schema({
         required: [true, "to is required"]
     },
 
-    traveltime: {
-        type: String,
-        required: [true, "please enter time"],
-    },
+    // traveltime: {
+    //     type: String,
+    //     required: [true, "please enter time"],
+    // },
     traveldate: {
         type: Date,
         required: [true, "please enter date"],
@@ -21,15 +21,15 @@ const seatSchema = new Schema({
         type: Object,
         bus: {
             type: String,
-            require:[true,"bus name is require please pass bus name "]
+            require: [true, "bus name is require please pass bus name "]
         },
         feature: {
             type: String,
-            require:[true,"bus name is require please pass bus name "]
+            require: [true, "bus name is require please pass bus name "]
         },
-      
+
         default: {
-            bus: "demobus",
+            bus: "0001",
             _id: "64b260e8ef94c7a1aa37a22b",
             feature: "vip"
         }

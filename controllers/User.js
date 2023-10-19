@@ -122,10 +122,6 @@ const getUserAndTicketLength = async (req, res) => {
           as: "usersRole"
         }
       },
-
-
-
-
       {
         "$project": {
           total:
@@ -151,7 +147,6 @@ const getUserAndTicketLength = async (req, res) => {
         }
       },
       { $sort: { total: -1 } }])
-  console.log("this is the user ticket here", usertickets)
   res.status(200).json({ userdetails: usertickets })
 }
 

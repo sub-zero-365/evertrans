@@ -26,7 +26,6 @@ cloudinary.config({
   api_key: "483645365462527",
   api_secret: "9-wnbRSZcEgQuco8AHMj6FjiVGk",
 });
-
 const cityController = require("./controllers/City").getCitys
 const port = process.env.PORT || 5000;
 const userRouter = require("./routes/User");
@@ -61,7 +60,8 @@ app.use("/auth/assistant", assistantRoute);
 app.use("/assistant", assistantControlsRoute);
 app.use("/seat", seatRouter);
 app.use("/routes", routesRouter);
-app.use("/ticket", userAuth, IsUserRestricted, Ticket);
+app.use("/ticket", userAuth,
+ IsUserRestricted, Ticket);
 app.use("/admin", Admin_auth, adminControl);
 app.use("/bus", busRouter);
 app.use("/contact", Admin_auth, contactRouter);

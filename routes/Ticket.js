@@ -15,12 +15,17 @@ const { validateTicketInput,
 const IsUserRestricted = require("../middlewares/IsUserRestricted")
 const express = require("express")
 const router = express.Router()
-
-router.route("/").post(IsUserRestricted,
-    validateTicketInput, create).get(getTickets)
+const { ticketPermission } = require("../utils/ticketPermission")
+router.route("/").post(
+    IsUserRestricted,
+    ticketPermission,
+    validateTicketInput,
+    create).get(
+        ticketPermission,
+        getTickets)
 router.route("/:id").get(
     validateIdParam,
-
+    ticketPermission,
     getTicket)
 router.route("/download/:id").
     get(validateIdParam,
