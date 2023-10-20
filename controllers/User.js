@@ -1,8 +1,11 @@
 const User = require("../models/User");
 const Ticket = require("../models/Ticket");
+const Admin = require("../models/Admin")
 const { BadRequestError, UnethenticatedError } = require("../error");
 const Assistant = require("../models/Assistant")
 const { createJWT } = require("../utils/tokenUtils")
+const { comparePassword, hashPassword } = require('../utils/passwordUtils.js');
+
 const mongoose = require("mongoose")
 const updatePassword = async (req, res) => {
   const { oldpassword, newpassword, confirmpassword } = req.body;
@@ -29,7 +32,7 @@ const updatePassword = async (req, res) => {
 
 
 const getUsers = async (req, res) => {
-  const obj = {};
+
 
 
   const { search } = req.query;
@@ -83,21 +86,7 @@ const getUserAndTicketLength = async (req, res) => {
       }
     ]
   }
-  // const allusers = await User.find(queryObject, { password: 0, __v: 0 }).sort("-createdAt");
-  // var promiseawait = await Promise.all(
-  //   allusers.map(async (user) => {
-  //     const lenght = await Ticket.countDocuments({ createdBy: user._id });
-  //     return {
-  //       ...{
-  //         user
-  //       },
-  //       nHits: lenght
-  //     };
-  //   })
-  // )
-  // const sortdata = promiseawait.sort((a, b) => b.nHits - a.nHits);
-  // res.status(200).
-  //   json({ userdetails: sortdata, nHits: sortdata.length })
+
   const usertickets = await User.
     aggregate([
       {
@@ -183,7 +172,24 @@ const getStaticUser = async (req, res) => {
   }
   res.status(200).json({ user });
 };
-
+const deleteUser = async (req, res) => {
+  const { id } = req.params
+  const generalAdmin_or_AdminCreated_the_user = req?.admin?.role == "admin" || (
+    await User.findOne({ createdBy: req?.admin?._id })
+  );
+  if (!generalAdmin_or_AdminCreated_the_user) {
+    throw BadRequestError("cant perfom this action now please try again later")
+  }
+  const { password } = req.body
+  let user = await Admin.findOne({ _id: req?.admin?._id })
+  const isValidUser = (
+    user && password &&
+    await comparePassword(password, user.password))
+  if (!isValidUser) throw BadRequestError("password did not match");
+  const deletedUser = await User.findOneAndDelete({ _id: id });
+  if (!deletedUser) throw BadRequestError("fail to delete user ")
+  res.send(200).json({ status: "success" })
+}
 
 
 
@@ -193,5 +199,6 @@ module.exports = {
   userInfo,
   getStaticUser,
   getUserAndTicketLength
-  , updatePassword
+  , updatePassword,
+  deleteUser
 };

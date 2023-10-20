@@ -214,7 +214,7 @@ const getTicket = async (req, res) => {
   }
   // this get all ticket if you didnit create it 
   const createdBy = (await User.findOne({ _id: ticket.createdBy })
-    .select("fullname")).fullname;
+    .select("fullname"))?.fullname || "n/a";
   let busname = await Seat.findOne({
     _id: ticket?.seat_id
   }).select("bus")
@@ -264,7 +264,7 @@ const getTickets = async (req, res) => {
           $regex: decodeURIComponent(search).split("+").join(" ").trim(), $options: "i"
         }
 
-      }, 
+      },
       // {
       //   customerPhone: { $regex: decodeURIComponent(search).split("+").join(" ").trim(), $options: "i" }
       // }
