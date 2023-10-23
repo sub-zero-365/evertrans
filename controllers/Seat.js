@@ -1,4 +1,4 @@
- Ticket = require("../models/Ticket")
+Ticket = require("../models/Ticket")
 const Bus = require("../models/Bus")
 const Seat = require("../models/Seat")
 const fs = require("fs")
@@ -85,15 +85,15 @@ const getStaticSeat = async (req, res) => {
 
 
     let isSeat = await Seat.find({ ...queryObject });
-   
+
     if (isSeat.length == 0 && from && to && traveldate) {
 
-            isSeat = await Seat.create({
-                from,
-                to,
-                traveldate,
-            })
-        
+        isSeat = await Seat.create({
+            from,
+            to,
+            traveldate,
+        })
+
         // console.log("newlyseasr", isSeat)
         if (!isSeat) {
             console.log("fail to create seat")
@@ -354,7 +354,7 @@ const downloadboarderaux = async (req, res) => {
                 }
             }
         })
-    console.log("updates", updates)
+    // console.log("updates", updates)
     let tickets = null;
 
     tickets = await Ticket.find({
@@ -382,13 +382,13 @@ const downloadboarderaux = async (req, res) => {
     })
     const _path = path.resolve(__dirname, "../boarderaux");
     const file = path.join(_path, "boarderauxafriquecon.pdf")
-    let img = fs.readFileSync(path.join(_path, "afrique-con.png"));
+    let img = fs.readFileSync(path.join(_path, "logo.png"));
 
     try {
         const pdfDoc = await PDFDocument.load(await readFile(file));
         // const fileNames = pdfDoc.getForm().getFields().map(f => f.getName())
         // console.log(fileNames)
-        const page = pdfDoc.getPage(0)
+        // const page = pdfDoc.getPage(0)
         const allpages = pdfDoc.getPages()
 
 
@@ -456,10 +456,11 @@ const downloadboarderaux = async (req, res) => {
             img.scaleToFit(100, 100)
             img.scale(1)
             currentpage.drawImage(img, {
-                x: (width / 2) - (img.width / 2 + 100),
-                y: height / 2
-                , width: 600,
-                rotate: degrees(30),
+                x: (width / 2) - (img.width / 2),
+                y: (height / 2) - (img.height / 2)
+                , width: 400,
+                height: 400,
+                // rotate: degrees(30),
                 opacity: 0.75,
             })
         })

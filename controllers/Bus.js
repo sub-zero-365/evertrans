@@ -111,43 +111,41 @@ const setActive = async (req, res) => {
 
 }
 const getAllBus = async (req, res) => {
-    const getNextDay = (date = new Date()) => {
-        const next = new Date(date.getTime());
-        next.setDate(date.getDate() + 1);
-        return next.toLocaleDateString("en-CA")
-    }
 
-    const { search, feature, from, to, status, date } = req.query;
+    const { search, feature, numberOfSeat } = req.query;
     const queryObject = {}
-    if (date) {
-        var date_ = {
-            $gte: new Date(date).toLocaleDateString("en-CA"),
-            $lte: getNextDay(new Date(date)),
-        }
-        console.log(date_)
-        queryObject.date = date_
+    if (numberOfSeat && numberOfSeat != "all") {
+        queryObject.number_of_seats = numberOfSeat
     }
-    if (status && status != "all") {
-        if (status == "active") {
-            queryObject.active = true
-        }
-        if (status == "inactive") {
-            queryObject.active = false
-        }
+    // if (date) {
+    //     var date_ = {
+    //         $gte: new Date(date).toLocaleDateString("en-CA"),
+    //         $lte: getNextDay(new Date(date)),
+    //     }
+    //     console.log(date_)
+    //     queryObject.date = date_
+    // }
+    // if (status && status != "all") {
+    //     if (status == "active") {
+    //         queryObject.active = true
+    //     }
+    //     if (status == "inactive") {
+    //         queryObject.active = false
+    //     }
 
-    }
-    if (from) {
-        queryObject.from = {
-            $regex: from, $options: "i"
-        }
+    // }
+    // if (from) {
+    //     queryObject.from = {
+    //         $regex: from, $options: "i"
+    //     }
 
-    }
-    if (to) {
-        queryObject.to = {
-            $regex: to, $options: "i"
-        }
+    // }
+    // if (to) {
+    //     queryObject.to = {
+    //         $regex: to, $options: "i"
+    //     }
 
-    }
+    // }
     if (search) {
         queryObject.$or = [
             {
@@ -162,15 +160,7 @@ const getAllBus = async (req, res) => {
     }
 
     const buses = await Bus.find(queryObject);
-    if (buses.length === 0 && queryObject.from && queryObject.to) {
-        const clonequery = { ...queryObject };
-        delete clonequery.from
-        delete clonequery.to
-        const _buses = await Bus.find(clonequery).limit(10)
-        res.status(200).
-            json({ buses, avalaibe_buses: _buses, nHits: buses.length })
-        return
-    }
+
     res.status(200).json({ nHits: buses.length, buses })
 }
 

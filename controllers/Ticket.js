@@ -195,6 +195,7 @@ const getTicket = async (req, res) => {
   // new implentation here//change the code to make  please the client
   var ticket = null;
   let isString = req.isString || false;
+
   const {
     params: { id },
   } = req;
@@ -518,7 +519,7 @@ const downloadsoftcopyticket = async (req, res) => {
   }
   const _path = path.resolve(__dirname, "../tickets")
 
-  const createdBy = (await User.findOne({ _id: ticket.createdBy }).select("fullname")).fullname;
+  const createdBy = (await User.findOne({ _id: ticket.createdBy }).select("fullname"))?.fullname || "n/a";
   qrcode.toFile(path.join(_path, "qr2.png"),
     url, {
     type: "terminal",
