@@ -53,7 +53,7 @@ const mailsSchema = new Schema(
             default: "pending",
             enum: {
                 values: ["pending",
-                    "sent", 
+                    "sent",
                     "recieved"],
             },
         },
@@ -70,6 +70,10 @@ const mailsSchema = new Schema(
         recieverfullname: String,
         imgUrl: String,
         avatarPublicId: String,
+        markRecievedBy: {
+            type: String,
+            default: "n/a"
+        }
     },
     {
         timestamps: true,
