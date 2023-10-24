@@ -151,10 +151,9 @@ const getAllMails = async (req, res) => {
     }
     if (quickdatesort) {
         queryObject.createdAt = {
-            $gte: quickdatesort,
-            // $lte: getPreviousDay(new Date(startdate.start)),
+            // $gte: quickdatesort,
+            $gte: new Date(quickdatesort),
         }
-
     }
     if (mailStatus && mailStatus != "all") {
         //check for the mail status 
@@ -174,6 +173,9 @@ const getAllMails = async (req, res) => {
         .sort(sortKey)
         .skip(skip)
         .limit(limit);
+        console.log("this is quick date sort here",
+        queryObject,createdBy)
+
     const nDoc = await Mail.countDocuments(queryObject);
 
     var statuses = (await Mail.aggregate([
@@ -214,20 +216,39 @@ const getAllMails = async (req, res) => {
     const totalSentMails = (obj?.sent?.total || 0)
     const totalPendingMails = (obj?.pending?.total || 0)
     const totalRecievedMails = (obj?.recieved?.total || 0)
-
-    console.log("this is the statuses ", statuses, obj,
-        totalMailsSum,
-        totalSentMails,
-        totalPendingMails,
-        totalRecievedMails)
+    const sentMailsPercentage = obj?.sent?.percentage || 0
+    const recievedMailsPercentage = obj?.recieved?.percentage || 0
+    const pendingMailsPercentage = obj?.pending?.percentage || 0
+    const pendingSum = obj?.pending?.sum || 0
+    const sentSum = obj?.sent?.sum || 0
+    const recievedSum = obj?.recieved?.sum || 0
+    // console.log("this is the statuses ",statuses, {
+    //     // mails,
+    //     nHits: mails.length,
+    //     totalMailsSum,
+    //     totalSentMails,
+    //     totalPendingMails,
+    //     totalRecievedMails,
+    //     sentMailsPercentage,
+    //     pendingMailsPercentage,
+    //     recievedMailsPercentage,
+    //     pendingSum,
+    //     sentSum,
+    //     recievedSum
+    // })
     res.status(StatusCodes.OK).json({
         mails,
         nHits: mails.length,
         totalMailsSum,
         totalSentMails,
         totalPendingMails,
-        totalRecievedMails
-
+        totalRecievedMails,
+        sentMailsPercentage,
+        pendingMailsPercentage,
+        recievedMailsPercentage,
+        pendingSum,
+        sentSum,
+        recievedSum
     })
 
 }
