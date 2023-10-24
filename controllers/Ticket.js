@@ -839,17 +839,12 @@ const getRankUsers = async (req, res) => {
       $gte: new Date(quickdatesort),
       // $lte: getPreviousDay(new Date(endDate.end)),
     }
-    // queryObject.createdAt = {
-    //   $gte:
-    //     // dayjs(quickdatesort).toISOString(),
-    //     quickdatesort
-    //   // $lte: dayjs(quickdatesort).toISOString(),
-    // }
+
 
   }
   console.log("this i quick date sort", quickdatesort,
     queryObject, req.query)
-
+  const uniqueNumbers = await Ticket.distinct("phone",queryObject)
   const rankUsers = await Ticket.aggregate([
     {
       $addFields: {
@@ -898,7 +893,8 @@ const getRankUsers = async (req, res) => {
     },
     { $sort: { total: -1 } }]).limit(10)
   console.log("this is the most ranked users of all times ", rankUsers.length)
-  res.status(200).json({ rankUsers })
+  res.status(200).json({ rankUsers,
+  nHits: uniqueNumbers.length })
 
 }
 
