@@ -36,7 +36,14 @@ const deleteRoutes = async (req, res) => {
 
 }
 const getAllRoutes = async (req, res) => {
-    const routes = await Route.find({})
+    const { from, to } = req.query;
+    console.log("this is the req.query here", req.query)
+    const queryObject = {}
+    if (from && to) {
+        queryObject.from = from
+        queryObject.to = to
+    }
+    const routes = await Route.find(queryObject)
     res.status(200).json({ routes, nHits: routes.length })
 }
 const getStaticRoute = async (req, res) => {
@@ -45,10 +52,25 @@ const getStaticRoute = async (req, res) => {
     if (!route) throw NotFoundError("not route with id ")
     res.status(200).json({ route })
 }
+const getRoute = async (req,res) => {
+    const { from, to } = req.query
+    console.log("this is the req ",req.query)
+    if (!from || !to) throw BadRequestError("please provide a from and a to cause its needed");
+    const queryObject = {
+        from: { $regex: decodeURIComponent(from).split("+").join(" ").trim(), $options: "i" },
+        to: { $regex: decodeURIComponent(to).split("+").join(" ").trim(), $options: "i" },
+    }
+    const route = await Route.findOne(queryObject);
+    if (!route) throw NotFoundError("no route found with the search query")
+    res.status(200).json({
+        route
+    })
+}
 module.exports = {
     createRoutes,
     updateRoutes,
     getAllRoutes,
     deleteRoutes,
-    getStaticRoute
+    getStaticRoute,
+    getRoute
 }
