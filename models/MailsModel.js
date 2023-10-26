@@ -73,7 +73,18 @@ const mailsSchema = new Schema(
         markRecievedBy: {
             type: String,
             default: "n/a"
+        },
+        paymenttype: {
+            type: String,
+            require: false,
+            default: "Cash In",
+            emun: {
+                values: ["Cash In",
+                    "CM"],
+
+            }
         }
+
     },
     {
         timestamps: true,
