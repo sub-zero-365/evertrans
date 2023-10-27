@@ -22,7 +22,7 @@ const login = async (req, res) => {
     httpOnly: true,
     expires: new Date(Date.now() + oneDay),
     secure: process.env.NODE_ENV === 'production',
-    sameSite: "none",
+    // sameSite: "none",
   }).json({ msg: "user logged in success!!!" });
 
 };
@@ -47,7 +47,7 @@ const logout = (req, res) => {
   res.cookie('token', 'logout', {
     httpOnly: true,
     expires: new Date(Date.now()),
-    sameSite: "none",
+    // sameSite: "none",
     secure: process.env.NODE_ENV === 'production',
 
   });
