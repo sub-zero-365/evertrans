@@ -8,6 +8,8 @@ const fs = require("fs")
 const { PDFDocument, degrees, StandardFonts, rgb } = require("pdf-lib");
 const { readFile, writeFile } = require("fs/promises");
 const Seat = require("../models/Seat")
+const day = require("dayjs")
+
 const {
   BadRequestError,
   NotFoundError,
@@ -274,16 +276,17 @@ const getTickets = async (req, res) => {
   }
 
   if (createdBy && req?.admin?.role === "admin") {
-    queryObject.$expr = {
-      $eq: ['$createdBy', { $toObjectId: createdBy }]
-    }
+    queryObject.createdBy = new mongoose.Types.ObjectId(createdBy)
+    // queryObject.$expr = {
+    //   $eq: ['$createdBy', { $toObjectId: createdBy }]
+    // }
   }
   if (createdBy && req?.admin?.role === "user") {
     // use is in here after implentation
-
-    queryObject.$expr = {
-      $eq: ['$createdBy', { $toObjectId: createdBy }]
-    }
+    queryObject.createdBy = new mongoose.Types.ObjectId(createdBy)
+    // queryObject.$expr = {
+    //   $eq: ['$createdBy', { $toObjectId: createdBy }]
+    // }
     // throw BadRequestError("inalid ")
 
   }
@@ -300,9 +303,11 @@ const getTickets = async (req, res) => {
 
   }
   if (req.userInfo?._id && !createdBy) {
-    queryObject.$expr = {
-      $eq: ['$createdBy', { $toObjectId: req.userInfo?._id }]
-    }
+    queryObject.createdBy = new mongoose.Types.ObjectId(req.userInfo?._id)
+
+    // queryObject.$expr = {
+    //   $eq: ['$createdBy', { $toObjectId: req.userInfo?._id }]
+    // }
 
   }
   if (daterange) {
@@ -477,6 +482,58 @@ const getTickets = async (req, res) => {
   }
   const _length = (totalActivePrice?.total || 0) + (totalInActivePrice?.total || 0)
   const numberOfPages = Math.ceil(_length / limit);
+
+  // ticket start here
+
+
+  // let stats = await Mail.aggregate([
+  //   { $match: { createdBy: new mongoose.Types.ObjectId(req.userInfo?._id) } },
+  //   { $group: { _id: '$ticketStatus', count: { $sum: 1 } } },
+  // ]);
+  // console.log("this is the user query here ,", stats)
+
+  // stats = stats.reduce((acc, curr) => {
+  //   const { _id: title, count } = curr;
+  //   acc[title] = count;
+  //   return acc;
+  // }, {});
+  // console.log("this is the reduce stat here", stats)
+  var createdBy_ = {}
+  if (queryObject.createdBy) createdBy_ = queryObject.createdBy
+  let monthlyApplications = await Ticket.aggregate([
+    { $match: { ...createdBy_ } },
+    {
+      $group: {
+        _id: { year: { $year: '$createdAt' }, month: { $month: '$createdAt' } },
+        count: { $sum: 1 },
+      },
+    },
+    { $sort: { '_id.year': -1, '_id.month': -1 } },
+    { $limit: 6 },
+  ]);
+  console.log("tickets stats here", monthlyApplications)
+
+  monthlyApplications = monthlyApplications
+    .map((item) => {
+      const {
+        _id: { year, month },
+        count,
+      } = item;
+
+      const date = day()
+        .month(month - 1)
+        .year(year)
+        .format('MMM YY');
+
+      return { date, count };
+    })
+    .reverse();
+  console.log("this is the multiplicatio data here", monthlyApplications)
+
+  // endhere
+
+
+
   res.
     status(200).json({
       totalPrice: (totalActivePrice?.sum || 0) + (totalInActivePrice?.sum || 0),
@@ -490,6 +547,7 @@ const getTickets = async (req, res) => {
       totalActiveTickets: totalActivePrice?.total || 0,
       totalInActiveTickets: totalInActivePrice?.total || 0,
       tickets,
+      monthlyApplications
 
     })
 
@@ -844,7 +902,7 @@ const getRankUsers = async (req, res) => {
   }
   console.log("this i quick date sort", quickdatesort,
     queryObject, req.query)
-  const uniqueNumbers = await Ticket.distinct("phone",queryObject)
+  const uniqueNumbers = await Ticket.distinct("phone", queryObject)
   const rankUsers = await Ticket.aggregate([
     {
       $addFields: {
@@ -877,7 +935,7 @@ const getRankUsers = async (req, res) => {
           $first: "$phone"
         },
         idcardnumber: {
-          $first: "$email"
+          $first: "$eTicket"
         },
       }
     },
@@ -893,11 +951,64 @@ const getRankUsers = async (req, res) => {
     },
     { $sort: { total: -1 } }]).limit(10)
   console.log("this is the most ranked users of all times ", rankUsers.length)
-  res.status(200).json({ rankUsers,
-  nHits: uniqueNumbers.length })
+  res.status(200).json({
+    rankUsers,
+    nHits: uniqueNumbers.length
+  })
 
 }
+const showStats = async (req, res) => {
+  let stats = await Mail.aggregate([
+    { $match: {/* createdBy: new mongoose.Types.ObjectId(req.userInfo?._id) */ } },
+    { $group: { _id: '$ticketStatus', count: { $sum: 1 } } },
+  ]);
+  console.log("this is the user query here ,", stats)
 
+  stats = stats.reduce((acc, curr) => {
+    const { _id: title, count } = curr;
+    acc[title] = count;
+    return acc;
+  }, {});
+  console.log("this is the reduce stat here", stats)
+
+  const defaultStats = {
+    pending: stats.pending || 0,
+    sent: stats.sent || 0,
+    recieved: stats.recieved || 0,
+  };
+
+  let monthlyApplications = await Ticket.aggregate([
+    { $match: { createdBy: new mongoose.Types.ObjectId(req.userInfo?._id) } },
+    {
+      $group: {
+        _id: { year: { $year: '$createdAt' }, month: { $month: '$createdAt' } },
+        count: { $sum: 1 },
+      },
+    },
+    { $sort: { '_id.year': -1, '_id.month': -1 } },
+    { $limit: 6 },
+  ]);
+  console.log("this  multiplication stats here", monthlyApplications)
+
+  monthlyApplications = monthlyApplications
+    .map((item) => {
+      const {
+        _id: { year, month },
+        count,
+      } = item;
+
+      const date = day()
+        .month(month - 1)
+        .year(year)
+        .format('MMM YY');
+
+      return { date, count };
+    })
+    .reverse();
+  console.log("this is the multiplicatio data here", monthlyApplications)
+
+  res.status(StatusCodes.OK).json({ defaultStats, monthlyApplications });
+};
 module.exports = {
   getTicketForAnyUser,
   create: createTicket,

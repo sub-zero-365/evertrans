@@ -4,7 +4,7 @@ const Assistant = require("../models/Assistant");
 const { BadRequestError, UnethenticatedError } = require("../error");
 const { StatusCodes } = require("http-status-codes")
 const Register = async (req, res) => {
-    console.log("hit the registe route here")
+    // console.log("hit the registe route here")
     const isAdmin_id = req?.admin?._id && req?.admin?.role == "user";
     if (!isAdmin_id) throw BadRequestError("not allowed to perform this action now");
     const isUserWithPhone = await User.findOne({ phone: req.body.phone });
@@ -43,7 +43,7 @@ const Login = async (req, res) => {
             httpOnly: true,
             expires: new Date(Date.now() + oneDay),
             secure: process.env.NODE_ENV === 'production',
-            sameSite: "none",
+            // sameSite: "none",
 
 
         });
@@ -59,9 +59,7 @@ const Login = async (req, res) => {
         httpOnly: true,
         expires: new Date(Date.now() + oneDay),
         secure: process.env.NODE_ENV === 'production',
-        sameSite: "none",
-
-
+        // sameSite: "none",
     });
     res.status(StatusCodes.OK).json({
         msg: 'user logged in',
@@ -72,7 +70,7 @@ const logout = (req, res) => {
     res.cookie('token', 'logout', {
         httpOnly: true,
         expires: new Date(Date.now()),
-        sameSite: "none",
+        // sameSite: "none",
         secure: process.env.NODE_ENV === 'production',
     });
     res.status(StatusCodes.OK).json({ msg: 'user logged out!' });

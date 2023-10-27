@@ -11,6 +11,9 @@ const { formatImage } = require("../utils/multerMiddleware")
 const cloudinary = require('cloudinary');
 const { StatusCodes } = require("http-status-codes")
 // import mongoose from 'mongoose';
+// import day from 'dayjs';
+const day =require("dayjs")
+
 const mongoose = require("mongoose")
 const createMail = async (req, res) => {
     // const newMail = { ...req.body };
@@ -408,9 +411,62 @@ const editMail = async (req, res) => {
     res.status(200).json({ msg: "success" })
 
 }
+const showStats = async (req, res) => {
 
+    let stats = await Mail.aggregate([
+      { $match: { createdBy: new mongoose.Types.ObjectId(req.userInfo?._id) } },
+      { $group: { _id: '$mailStatus', count: { $sum: 1 } } },
+    ]);
+    console.log("this is the user query here ,",stats)
+  
+    stats = stats.reduce((acc, curr) => {
+      const { _id: title, count } = curr;
+      acc[title] = count;
+      return acc;
+    }, {});
+    console.log("this is the reduce stat here", stats)
+  
+    const defaultStats = {
+      pending: stats.pending || 0,
+      sent: stats.sent || 0,
+      recieved: stats.recieved || 0,
+    };
+  
+    let monthlyApplications = await Mail.aggregate([
+      { $match: { createdBy: new mongoose.Types.ObjectId(req.userInfo?._id) } },
+      {
+        $group: {
+          _id: { year: { $year: '$createdAt' }, month: { $month: '$createdAt' } },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { '_id.year': -1, '_id.month': -1 } },
+      { $limit: 6 },
+    ]);
+    console.log("this  multiplication stats here",monthlyApplications)
+  
+    monthlyApplications = monthlyApplications
+      .map((item) => {
+        const {
+          _id: { year, month },
+          count,
+        } = item;
+  
+        const date = day()
+          .month(month - 1)
+          .year(year)
+          .format('MMM YY');
+  
+        return { date, count };
+      })
+      .reverse();
+      console.log("this is the multiplicatio data here",monthlyApplications)
+  
+    res.status(StatusCodes.OK).json({ defaultStats, monthlyApplications });
+  };
 module.exports = {
     createMail,
     getStaticMail,
-    getAllMeals: getAllMails, downloadsoftcopy, editMail
+    getAllMeals: getAllMails, downloadsoftcopy, editMail,
+    showStats
 }
