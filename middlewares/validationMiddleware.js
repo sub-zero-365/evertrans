@@ -185,17 +185,31 @@ const busValidtionInput = withValidationErrors([
 const validatecreateseat = withValidationErrors([
 
     body("from").optional().
-        isIn(["buea", "yaounde"])
-        .withMessage('invalid trip type type').custom((value, { req }) => {
-            if (value == req.body.to) throw BadRequestError("city names can not be thesame that is ")
+        // isIn(["buea", "yaounde"])
+        // .withMessage('invalide').custom((value, { req }) => {
+        //     if (value == req.body.to) throw BadRequestError("city names can not be thesame that is ")
+        //     return true
+        // })
+        custom(async (value, { req, loc, path }) => {
+            const cities = await getAllCities()
+            if (!(cities.includes(value))) throw BadRequestError("Invalid City sent")
+            if (value === req.body.to) throw BadRequestError("Cities should not be thesame ")
             return true
-        }),
+        })
+        ,
     body("to").optional().
-        isIn(["buea", "yaounde"])
-        .withMessage('invalid trip type type').custom((value, { req }) => {
-            if (value == req.body.from) throw BadRequestError("city names can not be thesame that is ")
+        // isIn(["buea", "yaounde"])
+        // .withMessage('invalide').custom((value, { req }) => {
+        //     if (value == req.body.from) throw BadRequestError("city names can not be thesame that is ")
+        //     return true
+        // })
+        custom(async (value, { req, loc, path }) => {
+            const cities = await getAllCities()
+            if (!(cities.includes(value))) throw BadRequestError("Invalid City sent")
+            if (value === req.body.from) throw BadRequestError("Cities should not be thesame ")
             return true
-        }),
+        })
+        ,
 ])
 const validateTicketInput = withValidationErrors([
     body('seat_id').notEmpty().
