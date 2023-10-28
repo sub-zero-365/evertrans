@@ -29,7 +29,7 @@ const seatSchema = new Schema({
         },
 
         default: {
-            bus: "0001",
+            bus: "Demo Car",
             _id: "64b260e8ef94c7a1aa37a22b",
             feature: "vip"
         }
@@ -50,7 +50,7 @@ const seatSchema = new Schema({
     ],
     number_of_seats: {
         type: Number,
-        min: [9, "please seat should not be less than 9"],
+        min: [4, "please seat should not be less than 9"],
         default: 9
     },
 }, {
