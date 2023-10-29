@@ -56,7 +56,7 @@ const ticketSchema = new Schema(
       required: [true, "please send a created user id"],
       ref: "users",
     },
-   
+
     doubletripdetails: {
       type: Array,
       required: true,
@@ -108,7 +108,22 @@ const ticketSchema = new Schema(
           "CM"],
 
       }
-    }
+    },
+    editedBy: [
+      {
+        full_name: {
+          type: String
+        },
+        user_id: {
+          type: Schema.ObjectId,
+          required: false
+        },
+        date: {
+          type: Date
+        }
+
+      }
+    ]
 
   },
   {

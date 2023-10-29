@@ -5,6 +5,6 @@ const checkPermissions = async (requestUser) => {
     _id: requestUser
   })
   if (!user) throw BadRequestError("user not permited to make this actions,please login as assistant ")
-  return user._id
+  return user
 }
 module.exports = checkPermissions

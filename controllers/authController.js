@@ -1,7 +1,8 @@
 
 const User = require("../models/User");
 const Assistant = require("../models/Assistant");
-const { BadRequestError, UnethenticatedError } = require("../error");
+const { BadRequestError
+    , UnethenticatedError } = require("../error");
 const { StatusCodes } = require("http-status-codes")
 const Register = async (req, res) => {
     // console.log("hit the registe route here")
@@ -44,8 +45,6 @@ const Login = async (req, res) => {
             expires: new Date(Date.now() + oneDay),
             secure: process.env.NODE_ENV === 'production',
             sameSite: "none",
-
-
         });
         res.status(StatusCodes.OK).json({
             msg: 'assistant logged in',
@@ -77,6 +76,6 @@ const logout = (req, res) => {
 };
 module.exports = {
     Register,
-    Login, 
+    Login,
     logout
 }
