@@ -93,7 +93,9 @@ const editTicket = async (req, res) => {
   const demo_id = "64ce0086f793d0001861d076";
 
   if (!user) throw BadRequestError("Login as Assistant to validate tickets")
-  await checkPermissions(user.id)
+  const { fullname,
+    _id: assistant_id
+  } = await checkPermissions(user.id)
 
   const { id } = req.params
   const { index } = req.query
@@ -135,7 +137,7 @@ const editTicket = async (req, res) => {
         arr[0].updatedAt = new Date()
       }
       tempObj = {
-        ...tempObj,
+        // ...tempObj,
         doubletripdetails: arr
       }
     }
@@ -154,7 +156,7 @@ const editTicket = async (req, res) => {
       }
       // is active is set to false cause the trip was successfully 
       tempObj = {
-        ...tempObj,
+        // ...tempObj,
         doubletripdetails: arr,
         active: false
       }
@@ -166,8 +168,20 @@ const editTicket = async (req, res) => {
 
         }
         , {
-          ...tempObj
-        }, { new: true })
+          // ...tempObj
+          $set: {
+            doubletripdetails: arr
+          },
+          $push: {
+            editedBy: {
+              full_name: fullname,
+              user_id: assistant_id,
+              date:new Date()
+            }
+          }
+        }
+
+        , { new: true })
       // await Assistant.findOne({})
       return res.status(200).json({ updateTicket: updatevalue })
     }
@@ -181,7 +195,19 @@ const editTicket = async (req, res) => {
 
   const isEdited = await Ticket.findOneAndUpdate(
     { _id: id },
-    { active: false },
+
+    {
+      $set: {
+        active: false,
+      },
+      $push: {
+        editedBy: {
+          full_name: fullname,
+          user_id: assistant_id,
+          date:new Date()
+        }
+      }
+    },
     { new: true }
   );
   if (!isEdited) {
@@ -570,7 +596,7 @@ const downloadsoftcopyticket = async (req, res) => {
   }
   let url = null;
   if (process.env.NODE_ENV === "production") {
-    url = `https://ntaribotaken.vercel.app/assistant/${id}?sound=true&xyz=secret&readonly=7gu8dsutf8asdf&render_9368&beta47`
+    url = `https://evertrans.vercel.app/assistant/${id}?sound=true&xyz=secret&readonly=7gu8dsutf8asdf&render_9368&beta47`
   } else {
     url = `http://192.168.43.68:3000/assistant/${id}?sound=true&xyz=secret&readonly=7gu8dsutf8asdf&render_9368&beta47`
 

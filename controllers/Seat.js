@@ -349,7 +349,7 @@ const downloadboarderaux = async (req, res) => {
         {
             $set: {
                 bus: {
-                    bus: currentBus?.name,
+                    bus: currentBus?.name || "n/a",
                     _id: req.query.bus_id
                 }
             }
@@ -390,7 +390,7 @@ const downloadboarderaux = async (req, res) => {
         // console.log(fileNames)
         // const page = pdfDoc.getPage(0)
         const allpages = pdfDoc.getPages()
-
+// const first_page=allpages[0]
 
         const arr = [];
         for (let i = 0; i < currentSeat?.seat_positions.length; ++i) {
@@ -410,7 +410,7 @@ const downloadboarderaux = async (req, res) => {
         }
         try {
             form.getTextField(`bus_number`).
-                setText(`${currentBus?.plate_number}`)
+                setText(`${currentBus?.plate_number || "n/a"}`)
         } catch (err) {
             console.log(err)
         }
@@ -461,7 +461,7 @@ const downloadboarderaux = async (req, res) => {
                 , width: 400,
                 height: 400,
                 // rotate: degrees(30),
-                opacity: 0.75,
+                opacity: 0.4,
             })
         })
 
