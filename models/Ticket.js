@@ -120,7 +120,8 @@ const ticketSchema = new Schema(
         },
         date: {
           type: Date
-        }
+        },
+        action: String
 
       }
     ]
