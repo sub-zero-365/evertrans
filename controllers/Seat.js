@@ -150,10 +150,10 @@ const specificTicketId = async (req, res) => {
         seat_id: _id,
         seatposition: index
     }).select("_id")
-    if (!ticket) {
-        console.log("no ticket found")
+    // if (!ticket) {
+    //     console.log("no ticket found")
 
-    }
+    // }
     res.status(200).json({ id: ticket._id })
 
 

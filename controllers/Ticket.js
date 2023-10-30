@@ -137,7 +137,7 @@ const editTicket = async (req, res) => {
         arr[0].updatedAt = new Date()
       }
       tempObj = {
-        // ...tempObj,
+        ...tempObj,
         doubletripdetails: arr
       }
     }
@@ -156,7 +156,7 @@ const editTicket = async (req, res) => {
       }
       // is active is set to false cause the trip was successfully 
       tempObj = {
-        // ...tempObj,
+        ...tempObj,
         doubletripdetails: arr,
         active: false
       }
@@ -168,15 +168,18 @@ const editTicket = async (req, res) => {
 
         }
         , {
-          // ...tempObj
+          // ...tempObj,
           $set: {
-            doubletripdetails: arr
+            doubletripdetails: arr,
+            active: index == 2 ? false : true
+
           },
           $push: {
             editedBy: {
               full_name: fullname,
               user_id: assistant_id,
-              date:new Date()
+              date: new Date(),
+              action: index == 1 ? "Remove first trip from ticket " : "remove second trip from ticket and makes the ticket invalide"
             }
           }
         }
@@ -204,7 +207,8 @@ const editTicket = async (req, res) => {
         editedBy: {
           full_name: fullname,
           user_id: assistant_id,
-          date:new Date()
+          date: new Date(),
+          action: "Remove validity from ticket  makes the ticket invalid"
         }
       }
     },
@@ -711,9 +715,18 @@ const downloadsoftcopyticket = async (req, res) => {
   })
 }
 const editTicketMeta = async (req, res) => {
+
   if (!req?.userInfo?._id) {
     throw UnethenticatedError("you are not authorized to perform this operation ")
   }
+  const requestedUser = await User.findOne({ _id: req?.userInfo?._id })
+  if (!requestedUser) {
+    throw BadRequestError("fail to find user")
+  }
+  const {
+    fullname,
+    _id: user_id
+  } = requestedUser;
   const {
     traveldate,
     traveltime,
@@ -723,7 +736,7 @@ const editTicketMeta = async (req, res) => {
     to
   } = req.body
 
-  console.log(req.body)
+  // console.log(req.body)
   const { id: _id } = req.params;
   let ticket_seatposition = null;
   let ticket_id = null
@@ -732,12 +745,13 @@ const editTicketMeta = async (req, res) => {
     _id,
     active: true
   })
-  console.log("this is the seat id here", seat_id)
+  // console.log("this is the seat id here", seat_id)
   if (!isTicket) {
     throw BadRequestError(`cannot find ticket with ${_id} and status ${active} `)
   }
   ticket_seatposition = isTicket.toJSON().seatposition
   ticket_id = isTicket.toJSON().seat_id
+  const ticket_bus = isTicket?.bus?.bus
   console.log("this is ticket seat position here", ticket_seatposition)
 
   console.log("seat position", ticket_seatposition, Number(ticket_seatposition), seat_id)
@@ -814,7 +828,17 @@ const editTicketMeta = async (req, res) => {
   }
 
 
-  const isUpdate = await Ticket.findOneAndUpdate({ _id }, updateObj);
+  const isUpdate = await Ticket.findOneAndUpdate({ _id }, {
+    ...updateObj,
+    $push: {
+      editedBy: {
+        full_name: fullname,
+        user_id,
+        date: new Date(),
+        action: ` ${fullname} Transfer Ticket From ---seat_id ${ticket_id}--  to seat_id ${seat_id}`
+      }
+    }
+  });
   console.log("updated ticket", isUpdate)
   if (!isUpdate) throw BadRequestError("fail to update ticket");
   res.status(200).
