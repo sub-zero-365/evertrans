@@ -14,7 +14,9 @@ const createRoutes = async (req, res) => {
         .json({ status: true })
 }
 const updateRoutes = async (req, res) => {
-    const updateRouter = await Route.findOneAndUpdate({
+    const { id: _id } = req.params;
+
+    const updateRouter = await Route.findOneAndUpdate({_id
     }, { ...req.body })
     if (!updateRouter) {
         throw BadRequestError("fail; to update routes")

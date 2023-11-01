@@ -298,9 +298,7 @@ const getTickets = async (req, res) => {
         }
 
       },
-      // {
-      //   customerPhone: { $regex: decodeURIComponent(search).split("+").join(" ").trim(), $options: "i" }
-      // }
+
     ]
 
   }
@@ -314,30 +312,31 @@ const getTickets = async (req, res) => {
   if (createdBy && req?.admin?.role === "user") {
     // use is in here after implentation
     queryObject.createdBy = new mongoose.Types.ObjectId(createdBy)
-    // queryObject.$expr = {
-    //   $eq: ['$createdBy', { $toObjectId: createdBy }]
-    // }
-    // throw BadRequestError("inalid ")
+
 
   }
   if (req?.admin?.role === "user" && !createdBy) {
     let users_ids = await User.find({ createdBy: req.admin._id }).select("_id");
     // console.log("user ids here", users_ids)
     // new mongoose.Types.ObjectId(createdBy)
-    users_ids = users_ids.map(({ _id }) => new mongoose.Types.ObjectId(_id));
-    // console.log("this is the users ids here",users_ids)
-    queryObject.createdBy = {
+    // users_ids = users_ids.map(({ _id }) => new mongoose.Types.ObjectId(_id));
+    users_ids = users_ids.map(({ _id }) => _id.toString());
+    // users_ids = users_ids.map(({ _id }) => _id);
+    console.log("this is the users ids here", users_ids)
+    // { movieId: { $in: [ 'movie1', 'movie2' ] }}
+
+    delete queryObject.createdBy
+    queryObject.ticket_id = {
       $in: [...users_ids
       ]
     }
-
+    // queryObject.createdBy = query.createdBy
+    // $in: [ "bananas", "$in_stock" ]
+    // queryObject.$in = ["createdBy"]
   }
   if (req.userInfo?._id && !createdBy) {
     queryObject.createdBy = new mongoose.Types.ObjectId(req.userInfo?._id)
 
-    // queryObject.$expr = {
-    //   $eq: ['$createdBy', { $toObjectId: req.userInfo?._id }]
-    // }
 
   }
   if (daterange) {
@@ -436,24 +435,47 @@ const getTickets = async (req, res) => {
     new_traveldate: "-traveldate",
     old_traveldate: "traveldate",
   }
+  console.log("this is the queryobject here", queryObject)
+  const removeticket_id = {
+    ...queryObject
 
+  }
+  if (removeticket_id.ticket_id) {
+    delete removeticket_id.ticket_id;
+    let users_ids = await User.find({ createdBy: req.admin._id }).select("_id");
+    users_ids = users_ids.map(({ _id }) => new mongoose.Types.ObjectId(_id));
+    removeticket_id.createdBy = {
+      $in: [
+        ...users_ids
+      ]
+    }
+
+  }
   const sortKey = sortOptions[sort] || sortOptions.newest;
   const page = Number(req.query.page) || 1;
   const limit = Number(req.query.limit) || 100;
   const skip = (page - 1) * limit;
-  const tickets = await Ticket.find(queryObject)
+  const tickets = await Ticket.find(removeticket_id)
     .sort(sortKey)
     .skip(skip)
     .limit(limit);
 
   if (queryObject?.sort) delete deleteTicket.sort
-  const nDoc = await Ticket.countDocuments(queryObject);
+ 
+  const nDoc = await Ticket.countDocuments(removeticket_id);
 
   var [totalActivePrice, totalInActivePrice,] = (await Ticket.aggregate([
     {
       $addFields: {
         customerPhone: {
           $toString: "$phone"
+        }
+      }
+    },
+    {
+      $addFields: {
+        ticket_id: {
+          $toString: "$createdBy"
         }
       }
     }
@@ -492,10 +514,10 @@ const getTickets = async (req, res) => {
 
   }
 
-  if (queryObject.$expr && req.userInfo?._id && !createdBy) {
-    delete queryObject.$expr
-    queryObject.updatedBy = new mongoose.Types.ObjectId(req.userInfo._id)
-  }
+  // if (queryObject.$expr && req.userInfo?._id && !createdBy) {
+  //   delete queryObject.$expr
+  //   queryObject.updatedBy = new mongoose.Types.ObjectId(req.userInfo._id)
+  // }
 
   const _tmp = queryObject.daterange
   if (queryObject.boardingRange) delete queryObject.boardingRange;
@@ -985,7 +1007,7 @@ const getRankUsers = async (req, res) => {
           $first: "$phone"
         },
         idcardnumber: {
-          $first: "$eTicket"
+          $first: "$email"
         },
       }
     },
@@ -1000,7 +1022,7 @@ const getRankUsers = async (req, res) => {
       }
     },
     { $sort: { total: -1 } }]).limit(10)
-  console.log("this is the most ranked users of all times ", rankUsers.length)
+  console.log("this is the most ranked users of all times ", rankUsers)
   res.status(200).json({
     rankUsers,
     nHits: uniqueNumbers.length
