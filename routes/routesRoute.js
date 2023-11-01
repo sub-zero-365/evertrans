@@ -15,5 +15,7 @@ router.route("/:id")
     .delete(admin_auth, deleteRoutes)
 router.route("/get")
 .get(getRoute)
+router.route("/update/:id").patch(admin_auth,
+updateRoutes)
 
 module.exports = router
