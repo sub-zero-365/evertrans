@@ -1,11 +1,10 @@
 
 const User = require("../models/User");
 const Assistant = require("../models/Assistant");
-const { BadRequestError
-    , UnethenticatedError } = require("../error");
+const { BadRequestError, UnethenticatedError } = require("../error");
 const { StatusCodes } = require("http-status-codes")
 const Register = async (req, res) => {
-    // console.log("hit the registe route here")
+    console.log("hit the registe route here")
     const isAdmin_id = req?.admin?._id && req?.admin?.role == "user";
     if (!isAdmin_id) throw BadRequestError("not allowed to perform this action now");
     const isUserWithPhone = await User.findOne({ phone: req.body.phone });
@@ -28,10 +27,10 @@ const Login = async (req, res) => {
     if (!password || !phone) {
         throw BadRequestError("please phone  or password needed");
     }
-    let user = await User.findOne({ ...{ phone, password } });
+    let user = await User.findOne({  phone, password  });
     let token = null
-    if (user) token = await user.createJWT();
-
+    if (user) {token = await user.createJWT();
+}
     if (!user) {
         // search assistant user
         user = await Assistant.findOne({ ...{ phone, password } }, { password: 0 });
@@ -45,6 +44,8 @@ const Login = async (req, res) => {
             expires: new Date(Date.now() + oneDay),
             secure: process.env.NODE_ENV === 'production',
             sameSite: "none",
+
+
         });
         res.status(StatusCodes.OK).json({
             msg: 'assistant logged in',
@@ -59,6 +60,8 @@ const Login = async (req, res) => {
         expires: new Date(Date.now() + oneDay),
         secure: process.env.NODE_ENV === 'production',
         sameSite: "none",
+
+
     });
     res.status(StatusCodes.OK).json({
         msg: 'user logged in',
@@ -76,6 +79,6 @@ const logout = (req, res) => {
 };
 module.exports = {
     Register,
-    Login,
+    Login, 
     logout
 }

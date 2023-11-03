@@ -4,7 +4,8 @@ const jwt = require("jsonwebtoken");
 
 const Auth = async (req, res, next) => {
     const { token } = req.cookies;
-    if (!token) throw UnethenticatedError('authentication invalid');
+    console.log("this is the cookie here", token)
+    if (!token) throw UnethenticatedError('authentication invalid , no cookies');
     try {
         const payload = jwt.verify(token,
             process.env.jwtSecret);
@@ -13,11 +14,12 @@ const Auth = async (req, res, next) => {
             phone: payload.phone,
             role: payload.role
         }
-        console.log(req.userInfo)
+        console.log("this is the current user",req.userInfo)
         next()
     } catch (err) {
         console.log("this is the error in the auth middleware", err)
         throw UnethenticatedError('authentication invalid');
+        // next()
     }
 
 }

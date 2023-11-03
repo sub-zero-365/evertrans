@@ -1,5 +1,5 @@
 const router = require("express").Router()
-const { createMail, getStaticMail, getAllMeals, downloadsoftcopy, editMail, showStats } = require("../controllers/mailsController")
+const { createMail, getStaticMail, getAllMeals, downloadsoftcopy, editMail, showStats, getRankUsersMails } = require("../controllers/mailsController")
 const { upload } = require("../utils/multerMiddleware")
 const { mailsPermission, mailsOrticketPermission } = require("../utils/ticketPermission")
 
@@ -10,9 +10,10 @@ router.route("/new").post(
     upload.single("imgUrl"),
     validateMailInput, userauth, mailsPermission,
     createMail, editMail)
-    router.route("/showstats").get(
-        userauth,
-        showStats)
+router.route("/showstats").get(
+    userauth,
+    showStats)
+    router.route("/ranked-users").get(getRankUsersMails)
 router.route("/:id").get(
     userauth,
     mailsOrticketPermission,
@@ -23,6 +24,7 @@ router.route("/edit/:id").patch(
     mailsOrticketPermission,
     editMail)
 router.route("/").get(getAllMeals)
+
 
 router.route("/download/:id").get(downloadsoftcopy)
 module.exports = router
