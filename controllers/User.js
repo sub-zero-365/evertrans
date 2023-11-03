@@ -93,7 +93,6 @@ const getUserAndTicketLength = async (req, res) => {
         $match: {
           ...queryObject,
           role: "tickets"
-
         }
       },
       {
@@ -152,9 +151,42 @@ const getUserAndTicketLength = async (req, res) => {
         }
       },
       { $sort: { total: -1 } }])
+  const userRes = await User.
+    aggregate([
+      {
+        $match: {
+          ...queryObject,
+          role: "restaurants"
 
-  console.log("this is the user tickets here", { ...usertickets ,...userMails})
-  res.status(200).json({ userdetails: [...usertickets ,...userMails]})
+        }
+      },
+      {
+        $lookup: {
+          from: "mails",
+          localField: "_id",
+          foreignField: "createdBy",
+          as: "usersRole"
+        }
+      },
+
+      {
+        "$project": {
+          total:
+            { $size: "$usersRole" },
+          fullname: 1,
+          _id: 1,
+          createdAt: 1,
+          phone: 1,
+         
+          user_id: 1,
+          role:1
+
+        }
+      },
+      { $sort: { total: -1 } }])
+
+  console.log("this is the user tickets here", usertickets.length ,userMails.length,userRes.length,[...usertickets ,...userMails,...userRes].length)
+  res.status(200).json({ userdetails: [...usertickets ,...userMails,...userRes]})
 }
 
 

@@ -1,6 +1,6 @@
 const { Schema, model } = require("mongoose");
 const jwt = require("jsonwebtoken");
-
+const {USER_ROLES}=require("../utils/constants")
 const UserSchema = new Schema({
     fullname: {
         type: String,
@@ -20,8 +20,7 @@ const UserSchema = new Schema({
     },
     role: {
         type: String,
-        enum: ['tickets',
-            'mails'],
+        enum:USER_ROLES,
         default: 'tickets',
     }
     ,

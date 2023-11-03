@@ -25,6 +25,14 @@ module.exports = {
   TICKET_SORT_BY,
   CITY_TYPE
 }
-const MAILS_STATUS={
+const MAILS_STATUS = {
 
+}
+const USER_ROLES = [
+  'tickets',
+  'mails',
+  "restaurants"
+]
+module.exports = {
+  USER_ROLES
 }

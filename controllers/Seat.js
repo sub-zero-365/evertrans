@@ -1,6 +1,7 @@
-Ticket = require("../models/Ticket")
+// Ticket = require("../models/Ticket")
 const Bus = require("../models/Bus")
 const Seat = require("../models/Seat")
+const Ticket = require("../models/Ticket")
 const fs = require("fs")
 const { PDFDocument, degrees } = require("pdf-lib");
 const { readFile, writeFile } = require("fs/promises");
@@ -343,23 +344,25 @@ const downloadboarderaux = async (req, res) => {
         }
     )
     if (!currentSeat) throw NotFoundError("coudnot find seat with id " + id);
-    const updates = await Seat.findOneAndUpdate({
-        _id: id
-    },
-        {
-            $set: {
-                bus: {
-                    bus: currentBus?.name || "n/a",
-                    _id: req.query.bus_id
+    if (req.query.bus_id && req.query.name) {
+   await Seat.findOneAndUpdate({
+            _id: id
+        },
+            {
+                $set: {
+                    bus: {
+                        bus: req.query.name || "n/a",
+                        _id: req.query.bus_id
+                    }
                 }
-            }
-        })
+            })
+    }
+
     // console.log("updates", updates)
     let tickets = null;
 
     tickets = await Ticket.find({
         seat_id: currentSeat._id,
-
     })
 
     tickets = tickets.filter((ticket) => {
@@ -390,7 +393,7 @@ const downloadboarderaux = async (req, res) => {
         // console.log(fileNames)
         // const page = pdfDoc.getPage(0)
         const allpages = pdfDoc.getPages()
-// const first_page=allpages[0]
+        // const first_page=allpages[0]
 
         const arr = [];
         for (let i = 0; i < currentSeat?.seat_positions.length; ++i) {
