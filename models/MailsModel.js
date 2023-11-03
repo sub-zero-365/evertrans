@@ -57,7 +57,7 @@ const mailsSchema = new Schema(
                     "recieved"],
             },
         },
-        senderfullname: String
+            senderfullname: String
         ,
         recieverphonenumber: {
             type: String,

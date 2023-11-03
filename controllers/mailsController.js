@@ -12,7 +12,7 @@ const cloudinary = require('cloudinary');
 const { StatusCodes } = require("http-status-codes")
 // import mongoose from 'mongoose';
 // import day from 'dayjs';
-const day =require("dayjs")
+const day = require("dayjs")
 
 const mongoose = require("mongoose")
 const createMail = async (req, res) => {
@@ -37,6 +37,98 @@ const createMail = async (req, res) => {
 
     res.status(StatusCodes.OK).json({ msg: 'update Mail' });
 }
+const getRankUsersMails = async (req, res) => {
+    const { quickdatesort, search, numberFilter } = req.query
+    const queryObject = {}
+    // if (numberFilter) {
+    //   queryObject.customerPhone = { $regex: decodeURIComponent(numberFilter).split("+").join(" ").trim(), $options: "i" }
+    // }
+    if (search) {
+        // console.log(decodeURIComponent(search).split("+").join(" "))
+        queryObject.$or = [
+            {
+                senderfullname: {
+                    $regex: decodeURIComponent(search).split("+").join(" ").trim(), $options: "i"
+                }
+            },
+
+        ]
+
+    }
+    // if (quickdatesort) {
+    //     queryObject.createdAt = {
+    //         $gte: new Date(quickdatesort),
+    //         // $lte: getPreviousDay(new Date(endDate.end)),
+    //     }
+
+
+    // }
+    console.log("this i quick date sort", quickdatesort,
+        queryObject, req.query)
+    const uniqueNumbers = await Mail.distinct("phone", queryObject)
+    const rankUsers = await Mail.aggregate([
+        //   {
+        //     $addFields: {
+        //       customerPhone: {
+        //         $toString: "$phone"
+        //       }
+        //     }
+        //   }
+        //   ,
+        {
+
+            $match: {
+                ...queryObject
+            }
+        }, {
+            $group: {
+                  _id: "$senderphonenumber",
+                //   sum: { $sum: "$price" },
+                total: { $sum: 1 },
+                senderfullname: {
+                    $first: "$senderfullname"
+                },
+                senderphonenumber: {
+                    $first: "$senderphonenumber"
+                },
+                senderidcardnumber: {
+                    $first: "$senderidcardnumber"
+                },
+
+                //    reciever information here
+                recieverfullname: {
+                    $first: "$recieverfullname"
+                },
+                recieverphonenumber: {
+                    $first: "$recieverphonenumber"
+                },
+                recieveridcardnumber: {
+                    $first: "$recieveridcardnumber"
+                },
+
+            }
+        },
+        {
+            $project: {
+                total: 1,
+                senderfullname: 1,
+                senderphonenumber: 1,
+                senderidcardnumber: 1,
+                recieverfullname: 1,
+                recieverphonenumber: 1,
+                recieveridcardnumber: 1,
+
+            }
+        },
+        { $sort: { total: -1 } }]).limit(10)
+    console.log("this is the most ranked users of all times ", rankUsers)
+    res.status(200).json({
+        rankUsers,
+        nHits: uniqueNumbers.length
+    })
+
+}
+
 const getStaticMail = async (req, res, next) => {
     const id = req.params.id
     const queryObject = {}
@@ -176,8 +268,8 @@ const getAllMails = async (req, res) => {
         .sort(sortKey)
         .skip(skip)
         .limit(limit);
-        console.log("this is quick date sort here",
-        queryObject,createdBy)
+    console.log("this is quick date sort here",
+        queryObject, createdBy)
 
     const nDoc = await Mail.countDocuments(queryObject);
 
@@ -414,59 +506,60 @@ const editMail = async (req, res) => {
 const showStats = async (req, res) => {
 
     let stats = await Mail.aggregate([
-      { $match: { createdBy: new mongoose.Types.ObjectId(req.userInfo?._id) } },
-      { $group: { _id: '$mailStatus', count: { $sum: 1 } } },
+        { $match: { createdBy: new mongoose.Types.ObjectId(req.userInfo?._id) } },
+        { $group: { _id: '$mailStatus', count: { $sum: 1 } } },
     ]);
-    console.log("this is the user query here ,",stats)
-  
+    console.log("this is the user query here ,", stats)
+
     stats = stats.reduce((acc, curr) => {
-      const { _id: title, count } = curr;
-      acc[title] = count;
-      return acc;
+        const { _id: title, count } = curr;
+        acc[title] = count;
+        return acc;
     }, {});
     console.log("this is the reduce stat here", stats)
-  
+
     const defaultStats = {
-      pending: stats.pending || 0,
-      sent: stats.sent || 0,
-      recieved: stats.recieved || 0,
+        pending: stats.pending || 0,
+        sent: stats.sent || 0,
+        recieved: stats.recieved || 0,
     };
-  
+
     let monthlyApplications = await Mail.aggregate([
-      { $match: { createdBy: new mongoose.Types.ObjectId(req.userInfo?._id) } },
-      {
-        $group: {
-          _id: { year: { $year: '$createdAt' }, month: { $month: '$createdAt' } },
-          count: { $sum: 1 },
+        { $match: { createdBy: new mongoose.Types.ObjectId(req.userInfo?._id) } },
+        {
+            $group: {
+                _id: { year: { $year: '$createdAt' }, month: { $month: '$createdAt' } },
+                count: { $sum: 1 },
+            },
         },
-      },
-      { $sort: { '_id.year': -1, '_id.month': -1 } },
-      { $limit: 6 },
+        { $sort: { '_id.year': -1, '_id.month': -1 } },
+        { $limit: 6 },
     ]);
-    console.log("this  multiplication stats here",monthlyApplications)
-  
+    console.log("this  multiplication stats here", monthlyApplications)
+
     monthlyApplications = monthlyApplications
-      .map((item) => {
-        const {
-          _id: { year, month },
-          count,
-        } = item;
-  
-        const date = day()
-          .month(month - 1)
-          .year(year)
-          .format('MMM YY');
-  
-        return { date, count };
-      })
-      .reverse();
-      console.log("this is the multiplicatio data here",monthlyApplications)
-  
+        .map((item) => {
+            const {
+                _id: { year, month },
+                count,
+            } = item;
+
+            const date = day()
+                .month(month - 1)
+                .year(year)
+                .format('MMM YY');
+
+            return { date, count };
+        })
+        .reverse();
+    console.log("this is the multiplicatio data here", monthlyApplications)
+
     res.status(StatusCodes.OK).json({ defaultStats, monthlyApplications });
-  };
+};
 module.exports = {
     createMail,
     getStaticMail,
     getAllMeals: getAllMails, downloadsoftcopy, editMail,
-    showStats
+    showStats,
+    getRankUsersMails
 }
