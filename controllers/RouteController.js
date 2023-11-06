@@ -16,7 +16,8 @@ const createRoutes = async (req, res) => {
 const updateRoutes = async (req, res) => {
     const { id: _id } = req.params;
 
-    const updateRouter = await Route.findOneAndUpdate({_id
+    const updateRouter = await Route.findOneAndUpdate({
+        _id
     }, { ...req.body })
     if (!updateRouter) {
         throw BadRequestError("fail; to update routes")
@@ -54,16 +55,16 @@ const getStaticRoute = async (req, res) => {
     if (!route) throw NotFoundError("not route with id ")
     res.status(200).json({ route })
 }
-const getRoute = async (req,res) => {
+const getRoute = async (req, res) => {
     const { from, to } = req.query
-    console.log("this is the req ",req.query)
+    console.log("this is the req ", req.query)
     if (!from || !to) throw BadRequestError("please provide a from and a to cause its needed");
     const queryObject = {
         from: { $regex: decodeURIComponent(from).split("+").join(" ").trim(), $options: "i" },
         to: { $regex: decodeURIComponent(to).split("+").join(" ").trim(), $options: "i" },
     }
     const route = await Route.findOne(queryObject);
-    if (!route) throw NotFoundError("no route found with the search query")
+    if (!route) throw NotFoundError(`No route found with search query from=${from} to=${to}, an admin can be contacted to create one`)
     res.status(200).json({
         route
     })
