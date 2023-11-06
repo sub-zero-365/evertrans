@@ -26,8 +26,6 @@ const productSchema = new Schema(
         product_category: Array,
         imgUrl: String,
         avatarPublicId: String,
-
-
     },
     {
         timestamps: true,

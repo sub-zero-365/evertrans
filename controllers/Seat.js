@@ -167,10 +167,19 @@ const getAllSeats = async (req, res) => {
         to,
         traveltime,
         daterange,
-        sort
+        sort, routequery: routeQuery
     } = req.query;
     console.log("date range", daterange, req.query)
     const queryObject = {}
+    if (routeQuery && routeQuery != "all") {
+        const [from, to] = routeQuery.split("-")
+        queryObject.from = {
+            $regex: from, $options: "i"
+        }
+        queryObject.to = {
+            $regex: to, $options: "i"
+        }
+    }
     if (daterange) {
         const decoded = decodeURIComponent(daterange)
         // console.log("dcoded", decoded)
@@ -345,7 +354,7 @@ const downloadboarderaux = async (req, res) => {
     )
     if (!currentSeat) throw NotFoundError("coudnot find seat with id " + id);
     if (req.query.bus_id && req.query.name) {
-   await Seat.findOneAndUpdate({
+        await Seat.findOneAndUpdate({
             _id: id
         },
             {
@@ -501,6 +510,34 @@ const downloadboarderaux = async (req, res) => {
     }
 
 }
+const editSeat = async (req, res) => {
+    const { id: _id } = req.params;
+    const { bus_id } = req.body;
+    const currentBus = await Bus.findOne({ _id: bus_id })
+    if (!currentBus) throw NotFoundError("no bus found with id:" + bus_id);
+    console.log("currentBus")
+    // const currentSeat = await Seat.findOne(
+    //     {
+    //         _id: id,
+
+    //     }
+    // )
+
+    const seat = await Seat.findOneAndUpdate({ _id }, {
+
+        // $set: {
+            bus: {
+                bus: currentBus.name,
+                _id: currentBus._id
+            }
+        // }
+
+    }, { new: true })
+    if (!seat) throw BadRequestError("fail to update bus with id: " + _id)
+    res.status(200).json({ status: true })
+
+
+}
 
 module.exports = {
     createSeat,
@@ -511,5 +548,6 @@ module.exports = {
     getSpecificSeat,
     specificTicketId,
     downloadboarderaux,
-    ticketassociatedWithBus
+    ticketassociatedWithBus,
+    editSeat
 }
