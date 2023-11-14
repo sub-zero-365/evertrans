@@ -1,6 +1,10 @@
 const { BadRequestError, UnethenticatedError } = require("../error");
 const Admin = require("../models/Admin");
 const mongoose = require("mongoose")
+const User = require("../models/User")
+
+// const {getStatic}=require("../controllers/User")
+
 const getStatic = async (req, res) => {
     // const { id } = req.params
     // queryObject.updatedBy = new mongoose.Types.ObjectId(createdBy)

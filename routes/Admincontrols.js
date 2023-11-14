@@ -5,7 +5,7 @@ const { getStatic, getAllUsers } = require("../controllers/Admin.Controller");
 const {
     getAlluser,
     getStaticUser,
-    getUserAndTicketLength
+    getUserAndTicketLength, userInfo
 } = require("../controllers/User");
 const { addCity,
     getCitys,
@@ -33,5 +33,5 @@ router.route("/city/:id")
 router.route("/city").post(addCity)
 router.route("/staticcontact/:id").get(getContact)
 
-
+router.route("/current-user/:userId").get(userInfo)
 module.exports = router

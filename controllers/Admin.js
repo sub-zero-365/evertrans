@@ -1,7 +1,8 @@
 const Admin = require("../models/Admin");
 const { comparePassword, hashPassword } = require('../utils/passwordUtils.js');
 const { UnethenticatedError, BadRequestError } = require('../error');
-const { StatusCodes } = require("http-status-codes")
+const { StatusCodes } = require("http-status-codes");
+const cookies = require("../utils/COOKIES.js");
 
 const login = async (req, res) => {
   const oneDay = 1000 * 60 * 60 * 24;
@@ -18,12 +19,15 @@ const login = async (req, res) => {
   if (!isValidUser) throw UnethenticatedError("invalid credentials")
   const token = await user.createJWT();
   res.status(200)
-  res.cookie('token', token, {
-    httpOnly: true,
-    expires: new Date(Date.now() + oneDay),
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: "none",
-  }).json({ msg: "user logged in success!!!" });
+  res.cookie('token', token,
+    cookies(oneDay)
+    // {
+    //   httpOnly: true,
+    //   expires: new Date(Date.now() + oneDay),
+    //   secure: process.env.NODE_ENV === 'production',
+    //   sameSite: "none",
+    // }
+  ).json({ msg: "user logged in success!!!" });
 
 };
 const register = async (req, res) => {
