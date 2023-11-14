@@ -2,7 +2,8 @@
 const User = require("../models/User");
 const Assistant = require("../models/Assistant");
 const { BadRequestError, UnethenticatedError } = require("../error");
-const { StatusCodes } = require("http-status-codes")
+const { StatusCodes } = require("http-status-codes");
+const cookies = require("../utils/COOKIES");
 const Register = async (req, res) => {
     console.log("hit the registe route here")
     const isAdmin_id = req?.admin?._id && req?.admin?.role == "user";
@@ -27,10 +28,11 @@ const Login = async (req, res) => {
     if (!password || !phone) {
         throw BadRequestError("please phone  or password needed");
     }
-    let user = await User.findOne({  phone, password  });
+    let user = await User.findOne({ phone, password });
     let token = null
-    if (user) {token = await user.createJWT();
-}
+    if (user) {
+        token = await user.createJWT();
+    }
     if (!user) {
         // search assistant user
         user = await Assistant.findOne({ ...{ phone, password } }, { password: 0 });
@@ -39,14 +41,17 @@ const Login = async (req, res) => {
         user = {
             redirect: true
         }
-        res.cookie('token', token, {
-            httpOnly: true,
-            expires: new Date(Date.now() + oneDay),
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: "none",
+        res.cookie('token', token,
+            cookies(oneDay)
+            // {
+            //     httpOnly: true,
+            //     expires: new Date(Date.now() + oneDay),
+            //     secure: process.env.NODE_ENV === 'production',
+            //     // sameSite: "none",
 
 
-        });
+            // }
+        );
         res.status(StatusCodes.OK).json({
             msg: 'assistant logged in',
             user
@@ -55,30 +60,38 @@ const Login = async (req, res) => {
 
 
 
-    res.cookie('token', token, {
-        httpOnly: true,
-        expires: new Date(Date.now() + oneDay),
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: "none",
+    res.cookie('token', token,
+        // {
+        //     httpOnly: true,
+        //     expires: new Date(Date.now() + oneDay),
+        //     secure: process.env.NODE_ENV === 'production',
+        //     // sameSite: "none",
 
 
-    });
+        // }
+        cookies(oneDay)
+
+    );
     res.status(StatusCodes.OK).json({
         msg: 'user logged in',
         user: { role: user.role }
     });
 };
 const logout = (req, res) => {
-    res.cookie('token', 'logout', {
-        httpOnly: true,
-        expires: new Date(Date.now()),
-        sameSite: "none",
-        secure: process.env.NODE_ENV === 'production',
-    });
+    res.cookie('token', 'logout',
+        // {
+        //     httpOnly: true,
+
+        //     expires: new Date(Date.now()),
+        //     // sameSite: "none",
+        //     secure: process.env.NODE_ENV === 'production',
+        // }
+        cookies()
+    );
     res.status(StatusCodes.OK).json({ msg: 'user logged out!' });
 };
 module.exports = {
     Register,
-    Login, 
+    Login,
     logout
 }

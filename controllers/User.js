@@ -112,8 +112,8 @@ const getUserAndTicketLength = async (req, res) => {
           _id: 1,
           createdAt: 1,
           phone: 1,
-         user_id: 1,
-         role:1
+          user_id: 1,
+          role: 1
 
         }
       },
@@ -144,9 +144,9 @@ const getUserAndTicketLength = async (req, res) => {
           _id: 1,
           createdAt: 1,
           phone: 1,
-         
+
           user_id: 1,
-          role:1
+          role: 1
 
         }
       },
@@ -177,25 +177,27 @@ const getUserAndTicketLength = async (req, res) => {
           _id: 1,
           createdAt: 1,
           phone: 1,
-         
+
           user_id: 1,
-          role:1
+          role: 1
 
         }
       },
       { $sort: { total: -1 } }])
 
-  console.log("this is the user tickets here", usertickets.length ,userMails.length,userRes.length,[...usertickets ,...userMails,...userRes].length)
-  res.status(200).json({ userdetails: [...usertickets ,...userMails,...userRes]})
+  console.log("this is the user tickets here", usertickets.length, userMails.length, userRes.length, [...usertickets, ...userMails, ...userRes].length)
+  res.status(200).json({ userdetails: [...usertickets, ...userMails, ...userRes] })
 }
 
 
 const userInfo = async (req, res) => {
 
-  const {
-    userInfo: { _id },
-  } = req;
-
+  // const {
+  //   userInfo: { _id },
+  // } = req;
+  let _id = null
+  _id = req?.userInfo || req.params?.userId;
+  if (!_id) throw BadRequestError("something went wrong try again later")
   const user = await User.findOne(
     {
       _id,
