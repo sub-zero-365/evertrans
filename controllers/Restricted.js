@@ -21,7 +21,11 @@ const getStaticRestrictedUsers = async (req, res) => {
     const id = req.params.id
     const restricteduser = await Restricted.findOne({ user_id: id });
     if (!restricteduser) throw BadRequestError("user does not exist");
-    res.status(200).json({ restricteduser, message: "restricted by admin please contact admin for more information" })
+    res.status(200).json({
+        restricteduser,
+        message: "restricted by admin please contact admin for more information",
+        isBlock: true
+    })
 }
 const getRestrictedUsers = async (req, res) => {
     const restrictedusers = await Restricted.find({})

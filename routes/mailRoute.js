@@ -2,18 +2,21 @@ const router = require("express").Router()
 const { createMail, getStaticMail, getAllMeals, downloadsoftcopy, editMail, showStats, getRankUsersMails } = require("../controllers/mailsController")
 const { upload } = require("../utils/multerMiddleware")
 const { mailsPermission, mailsOrticketPermission } = require("../utils/ticketPermission")
-
+const IsUserRestricted = require("../middlewares/IsUserRestricted")
 const { validateMailInput,
     validateGetSingleMail } = require("../middlewares/validationMiddleware")
 const userauth = require("../middlewares/Auth.User")
 router.route("/new").post(
     upload.single("imgUrl"),
-    validateMailInput, userauth, mailsPermission,
+    validateMailInput
+    , userauth,
+    IsUserRestricted,
+    mailsPermission,
     createMail, editMail)
 router.route("/showstats").get(
     userauth,
     showStats)
-    router.route("/ranked-users").get(getRankUsersMails)
+router.route("/ranked-users").get(getRankUsersMails)
 router.route("/:id").get(
     userauth,
     mailsOrticketPermission,
