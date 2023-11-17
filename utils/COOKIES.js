@@ -1,6 +1,6 @@
 const isProduction = process.env.NODE_ENV == "production"
 // this set cookies to the browser when depending on the environment varaible
-const cookies = async (time = null) => {
+const cookies = (time = null) => {
     const obj = {
         httpOnly: true,
         expires: new Date(Date.now()),
