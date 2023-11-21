@@ -82,7 +82,7 @@ const getRankUsersMails = async (req, res) => {
             }
         }, {
             $group: {
-                  _id: "$senderphonenumber",
+                _id: "$senderphonenumber",
                 //   sum: { $sum: "$price" },
                 total: { $sum: 1 },
                 senderfullname: {
@@ -482,24 +482,58 @@ const downloadsoftcopy = async (req, res) => {
 }
 const editMail = async (req, res) => {
     const status = req.body.status || ""
-
+    // const requestUserId = req?.userInfo?._id;
+    const requestedUser = await User.findOne({ _id: req?.userInfo?._id })
+    if (!requestedUser) {
+        throw BadRequestError("fail to find user")
+    }
+    const {
+        fullname,
+        _id: user_id
+    } = requestedUser;
+    let mail = null
     if (status == "sent") {
-        // if the mail doesnt belongs to me  con
+        // if the mail doesnt belongs to the creator of the mail..
         // throw an error
         const requestUserId = req?.userInfo?._id;
-        const mail = requestUserId && await Mail.findOne({
+        mail = requestUserId && await Mail.findOne({
             _id: req.params.id,
             createdBy: requestUserId
         })
         if (!mail) throw BadRequestError("You can only mark sent to the items you create !!!")
 
     }
-    const mail = await Mail.findOneAndUpdate({ _id: req.params.id }, {
+    if (status == "recieved") {
+        // the creator of the mail cant mark the mail are recieved ..
+        // throw an error
+        const requestUserId = req?.userInfo?._id;
+        mail = requestUserId && await Mail.findOne({
+            _id: req.params.id,
+            createdBy: requestUserId
+        })
+        if (mail) throw BadRequestError("You cant mark recieved on mails your created !!")
+
+    }
+    const previousMail = await Mail.findOne({
+        _id: req.params.id,
+    })
+
+    if (!previousMail) throw BadRequestError("No mail with id " + req.params.id)
+    const { status: previousMailStatus } = previousMail || {}
+    mail = await Mail.findOneAndUpdate({ _id: req.params.id }, {
         $set: {
             status: req.body.status
+        },
+        $push: {
+            editedBy: {
+                full_name: fullname,
+                user_id,
+                date: new Date(),
+                action: ` ${fullname} edited mail status from to  ${previousMailStatus} ---  to  ${status}`
+            }
         }
     })
-    if (!mail) throw NotFoundError("No mail with id")
+    // if (!mail) throw NotFoundError("No mail with id")
     res.status(200).json({ msg: "success" })
 
 }

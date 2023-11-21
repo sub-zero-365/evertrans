@@ -70,20 +70,22 @@ const mailsSchema = new Schema(
         recieverfullname: String,
         imgUrl: String,
         avatarPublicId: String,
-        markRecievedBy: [{
-            full_name: {
+        editedBy: [
+            {
+              full_name: {
                 type: String
-            },
-            user_id: {
+              },
+              user_id: {
                 type: Schema.ObjectId,
                 required: false
-            },
-            date: {
+              },
+              date: {
                 type: Date
-            },
-            action: String
-
-        }],
+              },
+              action: String
+      
+            }
+          ],
         paymenttype: {
             type: String,
             require: false,
