@@ -461,7 +461,7 @@ const getTickets = async (req, res) => {
     .limit(limit);
 
   if (queryObject?.sort) delete deleteTicket.sort
- 
+
   const nDoc = await Ticket.countDocuments(removeticket_id);
 
   var [totalActivePrice, totalInActivePrice,] = (await Ticket.aggregate([
@@ -857,7 +857,11 @@ const editTicketMeta = async (req, res) => {
         full_name: fullname,
         user_id,
         date: new Date(),
-        action: ` ${fullname} Transfer Ticket From ---seat_id ${ticket_id}--  to seat_id ${seat_id}`
+        action: ` ${fullname} Transfer Ticket From ---seat_id ||${ticket_id}|| --  to seat_id ||${seat_id}||`,
+        transferseatdetail: {
+          previousSeatId: ticket_id,
+          currentSeatId: seat_id
+        }
       }
     }
   });
