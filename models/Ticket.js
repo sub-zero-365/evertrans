@@ -121,7 +121,15 @@ const ticketSchema = new Schema(
         date: {
           type: Date
         },
-        action: String
+        action: String,
+        transferseatdetail: {
+          previousSeatId: {
+            type: Schema.ObjectId
+          },
+          currentSeatId: {
+            type: Schema.ObjectId
+          },
+        }
 
       }
     ]
