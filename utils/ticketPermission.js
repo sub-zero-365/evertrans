@@ -14,8 +14,14 @@ const mailsOrticketPermission = async (req, res, next) => {
     if (!requester) throw UnethenticatedError("unauthorised to visit this route");
     next()
 }
+const recieptsPermission = async (req, res, next) => {
+    const requester = req.userInfo.role === "restaurants";
+    if (!requester) throw UnethenticatedError("unauthorised please login as restaurants user to create reciepts");
+    next()
+}
 module.exports = {
     ticketPermission,
     mailsPermission,
-    mailsOrticketPermission
+    mailsOrticketPermission,
+    recieptsPermission
 }

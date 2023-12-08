@@ -47,6 +47,7 @@ const assistantRoute = require("./routes/Assistant")
 const assistantControlsRoute = require("./routes/Assistant.controls")
 const userSelf = require("./routes/User.self")
 const userRoute = require("./routes/authUserRoute")
+const recieptRouter = require("./routes/RecieptsRoute")
 const {
   validateGetTicket } = require("./middlewares/validationMiddleware")
 const { getRankUsers } = require("./controllers/Ticket")
@@ -61,7 +62,7 @@ app.use("/assistant", assistantControlsRoute);
 app.use("/seat", seatRouter);
 app.use("/routes", routesRouter);
 app.use("/ticket", userAuth,
- IsUserRestricted, Ticket);
+  IsUserRestricted, Ticket);
 app.use("/admin", Admin_auth, adminControl);
 app.use("/bus", busRouter);
 app.use("/contact", Admin_auth, contactRouter);
@@ -72,7 +73,7 @@ app.post("/public/ticket",
   validateGetTicket,
   getTicketForAnyUser)
 app.get("/ranked-users", getRankUsers)
-
+app.use("/reciepts",recieptRouter)
 app.get("/allcities", cityController);
 const server_running = (port) =>
   console.log(`server is running on port ${port}`);
