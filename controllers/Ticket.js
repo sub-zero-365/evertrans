@@ -649,13 +649,13 @@ const downloadsoftcopyticket = async (req, res) => {
         form.getTextField("fullname").
           setText(fullname)
         form.getTextField("traveldate").
-          setText(formatDate(traveldate).date)
+          setText(dayjs(traveldate || new Date()).format("dddd, MMMM D, YYYY"))
         form.getTextField("seatposition").
           setText(`${seatposition + 1}`)
         form.getTextField("createdby").
           setText(createdBy)
-        form.getTextField("traveltime").
-          setText(traveltime)
+        form.getTextField("bookingId").
+          setText(`${id}`)
         form.getTextField("from").
           setText(from)
         form.getTextField("to").
