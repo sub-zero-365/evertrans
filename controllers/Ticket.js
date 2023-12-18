@@ -276,12 +276,15 @@ const getTickets = async (req, res) => {
     boardingRange,
     triptype,
     traveltime,
+    paymenttype
   }
     =
     req.query;
   const queryObject = {
   }
-
+  if (paymenttype && paymenttype !== "all") {
+    queryObject.paymenttype = paymenttype
+  }
   if (triptype && triptype !== "all") {
     queryObject.type = triptype
   }
