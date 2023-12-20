@@ -161,7 +161,8 @@ const getStaticMail = async (req, res, next) => {
     }
     res.status(StatusCodes.OK).json({ mail: mailWithCreatedBy })
 }
-const getAllMails = async (req, res) => {
+const getUsersAllMails = async (req, res) => {
+    const { _id: requestedUserId } = req.userInfo;
     const {
         search,
         createdBy,
@@ -173,10 +174,16 @@ const getAllMails = async (req, res) => {
     }
         =
         req.query;
-    const queryObject = {}
-    if (createdBy) {
-        queryObject.createdBy = new mongoose.Types.ObjectId(createdBy)
+    const queryObject = {
+
+
     }
+    // get all the meals created by the user ;
+    queryObject.createdBy = new mongoose.Types.ObjectId(requestedUserId)
+
+    // queryObject
+    // if (createdBy) {
+    // }
 
     if (search) {
         // console.log(decodeURIComponent(search).split("+").join(" "))
@@ -593,7 +600,7 @@ const showStats = async (req, res) => {
 module.exports = {
     createMail,
     getStaticMail,
-    getAllMeals: getAllMails, downloadsoftcopy, editMail,
+    getAllMeals: getUsersAllMails, downloadsoftcopy, editMail,
     showStats,
     getRankUsersMails
 }
