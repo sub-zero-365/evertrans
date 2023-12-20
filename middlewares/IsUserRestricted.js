@@ -12,8 +12,8 @@ const isUserNotRestricted = async (req, res, next) => {
         `))
         }
         else {
-            next()
             resolve("everything ok");
+            next()
         }
     })
 }

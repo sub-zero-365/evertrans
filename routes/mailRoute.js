@@ -26,7 +26,10 @@ router.route("/edit/:id").patch(
     userauth,
     mailsOrticketPermission,
     editMail)
-router.route("/").get(getAllMeals)
+router.route("/").get(
+    userauth,//protect this route from invaders 
+    mailsPermission,
+    getAllMeals)
 
 
 router.route("/download/:id").get(downloadsoftcopy)
