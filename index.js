@@ -4,12 +4,14 @@ const cookieParser = require("cookie-parser");
 const express = require("express");
 const app = express();
 const cors = require("cors");
+const morgan = require("morgan")
 const session = require("express-session")
 const cloudinary = require('cloudinary');
 
 app.use(cookieParser());
 app.use(express.json())
 const fs = require("fs")
+app.use(morgan("tiny"))
 app.use(cors({
   // origin: ["http://localhost:3000",
   //   "http://192.168.43.68:3000",
@@ -73,7 +75,7 @@ app.post("/public/ticket",
   validateGetTicket,
   getTicketForAnyUser)
 app.get("/ranked-users", getRankUsers)
-app.use("/reciepts",recieptRouter)
+app.use("/reciepts", recieptRouter)
 app.get("/allcities", cityController);
 const server_running = (port) =>
   console.log(`server is running on port ${port}`);

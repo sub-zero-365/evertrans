@@ -6,6 +6,7 @@ const ticketPermission = async (req, res, next) => {
     next()
 }
 const mailsPermission = async (req, res, next) => {
+    if (req?.admin) return next();
     const requester = req.userInfo.role === "mails";
     if (!requester) throw UnethenticatedError("unauthorised to visit this route please login again");
     next()
