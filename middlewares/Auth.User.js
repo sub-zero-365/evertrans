@@ -9,7 +9,7 @@ const Auth = async (req, res, next) => {
     try {
         const payload = jwt.verify(token,
             process.env.jwtSecret);
-        req.userInfo = { 
+        req.user = { 
             _id: payload._id,
             phone: payload.phone,
             role: payload.role
