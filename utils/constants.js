@@ -31,7 +31,9 @@ const MAILS_STATUS = {
 const USER_ROLES = [
   'tickets',
   'mails',
-  "restaurants"
+  "restaurants",
+  "admin",
+  "sub_admin"
 ]
 module.exports = {
   USER_ROLES

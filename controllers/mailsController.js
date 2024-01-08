@@ -324,6 +324,7 @@ const getUsersAllMails = async (req, res) => {
     const pendingSum = obj?.pending?.sum || 0
     const sentSum = obj?.sent?.sum || 0
     const recievedSum = obj?.recieved?.sum || 0
+    const numberOfPages = Math.ceil(nDoc / limit)
     // console.log("this is the statuses ",statuses, {
     //     // mails,
     //     nHits: mails.length,
@@ -350,7 +351,10 @@ const getUsersAllMails = async (req, res) => {
         recievedMailsPercentage,
         pendingSum,
         sentSum,
-        recievedSum
+        recievedSum,
+        currentPage: page,
+        numberOfPages
+
     })
 
 }

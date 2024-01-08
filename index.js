@@ -6,7 +6,7 @@ const app = express();
 const cors = require("cors");
 const session = require("express-session")
 const cloudinary = require('cloudinary');
-
+const morgan = require("morgan")
 app.use(cookieParser());
 app.use(express.json())
 const fs = require("fs")
@@ -20,11 +20,11 @@ app.use(cors({
   origin: true,
   credentials: true,
 }));
-
+app.use(morgan("tiny"))//logger for express 
 cloudinary.config({
-  cloud_name: "dnuqptnuq",
-  api_key: "483645365462527",
-  api_secret: "9-wnbRSZcEgQuco8AHMj6FjiVGk",
+  cloud_name: process.env.cloudinary_name,
+  api_key: process.env.cloudinary_api_key,
+  api_secret: process.env.cloudinary_api_secret,
 });
 const cityController = require("./controllers/City").getCitys
 const port = process.env.PORT || 5000;
@@ -52,8 +52,10 @@ const {
   validateGetTicket } = require("./middlewares/validationMiddleware")
 const { getRankUsers } = require("./controllers/Ticket")
 
-const mailRouter = require("./routes/mailRoute")
+const mailRouter = require("./routes/mailRoute");
+const GlobalRestriction = require("./middlewares/GlobalRestriction");
 // const AdminUser = require("./routes/Admin")
+app.use(GlobalRestriction)
 app.use("/users", userAuth, userRouter)
 app.use("/auth", userRoute);
 app.use("/user", userSelf);
@@ -73,7 +75,7 @@ app.post("/public/ticket",
   validateGetTicket,
   getTicketForAnyUser)
 app.get("/ranked-users", getRankUsers)
-app.use("/reciepts",recieptRouter)
+app.use("/reciepts", recieptRouter)
 app.get("/allcities", cityController);
 const server_running = (port) =>
   console.log(`server is running on port ${port}`);
