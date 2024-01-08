@@ -162,7 +162,7 @@ const getStaticMail = async (req, res, next) => {
     res.status(StatusCodes.OK).json({ mail: mailWithCreatedBy })
 }
 const getUsersAllMails = async (req, res) => {
-    const { _id: requestedUserId } = req.userInfo;
+    const { _id: requestedUserId } = req?.userInfo || {};
     const {
         search,
         createdBy,
@@ -179,7 +179,8 @@ const getUsersAllMails = async (req, res) => {
 
     }
     // get all the meals created by the user ;
-    queryObject.createdBy = new mongoose.Types.ObjectId(requestedUserId)
+    if (requestedUserId) queryObject.createdBy = new mongoose.Types.ObjectId(requestedUserId)
+
 
     // queryObject
     // if (createdBy) {

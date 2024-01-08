@@ -6,6 +6,7 @@ const IsUserRestricted = require("../middlewares/IsUserRestricted")
 const { validateMailInput,
     validateGetSingleMail } = require("../middlewares/validationMiddleware")
 const userauth = require("../middlewares/Auth.User")
+const adminauth = require("../middlewares/Admin.auth")
 router.route("/new").post(
     upload.single("imgUrl"),
     validateMailInput
@@ -28,6 +29,10 @@ router.route("/edit/:id").patch(
     editMail)
 router.route("/").get(
     userauth,//protect this route from invaders 
+    mailsPermission,
+    getAllMeals)
+router.route("/admin/mails").get(
+    adminauth,//protect this route from invaders 
     mailsPermission,
     getAllMeals)
 
