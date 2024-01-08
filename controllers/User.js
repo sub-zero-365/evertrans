@@ -1,8 +1,8 @@
 const User = require("../models/User");
-const Ticket = require("../models/Ticket");
+// const Ticket = require("../models/Ticket");
 const Admin = require("../models/Admin")
 const { BadRequestError, UnethenticatedError } = require("../error");
-const Assistant = require("../models/Assistant")
+// const Assistant = require("../models/Assistant")
 const { createJWT } = require("../utils/tokenUtils")
 const { comparePassword, hashPassword } = require('../utils/passwordUtils.js');
 
@@ -32,11 +32,7 @@ const updatePassword = async (req, res) => {
 
 
 const getUsers = async (req, res) => {
-
-
-
   const { search } = req.query;
-
   const queryObject = {};
   if (search) {
     const userSearch = [

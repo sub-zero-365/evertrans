@@ -1,4 +1,5 @@
 const router = require("express").Router()
+const admin_auth = require("../middlewares/Admin.auth")
 const { createMail, getStaticMail, getAllMeals, downloadsoftcopy, editMail, showStats, getRankUsersMails } = require("../controllers/mailsController")
 const { upload } = require("../utils/multerMiddleware")
 const { mailsPermission, mailsOrticketPermission } = require("../utils/ticketPermission")
@@ -30,7 +31,12 @@ router.route("/").get(
     userauth,//protect this route from invaders 
     mailsPermission,
     getAllMeals)
+router.route("/admins/mails").get(
+    admin_auth,
+    mailsPermission,
+    getAllMeals
 
+)
 
 router.route("/download/:id").get(downloadsoftcopy)
 module.exports = router
