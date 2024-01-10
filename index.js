@@ -5,12 +5,12 @@ const express = require("express");
 const app = express();
 const cors = require("cors");
 const morgan = require("morgan")
-const session = require("express-session")
+// const session = require("express-session")
 const cloudinary = require('cloudinary');
 
 app.use(cookieParser());
 app.use(express.json())
-const fs = require("fs")
+// const fs = require("fs")
 app.use(morgan("tiny"))
 app.use(cors({
   // origin: ["http://localhost:3000",
