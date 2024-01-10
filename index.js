@@ -11,7 +11,10 @@ const cloudinary = require('cloudinary');
 app.use(cookieParser());
 app.use(express.json())
 // const fs = require("fs")
-app.use(morgan("tiny"))
+if (process.env.NODE_ENV === 'development') {
+  app.use(morgan('dev'));
+}
+// app.use(morgan("tiny"))
 app.use(cors({
   // origin: ["http://localhost:3000",
   //   "http://192.168.43.68:3000",
