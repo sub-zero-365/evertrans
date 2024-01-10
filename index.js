@@ -11,7 +11,9 @@ const cloudinary = require('cloudinary');
 app.use(cookieParser());
 app.use(express.json())
 // const fs = require("fs")
-if (process.env.NODE_ENV === 'development') {
+console.log("environment",!process.env.NODE_ENV || process.env.NODE_ENV === 'development'
+)
+if (!process.env.NODE_ENV || process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
 // app.use(morgan("tiny"))
