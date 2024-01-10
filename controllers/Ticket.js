@@ -625,7 +625,7 @@ const downloadsoftcopyticket = async (req, res) => {
   }
   let url = null;
   if (process.env.NODE_ENV === "production") {
-    url = `https://evertrans.vercel.app/assistant/${id}?sound=true&xyz=secret&readonly=7gu8dsutf8asdf&render_9368&beta47`
+    url = `https://eagle-tranz.com/assistant/${id}?sound=true&xyz=secret&readonly=7gu8dsutf8asdf&render_9368&beta47`
   } else {
     url = `http://192.168.43.68:3000/assistant/${id}?sound=true&xyz=secret&readonly=7gu8dsutf8asdf&render_9368&beta47`
 
