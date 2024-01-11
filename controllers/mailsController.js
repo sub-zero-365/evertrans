@@ -371,7 +371,7 @@ const downloadsoftcopy = async (req, res) => {
         url = `http://192.168.43.68:3000/assistant/mail/${id}?sound=true&xyz=secret&readonly=7gu8dsutf8asdf&render_9368&beta47`
 
     }
-    // const _path = path.resolve(__dirname, "../mails")
+    // const _path = path.resolvem(__dirname, "../mails")
 
     const _path = path.resolve(__dirname, "../tickets")
     const createdBy = (await User.findOne({ _id: mail.createdBy }).select("fullname"))?.fullname || "n/a";
@@ -398,7 +398,7 @@ const downloadsoftcopy = async (req, res) => {
                 senderidcardnumber,
                 recieverfullname,
                 recieverphonenumber,
-                estimatedprice
+                estimatedprice,createdAt
 
             } =
                 mail.toJSON()
@@ -406,6 +406,10 @@ const downloadsoftcopy = async (req, res) => {
                 // console.log(fileNames)
                 form.getTextField("product_name").
                     setText(name)
+                form.getTextField("registered_time").
+                    setText("")
+                form.getTextField("registered_date").
+                    setText(day(createdAt).format("M/D/YYYY"))
                 form.getTextField("from").
                     setText(from)
                 form.getTextField("to").
