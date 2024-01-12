@@ -11,8 +11,7 @@ const cloudinary = require('cloudinary');
 app.use(cookieParser());
 app.use(express.json())
 // const fs = require("fs")
-console.log("environment",!process.env.NODE_ENV || process.env.NODE_ENV === 'development'
-)
+
 if (!process.env.NODE_ENV || process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
@@ -80,7 +79,7 @@ app.post("/public/ticket",
   validateGetTicket,
   getTicketForAnyUser)
 app.get("/ranked-users", getRankUsers)
-app.use("/reciepts", recieptRouter)
+// app.use("/reciepts", recieptRouter)
 app.get("/allcities", cityController);
 const server_running = (port) =>
   console.log(`server is running on port ${port}`);
