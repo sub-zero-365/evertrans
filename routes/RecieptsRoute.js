@@ -15,7 +15,9 @@ router.route("/new").
     post(userauth, recieptsPermission,
         createReciept)
 
-router.route("/").get(userauth, getReciepts)
+router.
+    route("/")
+    .get(userauth, getReciepts)
 router.route("/:id").get(
     userauth
     , getSingleReciept)
