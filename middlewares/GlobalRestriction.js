@@ -1,5 +1,5 @@
 
-const { UnethenticatedError } = require("../error")
+const { UnethenticatedError, BadRequestError } = require("../error")
 const jwt = require("jsonwebtoken");
 const {
     DisableRequestError
@@ -22,23 +22,32 @@ const isUserNotRestricted = async (user_id) => {
 // module.exports = isUserNotRestricted
 const GlobalRestriction = async (req, res, next) => {
     const { token } = req.cookies;
-    // console.log("this is the cookie here", token)
     if (!token) return next();
-    try {
-        const payload = jwt.verify(token,
-            process.env.jwtSecret);
-        // req.userInfo = {
-        //     _id: payload._id,
-        //     phone: payload.phone,
-        //     role: payload.role
-        // }
-        // console.log("this is the current user",req.userInfo)
-        await isUserNotRestricted(payload._id)
-    } catch (err) {
-        console.log("this is the error in the auth middleware", err)
-        // throw UnethenticatedError('authentication invalid --u');
-        // next()
+    const payload = jwt.verify(token,
+        process.env.jwtSecret);
+
+    const isuserblocked = payload && await Restricted.findOne({ user_id: payload.userId });
+    if (isuserblocked) {
+        // const error = new Error("user is suspend")
+        // throw error
+        throw DisableRequestError(`
+        your account has been block contact admin  for information
+         `)
     }
+    // try {
+    //     const payload = jwt.verify(token,
+    //         process.env.jwtSecret);
+    //     const isuserblocked = await Restricted.findOne({ user_id: payload.userId });
+    //     if (isuserblocked) {
+    //         const error = new Error("user is suspend")
+    //         throw error
+    //     }
+    //     // throw new Error("user is suspend")
+    //     // await isUserNotRestricted(payload.userId)
+    // } catch (err) {
+    //     console.log("this is the error in the auth middleware", err)
+    //     throw BadRequestError(err?.message || "something went wromng")
+    // }
     next()
 
 
