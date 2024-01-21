@@ -1,15 +1,15 @@
 
-const { UnethenticatedError } = require("../error")
+const { UnethenticatedError, UnathorizedError: UnauthorizedError } = require("../error")
 // const jwt = require("jsonwebtoken");
 const { verifyJWT } = require('../utils/tokenUtils.js');
 
-const authenticateUser =(req, res, next) => {
+const authenticateUser = (req, res, next) => {
     const { token } = req.cookies;
-    if (!token) throw UnethenticatedError('authentication invalid , no cookies');
+    if (!token) throw UnethenticatedError('authentication invalid ');
     try {
         const payload = verifyJWT(token);
         req.user = {
-            userId: payload._id,
+            userId: payload.userId,
             role: payload.role
         }
         next()
@@ -22,7 +22,7 @@ const authenticateUser =(req, res, next) => {
 const authorizePermissions = (...roles) => {
     return (req, res, next) => {
         if (!roles.includes(req.user.role)) {
-            throw new UnauthorizedError('Unauthorized to access this route');
+            throw UnauthorizedError('Unauthorized to access this route');
         }
         next();
     };

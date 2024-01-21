@@ -54,7 +54,7 @@ const ticketSchema = new Schema(
     createdBy: {
       type: Schema.ObjectId,
       required: [true, "please send a created user id"],
-      ref: "users",
+      ref: "User",
     },
 
     doubletripdetails: {

@@ -36,10 +36,10 @@ const createTicket = async (req, res) => {
     if (!isSeat) {
       throw BadRequestError("invalid Seat id")
     }
-    console.log(req.userInfo)
-    const isUser = await User.findOne({ _id: req.userInfo });
+
+    const isUser = await User.findOne({ _id: req.user?.userId });
     if (!isUser) throw BadRequestError("coudnot find user please login again");
-    req.body.createdBy = req.userInfo._id
+    req.body.createdBy = req.user?.userId
     req.body.seat_id = isSeat._id
     const ticket = await Ticket.create(req.body);
     seat_id = ticket.toJSON()._id
@@ -93,17 +93,23 @@ const editTicket = async (req, res) => {
   const demo_id = "64ce0086f793d0001861d076";
 
   if (!user) throw BadRequestError("Login as Assistant to validate tickets")
-  const { fullname,
-    _id: assistant_id
-  } = await checkPermissions(user.id)
+  // const { fullname,
+  //   _id: assistant_id
+  // } = await checkPermissions(user.id)
+  const { fullname, _id: assistant_id } = req?.user &&
+    await User.findOne({ _id: user?.userId })
 
+
+  let isString = req.isString || false;
+  // let searchQuery = isString ? { id: req.params.id } : { _id: req.params.id }
   const { id } = req.params
   const { index } = req.query
+  console.log({ [isString ? "id" : "_id"]: id })
   var isTicket = await Ticket.findOne({
-    _id: id,
-
+    // ...searchQuery
+    [isString ? "id" : "_id"]: id
   });
-  console.log("ticket seatid ", isTicket.seat_id, demo_id)
+  // console.log("ticket seatid ", isTicket.seat_id, demo_id)
   if (toString(isTicket.seat_id) === demo_id) throw BadRequestError("This ticket does not have a bus seat ,please go get a bus seat before validating the ticket");
 
   if (!isTicket) {
@@ -164,7 +170,7 @@ const editTicket = async (req, res) => {
     try {
       const updatevalue = await Ticket.findOneAndUpdate(
         {
-          _id: id,
+          [isString ? "id" : "_id"]: id
 
         }
         , {
@@ -197,7 +203,7 @@ const editTicket = async (req, res) => {
 
 
   const isEdited = await Ticket.findOneAndUpdate(
-    { _id: id },
+    {  [isString ? "id" : "_id"]: id },
 
     {
       $set: {
@@ -258,9 +264,16 @@ const getTicket = async (req, res) => {
   usernameticket.username = createdBy;
   usernameticket.busdetails = busname
   usernameticket._id = ticket_id ?? _id
+  let url = null;
+  if (process.env.NODE_ENV === "production") {
+    url = `${process.env.clientBaseUrl}/assistant/${usernameticket._id}`
+  } else {
+    url = `http://192.168.43.68:3000/assistant/${usernameticket._id}`
 
+  }
   res.status(200).json({
-    ticket: usernameticket
+    ticket: usernameticket,
+    scanUrl: url
   });
 
 };
@@ -305,43 +318,48 @@ const getTickets = async (req, res) => {
     ]
 
   }
-
-  if (createdBy && req?.admin?.role === "admin") {
+  if (createdBy && ["admin", "sub_admin"].some(role => role.includes(req?.user?.role))) {
     queryObject.createdBy = new mongoose.Types.ObjectId(createdBy)
-    // queryObject.$expr = {
-    //   $eq: ['$createdBy', { $toObjectId: createdBy }]
-    // }
   }
-  if (createdBy && req?.admin?.role === "user") {
-    // use is in here after implentation
-    queryObject.createdBy = new mongoose.Types.ObjectId(createdBy)
+  if (req?.user?.role == "ticket") queryObject.createdBy = new mongoose.Types.ObjectId(req?.user?.userId)
+
+  // if (createdBy) queryObject.createdBy = new mongoose.Types.ObjectId(req?.user?.userId)
+  // if(create)
+  // if (req.user?._id && !createdBy) {
+  //   queryObject.createdBy = new mongoose.Types.ObjectId(req.userInfo?._id)
 
 
-  }
-  if (req?.admin?.role === "user" && !createdBy) {
-    let users_ids = await User.find({ createdBy: req.admin._id }).select("_id");
+  // }
+  if (req?.user?.role === "sub_admin" && !createdBy) {
+    let users_ids = await User.find({ createdBy: req.user.userId }).select("_id");
     // console.log("user ids here", users_ids)
     // new mongoose.Types.ObjectId(createdBy)
     // users_ids = users_ids.map(({ _id }) => new mongoose.Types.ObjectId(_id));
     users_ids = users_ids.map(({ _id }) => _id.toString());
-    // users_ids = users_ids.map(({ _id }) => _id);
-    console.log("this is the users ids here", users_ids)
-    // { movieId: { $in: [ 'movie1', 'movie2' ] }}
+
 
     delete queryObject.createdBy
     queryObject.ticket_id = {
       $in: [...users_ids
       ]
     }
-    // queryObject.createdBy = query.createdBy
-    // $in: [ "bananas", "$in_stock" ]
-    // queryObject.$in = ["createdBy"]
-  }
-  if (req.userInfo?._id && !createdBy) {
-    queryObject.createdBy = new mongoose.Types.ObjectId(req.userInfo?._id)
-
 
   }
+
+  // if (createdBy && req?.admin?.role === "admin") {
+  //   queryObject.createdBy = new mongoose.Types.ObjectId(createdBy)
+  //   // queryObject.$expr = {
+  //   //   $eq: ['$createdBy', { $toObjectId: createdBy }]
+  //   // }
+  // }
+  // if (createdBy && req?.admin?.role === "user") {
+  //   // use is in here after implentation
+  //   queryObject.createdBy = new mongoose.Types.ObjectId(createdBy)
+
+
+  // }
+  // if (req?.admin?.role === "user" && !createdBy) {
+
   if (daterange) {
     const decoded = decodeURIComponent(daterange)
     const [startdate, endDate] = decoded.
@@ -445,7 +463,7 @@ const getTickets = async (req, res) => {
   }
   if (removeticket_id.ticket_id) {
     delete removeticket_id.ticket_id;
-    let users_ids = await User.find({ createdBy: req.admin._id }).select("_id");
+    let users_ids = await User.find({ createdBy: req.user.userId }).select("_id");
     users_ids = users_ids.map(({ _id }) => new mongoose.Types.ObjectId(_id));
     removeticket_id.createdBy = {
       $in: [
@@ -454,6 +472,7 @@ const getTickets = async (req, res) => {
     }
 
   }
+  console.log("this is the queryobject for tickets",req.query,queryObject)
   const sortKey = sortOptions[sort] || sortOptions.newest;
   const page = Number(req.query.page) || 1;
   const limit = Number(req.query.limit) || 100;
@@ -554,7 +573,8 @@ const getTickets = async (req, res) => {
   // }, {});
   // console.log("this is the reduce stat here", stats)
   var createdBy_ = {}
-  if (queryObject.createdBy) createdBy_ = queryObject.createdBy
+  if (queryObject.createdBy) createdBy_.createdBy = queryObject.createdBy
+  // console.log("checking if the is a createdby",quer)
   let monthlyApplications = await Ticket.aggregate([
     { $match: { ...createdBy_ } },
     {
@@ -741,10 +761,10 @@ const downloadsoftcopyticket = async (req, res) => {
 }
 const editTicketMeta = async (req, res) => {
 
-  if (!req?.userInfo?._id) {
-    throw UnethenticatedError("you are not authorized to perform this operation ")
-  }
-  const requestedUser = await User.findOne({ _id: req?.userInfo?._id })
+  // if (!req?.userInfo?._id) {
+  //   throw UnethenticatedError("you are not authorized to perform this operation ")
+  // }
+  const requestedUser = await User.findOne({ _id: req?.user?.userId })
   if (!requestedUser) {
     throw BadRequestError("fail to find user")
   }

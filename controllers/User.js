@@ -1,13 +1,60 @@
 const User = require("../models/User");
 // const Ticket = require("../models/Ticket");
 const Admin = require("../models/Admin")
-const { BadRequestError, UnethenticatedError } = require("../error");
+const { BadRequestError, UnethenticatedError, UnathorizedError, DisableRequestError } = require("../error");
 // const Assistant = require("../models/Assistant")
 const { createJWT } = require("../utils/tokenUtils")
 const { comparePassword, hashPassword } = require('../utils/passwordUtils.js');
+const { USER_ROLES_STATUS } = require("../utils/constants.js")
+const mongoose = require("mongoose");
+const isUserNotRestricted = require("../middlewares/IsUserRestricted.js");
+const restrictedschema = require("../models/RestrictedUsers.js");
 
-const mongoose = require("mongoose")
+const getAllSubAdminUsers = async (req, res) => {
+  // const isSuperAdmin = req?.user?.role == "admin"
+  // if (!isSuperAdmin) throw UnethenticatedError("Unethenticated error");
+  // let users = null;
+
+  let users = await User.aggregate([{
+    $match: {
+      _id: {
+        $ne: new mongoose.Types.ObjectId(req?.user?.userId)
+      },
+      role: USER_ROLES_STATUS.sub_admin//"where thier roles are sub admins"
+    },
+  },
+  {
+    $lookup: {
+      from: "users",
+      localField: "_id",
+      foreignField: "createdBy",
+      as: "users"
+    }
+  },
+
+  {
+    $project: {
+      total: {
+        "$size": "$users"
+      },
+      fullname: 1,
+      _id: 1,
+      createdAt: 1,
+      phone: 1,
+    }
+  }, {
+    $sort: {
+      total: -1
+    }
+  }
+
+  ])
+
+  console.log("this is the new uses", users)
+  res.status(200).json({ users })
+}
 const updatePassword = async (req, res) => {
+
   const { oldpassword, newpassword, confirmpassword } = req.body;
   if (newpassword !== confirmpassword) throw BadRequestError("password doesnot match ");
   if (newpassword.length < 7) throw BadRequestError("Password must be greater or equal to 8")
@@ -17,6 +64,7 @@ const updatePassword = async (req, res) => {
   })
 
   if (!user) throw BadRequestError("Incorrect Password");
+
   user = await User.findOneAndUpdate({
     _id: req.userInfo._id,
 
@@ -65,12 +113,18 @@ const getUsers = async (req, res) => {
 
 const getUserAndTicketLength = async (req, res) => {
 
-  const { search } = req.query;
-  const queryObject = {}
-  if (!req.admin) throw UnethenticatedError("not allow to perfom this operation")
-  const isSuper = req?.admin?.role == "admin"
+  const { search, userRole } = req.query;
+  const queryObject = {};
+  if (userRole) {
+    const users = await User.find({ role: userRole });
+
+    return res.status(200).json({ users })
+  }
+  // if (!req.admin) throw UnethenticatedError("not allow to perfom this operation")
+  const isSuper = req?.user?.role == "admin"
+  // console.log("this is the user role here", isSuper)
   if (!isSuper) {
-    queryObject.createdBy = new mongoose.Types.ObjectId(req.admin?._id)
+    queryObject.createdBy = new mongoose.Types.ObjectId(req.user?.userId)
   }
   if (search) {
     queryObject.$or = [
@@ -88,7 +142,7 @@ const getUserAndTicketLength = async (req, res) => {
       {
         $match: {
           ...queryObject,
-          role: "tickets"
+          role: USER_ROLES_STATUS.ticketer
         }
       },
       {
@@ -119,7 +173,7 @@ const getUserAndTicketLength = async (req, res) => {
       {
         $match: {
           ...queryObject,
-          role: "mails"
+          role: USER_ROLES_STATUS.mailer
 
         }
       },
@@ -181,24 +235,33 @@ const getUserAndTicketLength = async (req, res) => {
       },
       { $sort: { total: -1 } }])
 
-  console.log("this is the user tickets here", usertickets.length, userMails.length, userRes.length, [...usertickets, ...userMails, ...userRes].length)
-  res.status(200).json({ userdetails: [...usertickets, ...userMails, ...userRes] })
+  // console.log("this is the user tickets here", usertickets)
+  res.status(200).json({ userdetails: [...usertickets, ...userMails] })
 }
 
 
 const userInfo = async (req, res) => {
+  const isHigherOrderUser = req.query.higherorderuser
+  const userId = req?.params?.userId || req?.user?.userId
+  const userRole = req?.user?.role
+  if (isHigherOrderUser && [USER_ROLES_STATUS.ticketer, USER_ROLES_STATUS.mailer].
+    some(role => role.includes(userRole))) {
+    throw UnathorizedError("not authorise to access this data please login again ")
+  }
+  // const isUser = await restrictedschema.findOne({ user_id: req?.user?.userId })
+  // if (isUser) throw DisableRequestError("hahah")
+  // if(isHigherOrderUser&&![USER_ROLES_STATUS.ticketer, USER_ROLES_STATUS.mailer].
+  //   some(role => role.includes(userRole))){
+  //     throw UnathorizedError("not authorise to access this data please login again ")
 
-  // const {
-  //   userInfo: { _id },
-  // } = req;
-  let _id = null
-  _id = req?.userInfo || req.params?.userId;
-  if (!_id) throw BadRequestError("something went wrong try again later")
+  //   }
+
   const user = await User.findOne(
     {
-      _id,
-    },
-    { password: 0 }
+      _id: userId,
+    }, {
+    password: false
+  }
   );
   if (!user) throw BadRequestError("couldnot find user");
   res.json({
@@ -210,7 +273,7 @@ const uniqueUsers = async (req, res) => {
   res.status(200).json({ unique });
 };
 const getStaticUser = async (req, res) => {
-  console.log(req.cookies);
+
   const {
     params: { id: _id },
   } = req;
@@ -221,18 +284,25 @@ const getStaticUser = async (req, res) => {
   res.status(200).json({ user });
 };
 const deleteUser = async (req, res) => {
+  const deleteuserwithoutaskingpassword = req.query.allowwithotpassword;
   const { id } = req.params
-  const generalAdmin_or_AdminCreated_the_user = req?.admin?.role == "admin" || (
-    await User.findOne({ createdBy: req?.admin?._id })
+  const generalAdmin_or_AdminCreated_the_user = req?.user?.role == "admin" || (
+    await User.findOne({ createdBy: req?.user?.userId })
   );
   if (!generalAdmin_or_AdminCreated_the_user) {
     throw BadRequestError("cant perfom this action now please try again later")
+
   }
   const { password } = req.body
-  let user = await Admin.findOne({ _id: req?.admin?._id })
-  const isValidUser = (
-    user && password &&
-    await comparePassword(password, user.password))
+  // let user = null;
+  let isValidUser = false;
+
+  if (deleteuserwithoutaskingpassword) {
+    isValidUser = true
+  } else {
+    let user = await User.findOne({ _id: id, password: password })
+    isValidUser = user && password
+  }
   if (!isValidUser) throw BadRequestError("password did not match");
   const deletedUser = await User.findOneAndDelete({ _id: id });
   if (!deletedUser) throw BadRequestError("fail to delete user ")
@@ -248,5 +318,6 @@ module.exports = {
   getStaticUser,
   getUserAndTicketLength
   , updatePassword,
-  deleteUser
+  deleteUser,
+  getAllSubAdminUsers
 };

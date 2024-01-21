@@ -10,6 +10,8 @@ const Mail = require("../models/MailsModel")
 const { formatImage } = require("../utils/multerMiddleware")
 const cloudinary = require('cloudinary');
 const { StatusCodes } = require("http-status-codes")
+const { USER_ROLES_STATUS } = require("../utils/constants");
+
 // import mongoose from 'mongoose';
 // import day from 'dayjs';
 const day = require("dayjs")
@@ -17,9 +19,9 @@ const day = require("dayjs")
 const mongoose = require("mongoose")
 const createMail = async (req, res) => {
     // const newMail = { ...req.body };
-    req.body.createdBy = req?.userInfo?._id
+    req.body.createdBy = req?.user?.userId
 
-    console.log("req.file", req.body)
+    // console.log("req.file", req.body)
 
     if (req.file) {
         // console.log("this i sthe file here", req.file)
@@ -40,9 +42,7 @@ const createMail = async (req, res) => {
 const getRankUsersMails = async (req, res) => {
     const { quickdatesort, search, numberFilter } = req.query
     const queryObject = {}
-    // if (numberFilter) {
-    //   queryObject.customerPhone = { $regex: decodeURIComponent(numberFilter).split("+").join(" ").trim(), $options: "i" }
-    // }
+
     if (search) {
         // console.log(decodeURIComponent(search).split("+").join(" "))
         queryObject.$or = [
@@ -162,7 +162,9 @@ const getStaticMail = async (req, res, next) => {
     res.status(StatusCodes.OK).json({ mail: mailWithCreatedBy })
 }
 const getUsersAllMails = async (req, res) => {
-    const { _id: requestedUserId } = req.userInfo;
+    // const { userId: requestedUserId } = req.user;
+    const { userId, role } = req?.user;
+    const requestedUserId = userId
     const {
         search,
         createdBy,
@@ -178,8 +180,12 @@ const getUsersAllMails = async (req, res) => {
 
 
     }
+    if (![USER_ROLES_STATUS.admin, USER_ROLES_STATUS.sub_admin]
+        .some(user_role => user_role.includes(role))) {
+        queryObject.createdBy = new mongoose.Types.ObjectId(requestedUserId)
+
+    }
     // get all the meals created by the user ;
-    queryObject.createdBy = new mongoose.Types.ObjectId(requestedUserId)
 
     // queryObject
     // if (createdBy) {
@@ -493,8 +499,8 @@ const downloadsoftcopy = async (req, res) => {
 }
 const editMail = async (req, res) => {
     const status = req.body.status || ""
-    // const requestUserId = req?.userInfo?._id;
-    const requestedUser = await User.findOne({ _id: req?.userInfo?._id })
+    // const requestUserId = req?.user?.userId;
+    const requestedUser = await User.findOne({ _id: req?.user?.userId })
     if (!requestedUser) {
         throw BadRequestError("fail to find user")
     }
@@ -506,7 +512,7 @@ const editMail = async (req, res) => {
     if (status == "sent") {
         // if the mail doesnt belongs to the creator of the mail..
         // throw an error
-        const requestUserId = req?.userInfo?._id;
+        const requestUserId = req?.user?.userId;
         mail = requestUserId && await Mail.findOne({
             _id: req.params.id,
             createdBy: requestUserId
@@ -517,7 +523,7 @@ const editMail = async (req, res) => {
     if (status == "recieved") {
         // the creator of the mail cant mark the mail are recieved ..
         // throw an error
-        const requestUserId = req?.userInfo?._id;
+        const requestUserId = req?.user?.userId;
         mail = requestUserId && await Mail.findOne({
             _id: req.params.id,
             createdBy: requestUserId
@@ -551,7 +557,7 @@ const editMail = async (req, res) => {
 const showStats = async (req, res) => {
 
     let stats = await Mail.aggregate([
-        { $match: { createdBy: new mongoose.Types.ObjectId(req.userInfo?._id) } },
+        { $match: { createdBy: new mongoose.Types.ObjectId(req.user?.userId) } },
         { $group: { _id: '$mailStatus', count: { $sum: 1 } } },
     ]);
     console.log("this is the user query here ,", stats)
@@ -570,7 +576,7 @@ const showStats = async (req, res) => {
     };
 
     let monthlyApplications = await Mail.aggregate([
-        { $match: { createdBy: new mongoose.Types.ObjectId(req.userInfo?._id) } },
+        { $match: { createdBy: new mongoose.Types.ObjectId(req.user?.userId) } },
         {
             $group: {
                 _id: { year: { $year: '$createdAt' }, month: { $month: '$createdAt' } },

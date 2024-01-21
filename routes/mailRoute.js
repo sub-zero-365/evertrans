@@ -2,41 +2,54 @@ const router = require("express").Router()
 const admin_auth = require("../middlewares/Admin.auth")
 const { createMail, getStaticMail, getAllMeals, downloadsoftcopy, editMail, showStats, getRankUsersMails } = require("../controllers/mailsController")
 const { upload } = require("../utils/multerMiddleware")
-const { mailsPermission, mailsOrticketPermission } = require("../utils/ticketPermission")
 const IsUserRestricted = require("../middlewares/IsUserRestricted")
 const { validateMailInput,
     validateGetSingleMail } = require("../middlewares/validationMiddleware")
-const userauth = require("../middlewares/Auth.User")
+const { authorizePermissions } = require("../middlewares/Auth.User")
+const { USER_ROLES_STATUS } = require("../utils/constants");
+
 router.route("/new").post(
     upload.single("imgUrl"),
-    validateMailInput
-    , userauth,
+    validateMailInput,
     IsUserRestricted,
-    mailsPermission,
-    createMail, editMail)
+    authorizePermissions(USER_ROLES_STATUS.mailer)
+    ,
+    // mailsPermission,
+    createMail)
 router.route("/showstats").get(
-    userauth,
+    authorizePermissions(USER_ROLES_STATUS.mailer,
+        USER_ROLES_STATUS.admin
+        , USER_ROLES_STATUS.sub_admin,),
+
     showStats)
-router.route("/ranked-users").get(getRankUsersMails)
+router.route("/ranked-users").
+    get(authorizePermissions(USER_ROLES_STATUS.mailer,
+        USER_ROLES_STATUS.admin
+        , USER_ROLES_STATUS.sub_admin),
+        getRankUsersMails)
 router.route("/:id").get(
-    userauth,
-    mailsOrticketPermission,
+    authorizePermissions(USER_ROLES_STATUS.mailer,
+        USER_ROLES_STATUS.admin
+        , USER_ROLES_STATUS.sub_admin,),
+
     validateGetSingleMail,
     getStaticMail)
 router.route("/edit/:id").patch(
-    userauth,
-    mailsOrticketPermission,
+
+    authorizePermissions(USER_ROLES_STATUS.mailer,
+    ),
     editMail)
 router.route("/").get(
-    userauth,//protect this route from invaders 
-    mailsPermission,
+    authorizePermissions(USER_ROLES_STATUS.mailer,
+        USER_ROLES_STATUS.admin
+        , USER_ROLES_STATUS.sub_admin,),
     getAllMeals)
-router.route("/admins/mails").get(
-    admin_auth,
-    mailsPermission,
-    getAllMeals
+// router.route("/admins/mails").get(
+//     admin_auth,
+//     mailsPermission,
+//     getAllMeals
 
-)
+// )
 
 router.route("/download/:id").get(downloadsoftcopy)
 module.exports = router
