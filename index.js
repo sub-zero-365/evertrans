@@ -11,10 +11,11 @@ app.use(cookieParser());
 app.use(express.json())
 // const fs = require("fs")
 app.use(cors({
-  origin: ["http://localhost:3000",
-    "http://192.168.43.68:3000",
-    "https://eagle-tranz.com",
-  ],
+  // origin: ["http://localhost:3000",
+  //   "http://192.168.43.68:3000",
+  //   "https://eagle-tranz.com",
+  // ],
+  origin:true,
   credentials: true,
 }));
 app.use(morgan("tiny"))//logger for express 
