@@ -314,6 +314,7 @@ const getUsersAllMails = async (req, res) => {
             }
         }]
     ))?.sort((a, b) => b._id - a._id);
+
     const obj = {}
     statuses?.map((status) => {
         obj[status._id] = status
@@ -331,6 +332,7 @@ const getUsersAllMails = async (req, res) => {
     const sentSum = obj?.sent?.sum || 0
     const recievedSum = obj?.recieved?.sum || 0
     const numberOfPages = Math.ceil(nDoc / limit)
+    const total_mails = totalSentMails + totalRecievedMails + totalPendingMails
     // console.log("this is the statuses ",statuses, {
     //     // mails,
     //     nHits: mails.length,
@@ -348,6 +350,7 @@ const getUsersAllMails = async (req, res) => {
     res.status(StatusCodes.OK).json({
         mails,
         nHits: mails.length,
+        total_mails,
         totalMailsSum,
         totalSentMails,
         totalPendingMails,
