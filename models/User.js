@@ -21,13 +21,13 @@ const UserSchema = new Schema({
     role: {
         type: String,
         enum:USER_ROLES,
-        default: 'tickets',
+        default: 'user',
     }
     ,
     createdBy: {
         type: Schema.ObjectId,
         required: [true, "please send a created user id"],
-        ref: "admins",
+        ref: "user",
     }
 }, {
     timestamps: true

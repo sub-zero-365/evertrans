@@ -1,27 +1,34 @@
 
-const { UnethenticatedError } = require("../error")
-const jwt = require("jsonwebtoken");
+const { UnethenticatedError, UnathorizedError: UnauthorizedError } = require("../error")
+// const jwt = require("jsonwebtoken");
+const { verifyJWT } = require('../utils/tokenUtils.js');
 
-const Auth = async (req, res, next) => {
+const authenticateUser = (req, res, next) => {
     const { token } = req.cookies;
-    console.log("this is the cookie here", token)
-    if (!token) throw UnethenticatedError('authentication invalid , no cookies');
+    if (!token) throw UnethenticatedError('authentication invalid ');
     try {
-        const payload = jwt.verify(token,
-            process.env.jwtSecret);
-        req.userInfo = {
-            _id: payload._id,
-            phone: payload.phone,
+        const payload = verifyJWT(token);
+        req.user = {
+            userId: payload.userId,
             role: payload.role
         }
-        console.log("this is the current user",req.userInfo)
         next()
     } catch (err) {
-        console.log("this is the error in the auth middleware", err)
-        throw UnethenticatedError('authentication invalid');
-        // next()
+        // console.log("this is the error in the auth middleware", err)
+        throw UnethenticatedError('authentication invalid --u');
     }
 
 }
+const authorizePermissions = (...roles) => {
+    return (req, res, next) => {
+        if (!roles.includes(req.user.role)) {
+            throw UnauthorizedError('Unauthorized to access this route');
+        }
+        next();
+    };
+};
 
-module.exports = Auth
+module.exports = {
+    authenticateUser,
+    authorizePermissions
+}

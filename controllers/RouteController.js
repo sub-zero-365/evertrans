@@ -1,6 +1,7 @@
 const Route = require("../models/RouteModel");
 const { BadRequestError,
-    NotFoundError } = require("../error")
+    NotFoundError } = require("../error");
+const isUserNotRestricted = require("../middlewares/IsUserRestricted");
 // 
 const createRoutes = async (req, res) => {
     const { from, to } = req.body
@@ -55,7 +56,8 @@ const getStaticRoute = async (req, res) => {
     if (!route) throw NotFoundError("not route with id ")
     res.status(200).json({ route })
 }
-const getRoute = async (req, res) => {
+const getRoute = async (req, res, next) => {
+    
     const { from, to } = req.query
     console.log("this is the req ", req.query)
     if (!from || !to) throw BadRequestError("please provide a from and a to cause its needed");
