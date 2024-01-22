@@ -19,6 +19,7 @@ const toJson = require("../utils/toJson");
 const dayjs = require("dayjs")
 const Ticket = require("../models/Ticket");
 const { toString } = require('express-validator/src/utils');
+const { USER_ROLES_STATUS } = require('../utils/constants');
 function formatDate(date = new Date()) {
   const formateDate = new Date(date);
   return {
@@ -203,7 +204,7 @@ const editTicket = async (req, res) => {
 
 
   const isEdited = await Ticket.findOneAndUpdate(
-    {  [isString ? "id" : "_id"]: id },
+    { [isString ? "id" : "_id"]: id },
 
     {
       $set: {
@@ -323,18 +324,10 @@ const getTickets = async (req, res) => {
   }
   if (req?.user?.role == "ticket") queryObject.createdBy = new mongoose.Types.ObjectId(req?.user?.userId)
 
-  // if (createdBy) queryObject.createdBy = new mongoose.Types.ObjectId(req?.user?.userId)
-  // if(create)
-  // if (req.user?._id && !createdBy) {
-  //   queryObject.createdBy = new mongoose.Types.ObjectId(req.userInfo?._id)
 
-
-  // }
   if (req?.user?.role === "sub_admin" && !createdBy) {
     let users_ids = await User.find({ createdBy: req.user.userId }).select("_id");
-    // console.log("user ids here", users_ids)
-    // new mongoose.Types.ObjectId(createdBy)
-    // users_ids = users_ids.map(({ _id }) => new mongoose.Types.ObjectId(_id));
+
     users_ids = users_ids.map(({ _id }) => _id.toString());
 
 
@@ -472,7 +465,7 @@ const getTickets = async (req, res) => {
     }
 
   }
-  console.log("this is the queryobject for tickets",req.query,queryObject)
+  console.log("this is the queryobject for tickets", req.query, queryObject)
   const sortKey = sortOptions[sort] || sortOptions.newest;
   const page = Number(req.query.page) || 1;
   const limit = Number(req.query.limit) || 100;
@@ -560,23 +553,24 @@ const getTickets = async (req, res) => {
   // ticket start here
 
 
-  // let stats = await Mail.aggregate([
-  //   { $match: { createdBy: new mongoose.Types.ObjectId(req.userInfo?._id) } },
-  //   { $group: { _id: '$ticketStatus', count: { $sum: 1 } } },
-  // ]);
-  // console.log("this is the user query here ,", stats)
 
-  // stats = stats.reduce((acc, curr) => {
-  //   const { _id: title, count } = curr;
-  //   acc[title] = count;
-  //   return acc;
-  // }, {});
-  // console.log("this is the reduce stat here", stats)
   var createdBy_ = {}
   if (queryObject.createdBy) createdBy_.createdBy = queryObject.createdBy
+
+  else {
+    if ((USER_ROLES_STATUS.sub_admin === req?.user?.role)&& !createdBy) {
+      let users_ids = await User.find({ createdBy: req.user.userId }).select("_id");
+      users_ids = users_ids.map(({ _id }) => _id.toString());
+      createdBy_.createdBy = {
+        $in: [...users_ids]
+      }
+    }
+  }
   // console.log("checking if the is a createdby",quer)
+  console.log("this is the created by here", createdBy_)
   let monthlyApplications = await Ticket.aggregate([
     { $match: { ...createdBy_ } },
+
     {
       $group: {
         _id: { year: { $year: '$createdAt' }, month: { $month: '$createdAt' } },

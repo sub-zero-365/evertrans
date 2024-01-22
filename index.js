@@ -34,7 +34,7 @@ const NOTFOUND = require("./middlewares/notfound");
 const adminControl = require("./routes/Admincontrols");
 const Admin_auth = require("./middlewares/Admin.auth");
 const { authenticateUser, authorizePermissions } = require("./middlewares/Auth.User");
-const contactRouter = require("./routes/Contact");
+// const contactRouter = require("./routes/Contact");
 const busRouter = require("./routes/Bus")
 const restrictedRouter = require("./routes/RestrictedUsers");
 const seatRouter = require("./routes/Seat");
@@ -64,7 +64,7 @@ app.use("/user", userSelf);
 app.use("/auth/assistant", assistantRoute);
 // app.use("/assistant", assistantControlsRoute);
 app.use("/seat", seatRouter);
-app.use("/routes", routesRouter);
+app.use("/routes", authenticateUser, routesRouter);
 app.use("/ticket", authenticateUser,
   IsUserRestricted, Ticket);
 app.use("/admin", Admin_auth, adminControl);
