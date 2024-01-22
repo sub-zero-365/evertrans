@@ -1,4 +1,4 @@
-const { BadRequestError, UnethenticatedError } = require("../error");
+    const { BadRequestError, UnethenticatedError } = require("../error");
 const jwt = require("jsonwebtoken")
 const auth = async (req, _, next) => {
     const { token } = req.cookies;
@@ -14,7 +14,7 @@ const auth = async (req, _, next) => {
         }
         next()
     } catch (err) {
-        throw  UnethenticatedError('authentication invalid');
+        throw  UnethenticatedError('authentication invalid --a');
     }
 
 }

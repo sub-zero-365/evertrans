@@ -54,7 +54,7 @@ const ticketSchema = new Schema(
     createdBy: {
       type: Schema.ObjectId,
       required: [true, "please send a created user id"],
-      ref: "users",
+      ref: "User",
     },
 
     doubletripdetails: {
@@ -144,6 +144,9 @@ const ticketSchema = new Schema(
 
 
 ticketSchema.pre("validate", async function () {
+  // im not checking for duplicate maybe will check that in the future 
+  // because we have a large sample size of npr 
+  // that is 58pr8 which is approximate to 77 trillion
   this.id = generateRandonNumber()
   if (this.type === "roundtrip") {
     this.doubletripdetails = [

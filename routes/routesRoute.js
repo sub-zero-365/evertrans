@@ -1,5 +1,6 @@
 const router = require("express").Router();
-const admin_auth = require("../middlewares/Admin.auth")
+// const admin_auth = require("../middlewares/Admin.auth")
+const { authorizePermissions } = require("../middlewares/Auth.User")
 const {
     createRoutes,
     updateRoutes,
@@ -7,15 +8,19 @@ const {
     deleteRoutes,
     getStaticRoute,
     getRoute
-} = require("../controllers/RouteController")
-router.route("/new").post(admin_auth,
+} = require("../controllers/RouteController");
+const { USER_ROLES_STATUS } = require("../utils/constants");
+router.route("/new").post(authorizePermissions(USER_ROLES_STATUS.admin,
+    USER_ROLES_STATUS.sub_admin),
     createRoutes)
 router.route("/").get(getAllRoutes)
 router.route("/:id")
-    .delete(admin_auth, deleteRoutes)
+    .delete(authorizePermissions(USER_ROLES_STATUS.admin,
+        USER_ROLES_STATUS.sub_admin), deleteRoutes)
 router.route("/get")
-.get(getRoute)
-router.route("/update/:id").patch(admin_auth,
-updateRoutes)
+    .get(getRoute)
+router.route("/update/:id").patch(authorizePermissions(USER_ROLES_STATUS.admin,
+    USER_ROLES_STATUS.sub_admin),
+    updateRoutes)
 
 module.exports = router

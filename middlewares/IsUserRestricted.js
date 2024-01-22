@@ -3,7 +3,7 @@ const {
 } = require("../error")
 const Restricted = require("../models/RestrictedUsers");
 const isUserNotRestricted = async (req, res, next) => {
-    const user_id = req?.userInfo?._id;
+    const user_id = req?.user?.userId;
     return new Promise(async function (resolve, reject) {
         const isuserblocked = await Restricted.findOne({ user_id });
         if (isuserblocked) {

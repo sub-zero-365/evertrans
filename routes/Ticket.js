@@ -6,6 +6,9 @@ const {
     , downloadsoftcopyticket,
     editTicketMeta, removeSeatIdFromTicket
 } = require("../controllers/Ticket");
+const { authorizePermissions } = require("../middlewares/Auth.User");
+
+
 const { validateTicketInput,
     validateupdateTicket,
     validateIdParam,
@@ -13,34 +16,49 @@ const { validateTicketInput,
     validateEditTicket,
 } = require("../middlewares/validationMiddleware")
 const IsUserRestricted = require("../middlewares/IsUserRestricted")
-const express = require("express")
+const express = require("express");
+const { USER_ROLES_STATUS } = require("../utils/constants");
 const router = express.Router()
-const { ticketPermission } = require("../utils/ticketPermission")
+// const { ticketPermission } = require("../utils/ticketPermission")
 router.route("/").post(
     IsUserRestricted,
-    ticketPermission,
+    authorizePermissions("ticket"),
     validateTicketInput,
     create).get(
-        ticketPermission,
+        // ticketPermission,
+        authorizePermissions(
+            USER_ROLES_STATUS.ticketer,
+            USER_ROLES_STATUS.admin,
+            USER_ROLES_STATUS.sub_admin),
         getTickets)
 router.route("/:id").get(
-    validateIdParam,
-    ticketPermission,
+    validateGetTicket,
+    authorizePermissions(
+        USER_ROLES_STATUS.ticketer,
+        USER_ROLES_STATUS.admin,
+        USER_ROLES_STATUS.sub_admin,
+        USER_ROLES_STATUS.scanner),
     getTicket)
 router.route("/download/:id").
     get(validateIdParam,
+        authorizePermissions(USER_ROLES_STATUS.ticketer,
+            USER_ROLES_STATUS.admin,
+            USER_ROLES_STATUS.sub_admin),
         downloadsoftcopyticket)
 router.route("/edit/:id").
     post(
-        validateIdParam,
+        validateGetTicket,
         validateupdateTicket,
         validateEditTicket
         ,
+        authorizePermissions( USER_ROLES_STATUS.scanner),
         edit)
 router.
     route("/updateticket/:id").
     patch(
         validateIdParam,
+        authorizePermissions(USER_ROLES_STATUS.ticketer,
+            USER_ROLES_STATUS.admin),
         editTicketMeta)
 router.route("/removeticketfrombus").post(removeSeatIdFromTicket)
 

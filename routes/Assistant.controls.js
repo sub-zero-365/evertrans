@@ -1,6 +1,6 @@
 const router = require("express").Router()
 const adminauth = require("../middlewares/Admin.auth");
-const userauth = require("../middlewares/Auth.User");
+const {authenticateUser} = require("../middlewares/Auth.User");
 
 const { verifyJWT } = require("../utils/tokenUtils")
 const checkPermissions = require("../utils/checkPermission")
@@ -28,11 +28,11 @@ router.route("/").get(adminauth
     patch(validation,
         updatePassword)
 router.route("/current-user").get(
-    userauth, validation,
+    authenticateUser, validation,
     getStaticAssistant)
 router.route("/:id").delete(adminauth, DeleteAssistant);
 router.route("/ticket/:id").get(
-    userauth,
+    authenticateUser,
     validation,
     async function (req, res, next) {
         await checkPermissions(req.user.id)
@@ -42,7 +42,7 @@ router.route("/ticket/:id").get(
     getTicket)
 
 router.route("/edit/:id").post(
-    userauth,validation,
+    authenticateUser,validation,
     edit)
 
 

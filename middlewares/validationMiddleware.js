@@ -33,19 +33,18 @@ const withValidationErrors = (validateFn) => {
 
 
 const validateGetTicket = withValidationErrors([
-    body('id').custom((value, { req }) => {
-        console.log("8c", value)
+    param('id').custom((value, { req }) => {
+        // console.log("8c", value)
         if (value.length === 8) {
             req.isString = true
             return true
         }
         else if (value.length === 24) {
-
             const bool = mongoose.Types.ObjectId.isValid(value);
             return bool
         }
         else {
-            throw BadRequestError("invalid id ")
+            throw BadRequestError("invalid id 88 ")
         }
 
     })
@@ -76,9 +75,9 @@ const validateGetSingleMail = withValidationErrors([
 )
 
 const validateupdateTicket = withValidationErrors([
-    param('id')
-        .custom((value) => mongoose.Types.ObjectId.isValid(value))
-        .withMessage('invalid MongoDB id'),
+    // param('id')
+    //     .custom((value) => mongoose.Types.ObjectId.isValid(value))
+    //     .withMessage('invalid MongoDB id'),
     query('index')
         .optional()
         .isIn([1, 2])

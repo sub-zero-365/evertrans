@@ -1,0 +1,114 @@
+[33mcommit bb328b78253818f8cae37e1406ecd52a9aee351f[m[33m ([m[1;36mHEAD -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m
+Author: mmanuel <bateemma14@gmail.com>
+Date:   Mon Jan 8 16:22:16 2024 +0100
+
+    fix code
+
+[33mcommit 09d2f21e00047e470f7f113d7db41fb5b356f6e1[m
+Author: mmanuel <bateemma14@gmail.com>
+Date:   Wed Dec 20 10:20:39 2023 +0100
+
+    up=date user permission
+
+[33mcommit daa85a1e7ab5a372c80c58d90d1c2718e34d75af[m
+Author: mmanuel <bateemma14@gmail.com>
+Date:   Mon Dec 18 11:07:42 2023 +0100
+
+    added paymenttype to query on tickets
+
+[33mcommit 8eff1137d6e5dce1ce479f03c8410f57d65ec0ca[m
+Author: mmanuel <bateemma14@gmail.com>
+Date:   Tue Dec 12 10:03:05 2023 +0100
+
+    change customer ticket
+
+[33mcommit e65e4922006a5c2989b95dbb5418d136ded77581[m
+Author: mmanuel <bateemma14@gmail.com>
+Date:   Fri Dec 8 22:29:35 2023 +0100
+
+    wrkx with restau user
+
+[33mcommit ace7e30cb4f993bbd893e89b56a4906f61fb9a96[m
+Author: mmanuel <bateemma14@gmail.com>
+Date:   Sat Dec 2 03:18:52 2023 +0100
+
+    change transferdetails in tickets
+
+[33mcommit ca1831c043e44cd527ce24f84b9f4622ae46722d[m
+Author: mmanuel <bateemma14@gmail.com>
+Date:   Tue Nov 21 03:05:30 2023 +0100
+
+    added edited history to mailscontroller
+
+[33mcommit c70c709461a2327300481985cfa12082ac1fde89[m
+Merge: 417fc02 e82023d
+Author: mmanuel <bateemma14@gmail.com>
+Date:   Fri Nov 17 23:23:06 2023 +0100
+
+    Merge branch 'main' of https://github.com/sub-zero-365/evertrans
+
+[33mcommit 417fc022b82a99f82c0b71a643b3893f74565de0[m
+Author: mmanuel <bateemma14@gmail.com>
+Date:   Fri Nov 17 23:22:10 2023 +0100
+
+    fixed some bugs
+
+[33mcommit e82023d505248000ac47b5d41d734b14aed63b8c[m
+Author: sub-zero-365 <144519731+sub-zero-365@users.noreply.github.com>
+Date:   Thu Nov 16 08:04:34 2023 +0100
+
+    Remove the async
+
+[33mcommit 5d00da8ba73ac51821920a4998b20e8d13fd2f19[m
+Author: mmanuel <bateemma14@gmail.com>
+Date:   Tue Nov 14 22:24:06 2023 +0100
+
+    aDDed cookieas function in util
+
+[33mcommit d2f40d5d9857d4a29fb8befeaa2f024126dea74c[m
+Author: mmanuel <bateemma14@gmail.com>
+Date:   Mon Nov 6 15:43:53 2023 +0100
+
+    added some changes to the code
+
+[33mcommit 842d3333dcc7e3c985eaaf40703f75cc6568226f[m
+Author: mmanuel <bateemma14@gmail.com>
+Date:   Sun Nov 5 02:49:21 2023 +0100
+
+    added shopping functionality
+
+[33mcommit 3323b464bff032a97b22cad6fac74757b1fd8892[m
+Author: mmanuel <bateemma14@gmail.com>
+Date:   Sat Nov 4 00:39:57 2023 +0100
+
+    added employes role==user ranks
+
+[33mcommit d132b64bc66f194018cda47d7e662c3df7b60c29[m
+Author: mmanuel <bateemma14@gmail.com>
+Date:   Fri Nov 3 01:43:09 2023 +0100
+
+    fix some bugs
+
+[33mcommit 1a7e66f30f38eb2ec98cbc003203ffbeb13c342d[m
+Author: mmanuel <bateemma14@gmail.com>
+Date:   Wed Nov 1 02:03:01 2023 +0100
+
+    fix some issues
+
+[33mcommit 1c4cde1ca50e09a52a6a4e71c4dc3864013de37f[m
+Author: mmanuel <bateemma14@gmail.com>
+Date:   Mon Oct 30 10:14:53 2023 +0100
+
+    fixt the roundtrip scan error
+
+[33mcommit a7cf686921b0dd37930395594d1ab36f0953f6e9[m
+Author: mmanuel <bateemma14@gmail.com>
+Date:   Sun Oct 29 22:16:45 2023 +0100
+
+    added edited history
+
+[33mcommit aed3d34e66981737ca46b84de710ceecb8cf4a06[m
+Author: mmanuel <bateemma14@gmail.com>
+Date:   Sat Oct 28 05:30:29 2023 +0100
+
+    added add more buses to route
