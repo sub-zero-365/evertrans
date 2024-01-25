@@ -117,7 +117,6 @@ const getUserAndTicketLength = async (req, res) => {
   const queryObject = {};
   if (userRole) {
     const users = await User.find({ role: userRole });
-
     return res.status(200).json({ users })
   }
   // if (!req.admin) throw UnethenticatedError("not allow to perfom this operation")
@@ -236,7 +235,10 @@ const getUserAndTicketLength = async (req, res) => {
       { $sort: { total: -1 } }])
 
   // console.log("this is the user tickets here", usertickets)
-  res.status(200).json({ userdetails: [...usertickets, ...userMails] })
+  res.status(200).json({
+    userdetails: [...usertickets, ...userMails],
+    nHits: [...usertickets, ...userMails]?.length
+  })
 }
 
 
