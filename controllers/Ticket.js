@@ -18,7 +18,6 @@ const {
 const toJson = require("../utils/toJson");
 const dayjs = require("dayjs")
 const Ticket = require("../models/Ticket");
-// const { toString } = require('express-validator/src/utils');
 const { USER_ROLES_STATUS } = require('../utils/constants');
 function formatDate(date = new Date()) {
   const formateDate = new Date(date);
