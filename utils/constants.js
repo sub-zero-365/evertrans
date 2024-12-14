@@ -28,14 +28,7 @@ const CITY_TYPE = [
 const MAILS_STATUS = [
   "active", "inactive"
 ]
-const USER_ROLES = [
-  'ticket',
-  'mails',
-  "restaurants",
-  "admin",
-  "sub_admin",
-  "scanner"
-]
+
 
 const USER_ROLES_STATUS =
 {
@@ -47,7 +40,9 @@ const USER_ROLES_STATUS =
   scanner: "scanner"
 
 }
-
+const USER_ROLES = [
+  ...Object.values(USER_ROLES_STATUS)
+]
 
 module.exports = {
   USER_ROLES,

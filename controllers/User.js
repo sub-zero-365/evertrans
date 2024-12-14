@@ -121,6 +121,7 @@ const getUserAndTicketLength = async (req, res) => {
   }
   // if (!req.admin) throw UnethenticatedError("not allow to perfom this operation")
   const isSuper = req?.user?.role == "admin"
+  console.log("user requesting the data ",req?.user?.role)
   // console.log("this is the user role here", isSuper)
   if (!isSuper) {
     queryObject.createdBy = new mongoose.Types.ObjectId(req.user?.userId)
