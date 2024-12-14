@@ -18,7 +18,7 @@ const {
 const toJson = require("../utils/toJson");
 const dayjs = require("dayjs")
 const Ticket = require("../models/Ticket");
-const { toString } = require('express-validator/src/utils');
+// const { toString } = require('express-validator/src/utils');
 const { USER_ROLES_STATUS } = require('../utils/constants');
 function formatDate(date = new Date()) {
   const formateDate = new Date(date);
@@ -111,7 +111,7 @@ const editTicket = async (req, res) => {
     [isString ? "id" : "_id"]: id
   });
   // console.log("ticket seatid ", isTicket.seat_id, demo_id)
-  if (toString(isTicket.seat_id) === demo_id) throw BadRequestError("This ticket does not have a bus seat ,please go get a bus seat before validating the ticket");
+  if (String(isTicket.seat_id) === demo_id) throw BadRequestError("This ticket does not have a bus seat ,please go get a bus seat before validating the ticket");
 
   if (!isTicket) {
     throw NotFoundError("cannot find ticket with this id " + id);
