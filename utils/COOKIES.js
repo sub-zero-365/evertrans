@@ -1,9 +1,9 @@
 const isProduction = process.env.NODE_ENV == "production"
 // this set cookies to the browser when depending on the environment varaible
 
-  const cookies = (time) => {
+  const cookies = (time=null) => {
     const obj = {
-      httpOnly: isProduction,
+      httpOnly: true,
       expires: time ? new Date(Date.now() + time) : new Date(Date.now()),
       secure: isProduction,
     };
@@ -13,5 +13,5 @@ const isProduction = process.env.NODE_ENV == "production"
       ...obj,
     };
   };
-  
+
 module.exports=cookies
