@@ -630,135 +630,92 @@ const deleteTicket = async (req, res) => {
 
 const downloadsoftcopyticket = async (req, res) => {
   const id = req.params.id;
-  const ticket = await Ticket.findOne({
-    _id: id,
-  });
+
+  // Fetch ticket details
+  const ticket = await Ticket.findOne({ _id: id });
   if (!ticket) {
-    throw BadRequestError("please send a valid for to get the ticket");
+    throw BadRequestError("Please send a valid ID to get the ticket");
   }
-  let url = null;
-  if (process.env.NODE_ENV === "production") {
-    url = `${process.env.clientBaseUrl}/assistant/${id}?sound=true&xyz=secret&readonly=7gu8dsutf8asdf&render_9368&beta47`
-  } else {
-    url = `http://192.168.43.68:3000/assistant/${id}?sound=true&xyz=secret&readonly=7gu8dsutf8asdf&render_9368&beta47`
 
+  // Define the URL based on environment
+  const url =
+    process.env.NODE_ENV === "production"
+      ? `${process.env.clientBaseUrl}/assistant/${id}?sound=true&xyz=secret&readonly=7gu8dsutf8asdf&render_9368&beta47`
+      : `http://192.168.43.68:3000/assistant/${id}?sound=true&xyz=secret&readonly=7gu8dsutf8asdf&render_9368&beta47`;
+
+  // Fetch user who created the ticket
+  const createdBy =
+    (await User.findOne({ _id: ticket.createdBy }).select("fullname"))
+      ?.fullname || "n/a";
+
+  try {
+    // Generate QR code in memory
+    const qrCodeBuffer = await qrcode.toBuffer(url, {
+      type: "png",
+      width: 310, // Adjust size as necessary
+    });
+
+    // Load the PDF template
+    const pdfDoc = await PDFDocument.load(
+      await fs.promises.readFile(
+        path.resolve(__dirname, "../tickets", "sampleticket.pdf")
+      )
+    );
+    const page = pdfDoc.getPage(0);
+    const { width, height } = page.getSize();
+
+    // Populate form fields
+    const form = pdfDoc.getForm();
+    const { fullname, traveldate, traveltime, seatposition, from, to, type, _id, id, price, updatePrice } = ticket.toJSON();
+
+    form.getTextField("fullname").setText(fullname);
+    form
+      .getTextField("traveldate")
+      .setText(dayjs(traveldate || new Date()).format("dddd, MMMM D, YYYY"));
+    form.getTextField("seatposition").setText(`${seatposition + 1}`);
+    form.getTextField("createdby").setText(createdBy);
+    form.getTextField("bookingId").setText(`${id}`);
+    form.getTextField("from").setText(from);
+    form.getTextField("to").setText(to);
+    form.getTextField("price").setText(`${price + (updatePrice || 0)} frs`);
+    form.getTextField("triptype").setText(type === "roundtrip" ? "roundtrip" : "singletrip");
+
+    const fontSize = 40;
+    page.drawText(`${id || _id}`, {
+      x: width - 30,
+      y: height / 2 - (fontSize * 8) / 2,
+      size: fontSize,
+      color: rgb(0, 1, 0),
+      rotate: degrees(90),
+    });
+
+    form.flatten();
+
+    // Embed QR code
+    const qrImage = await pdfDoc.embedPng(qrCodeBuffer);
+    page.drawImage(qrImage, {
+      x: width / 2 - 155,
+      y: height - 340,
+      width: 310,
+      height: 310,
+    });
+
+    // Save the updated PDF to memory
+    const pdfBytes = await pdfDoc.save();
+
+    // Set headers and send the response
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      `inline; filename=ticket-${_id}.pdf`
+    );
+    res.send(Buffer.from(pdfBytes));
+  } catch (err) {
+    console.error("Error generating ticket:", err);
+    res.status(500).send("Failed to generate ticket");
   }
-  const _path = path.resolve(__dirname, "../tickets")
+};
 
-  const createdBy = (await User.findOne({ _id: ticket.createdBy }).select("fullname"))?.fullname || "n/a";
-  qrcode.toFile(path.join(_path, "qr2.png"),
-    url, {
-    type: "terminal",
-    size: 4
-  }, async function (err, code) {
-    if (err) return console.log(err)
-    try {
-      const pdfDoc = await PDFDocument.load(await readFile(path.resolve(__dirname, "../tickets", "sampleticket.pdf")));
-      const page = pdfDoc.getPage(0)
-      const { width, height } = page.getSize()
-
-      // const fileNames = pdfDoc.getForm().getFields().map(f => f.getName())
-      const form = pdfDoc.getForm()
-      const { fullname, traveldate, traveltime, seatposition, from, to, type, _id, id, bus, price, updatePrice } = ticket.toJSON()
-      try {
-        // console.log(fileNames)
-        form.getTextField("fullname").
-          setText(fullname)
-        form.getTextField("traveldate").
-          setText(dayjs(traveldate || new Date()).format("dddd, MMMM D, YYYY"))
-        form.getTextField("seatposition").
-          setText(`${seatposition + 1}`)
-        form.getTextField("createdby").
-          setText(createdBy)
-        form.getTextField("bookingId").
-          setText(`${id}`)
-        form.getTextField("from").
-          setText(from)
-        form.getTextField("to").
-          setText(to)
-        form.getTextField("price").
-          setText(`${price + (updatePrice ? updatePrice : 0)} frs`)
-        if (type == "singletrip") {
-          form.getTextField("triptype").
-            setText(`singletrip`)
-        }
-        if (type == "roundtrip") {
-          form.getTextField("triptype").
-            setText(`roundtrip`)
-        }
-        const fontSize = 40
-        page.drawText(`${id ? id : _id}`, {
-          x: width - 30,
-          y: (height / 2) - (fontSize * 8) / 2,
-          size: fontSize,
-          color: rgb(0, 1, 0),
-          rotate: degrees(90)
-        })
-        form.flatten()
-      } catch (err) {
-        console.log(err)
-      }
-
-      let img = fs.readFileSync(path.join(_path, "qr2.png"));
-      let logo = fs.readFileSync(path.join(_path, "logo.png"))
-      img = await pdfDoc.embedPng(img)
-      logo = await pdfDoc.embedPng(logo)
-      img.scaleToFit(100, 100)
-      img.scale(1)
-      logo.scaleToFit(100, 100)
-      logo.scale(1)
-      page.drawImage(img, {
-        x: (width / 2) - 155,
-        y: height - 340,
-        width: 310,
-        height: 310
-      })
-      // page.drawImage(logo, {
-      //   x: (width / 2) - 155,
-      //   y: height - 140,
-      //   width: 310,
-      //   height: 310
-      // })
-
-
-      const pdfBytes = await pdfDoc.save()
-      // await writeFile(path.join(_path, ticket._id + ".pdf"), pdfBytes);
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `inline; filename=ticket-${_id}.pdf`);
-      
-      // Send the PDF buffer to the client
-      console.log("enter here ");
-      res.send(Buffer.from(pdfBytes));
-      // await res.sendFile(path.join(_path, ticket._id + ".pdf"),
-      //   null,
-      //   function (err) {
-      //     res.end()
-      //     if (err) {
-      //       console.log(err, "391 ticket download")
-
-      //       // throw err
-      //     }
-      //     else {
-      //       console.log("ticket downloaded")
-      //       // if (fs.existsSync(path.join(_path, "qr2.png")) && fs.existsSync(path.join(_path, ticket._id + ".pdf"))) {
-      //       //   try {
-      //       //     fs.unlinkSync(path.join(_path, "qr2.png"));
-      //       //     fs.unlinkSync(path.join(_path, ticket._id + ".pdf"));
-      //         // }
-      //         // catch (err) {
-      //         //   console.lg(err)
-      //         // }
-      //       // }
-      //     }
-
-      //   })
-    }
-    catch (err) {
-      console.log(err)
-    }
-
-  })
-}
 const editTicketMeta = async (req, res) => {
 
   // if (!req?.userInfo?._id) {
