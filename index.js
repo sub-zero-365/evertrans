@@ -15,6 +15,7 @@ const allowedOrigins = [
   "http://192.168.43.68:3000",    // Local network development
   "https://eagle-tranz.com",      // Production domain,
   "https://www.eagle-tranz.com",
+  "https://evertrans.onrender.com"
 ];
 
 app.use(cors({
