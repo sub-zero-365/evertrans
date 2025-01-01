@@ -722,29 +722,36 @@ const downloadsoftcopyticket = async (req, res) => {
 
 
       const pdfBytes = await pdfDoc.save()
-      await writeFile(path.join(_path, ticket._id + ".pdf"), pdfBytes);
-      await res.sendFile(path.join(_path, ticket._id + ".pdf"),
-        null,
-        function (err) {
-          res.end()
-          if (err) {
-            console.log(err, "391 ticket download")
+      // await writeFile(path.join(_path, ticket._id + ".pdf"), pdfBytes);
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `inline; filename=ticket-${_id}.pdf`);
+      
+      // Send the PDF buffer to the client
+      console.log("enter here ");
+      res.send(Buffer.from(pdfBytes));
+      // await res.sendFile(path.join(_path, ticket._id + ".pdf"),
+      //   null,
+      //   function (err) {
+      //     res.end()
+      //     if (err) {
+      //       console.log(err, "391 ticket download")
 
-            // throw err
-          }
-          else {
-            if (fs.existsSync(path.join(_path, "qr2.png")) && fs.existsSync(path.join(_path, ticket._id + ".pdf"))) {
-              try {
-                fs.unlinkSync(path.join(_path, "qr2.png"));
-                fs.unlinkSync(path.join(_path, ticket._id + ".pdf"));
-              }
-              catch (err) {
-                console.lg(err)
-              }
-            }
-          }
+      //       // throw err
+      //     }
+      //     else {
+      //       console.log("ticket downloaded")
+      //       // if (fs.existsSync(path.join(_path, "qr2.png")) && fs.existsSync(path.join(_path, ticket._id + ".pdf"))) {
+      //       //   try {
+      //       //     fs.unlinkSync(path.join(_path, "qr2.png"));
+      //       //     fs.unlinkSync(path.join(_path, ticket._id + ".pdf"));
+      //         // }
+      //         // catch (err) {
+      //         //   console.lg(err)
+      //         // }
+      //       // }
+      //     }
 
-        })
+      //   })
     }
     catch (err) {
       console.log(err)
