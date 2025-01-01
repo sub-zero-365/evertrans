@@ -14,6 +14,7 @@ const LOCAL_URL = process.env.LOCAL_URL
 
 const PROD_URL = process.env.PROD_URL
 const connectWithDB = (uri) => {
+    console.log(`this is the devMode : ${process.env.NODE_ENV === "production" ? "production" : "development"} and the is ${LOCAL_URL}`)
     mongoose.connect(uri, options).
         then(() => console.log("connected to databse")).
         catch((err) => {
@@ -26,7 +27,7 @@ if (process.env.NODE_ENV === "production") {
 } else {
     connectWithDB(LOCAL_URL)
     // connectWithDB(PROD_URL)
-    
+
 
 }
 module.exports = connectWithDB

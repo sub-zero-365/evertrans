@@ -81,6 +81,7 @@ app.post("/public/ticket",
 app.get("/ranked-users", getRankUsers)
 app.use("/reciepts",recieptRouter)
 app.get("/allcities", cityController);
+app.get("/hello-world",(_,res)=>res.send("hello world from server"))
 app.use("/cities", authenticateUser,
   IsUserRestricted,
   authorizePermissions(
