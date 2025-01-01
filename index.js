@@ -10,12 +10,22 @@ const morgan = require("morgan")
 app.use(cookieParser());
 app.use(express.json())
 const fs = require("fs")
+const allowedOrigins = [
+  "http://localhost:3000",        // Local development
+  "http://192.168.43.68:3000",    // Local network development
+  "https://eagle-tranz.com",      // Production domain,
+  "https://www.eagle-tranz.com",
+];
+
 app.use(cors({
-  // origin: ["http://localhost:3000",
-  //   "http://192.168.43.68:3000",
-  //   "https://eagle-tranz.com",
-  // ],
-  origin:true,
+  origin: (origin, callback) => {
+    if (allowedOrigins.includes(origin) || !origin) {
+      // Allow requests with no origin (e.g., mobile apps, Postman)
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
   credentials: true,
 }));
 app.use(morgan("tiny"))//logger for express 
