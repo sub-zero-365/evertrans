@@ -43,34 +43,7 @@ const Login = async (req, res) => {
         userId: user._id,
         role: user.role
     });
-    // let token = null
-    // if (user) {
-    //     token = await user.createJWT();
-    // }
-    // if (!user) {
-    //     // search assistant user
-    //     user = await Assistant.findOne({ ...{ phone, password } }, { password: 0 });
-    //     if (!user) throw BadRequestError("please check your login details and try again");
-    //     token = await user.createJWT()
-    //     user = {
-    //         redirect: true
-    //     }
-    //     res.cookie('token', token,
-    //         cookies(oneDay)
-    //         // {
-    //         //     httpOnly: true,
-    //         //     expires: new Date(Date.now() + oneDay),
-    //         //     secure: process.env.NODE_ENV === 'production',
-    //         //     // sameSite: "none",
-
-
-    //         // }
-    //     );
-    //     res.status(StatusCodes.OK).json({
-    //         msg: 'assistant logged in',
-    //         user
-    //     });
-    // }
+   
 
 
 
