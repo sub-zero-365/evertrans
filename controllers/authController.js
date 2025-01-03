@@ -43,7 +43,7 @@ const Login = async (req, res) => {
         userId: user._id,
         role: user.role
     });
-   
+
 
 
 
@@ -59,7 +59,10 @@ const Login = async (req, res) => {
 };
 const logout = (req, res) => {
     res.cookie('token', 'logout',
-        cookies()
+        {
+            httpOnly: true,
+            expires: new Date(Date.now()),
+        }
     );
     res.status(StatusCodes.OK).json({ msg: 'user logged out!' });
 };
