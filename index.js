@@ -9,26 +9,34 @@ const cloudinary = require('cloudinary');
 const morgan = require("morgan")
 app.use(cookieParser());
 app.use(express.json())
-const fs = require("fs")
 const allowedOrigins = [
   "http://localhost:3000",        // Local development
   "http://192.168.43.68:3000",    // Local network development
   "https://eagle-tranz.com",      // Production domain,
   "https://www.eagle-tranz.com",
-  "https://evertrans.onrender.com"
+  "https://evertrans.onrender.com",
+  "http://192.168.43.79:3000/",
+  "http://192.168.43.79:3000"
 ];
 
+
+// Configure CORS middleware
 app.use(cors({
   origin: (origin, callback) => {
-    if (allowedOrigins.includes(origin) || !origin) {
-      // Allow requests with no origin (e.g., mobile apps, Postman)
+    console.log("Request Origin:", origin); // Debugging: log the origin
+    if (!origin || allowedOrigins.includes(origin)) {
+      console.log("enter here ")
+      // Allow requests with no origin or from allowed origins
       callback(null, true);
     } else {
+      console.error("Blocked by CORS:", origin); // Log blocked origins for debugging
       callback(new Error("Not allowed by CORS"));
     }
   },
-  credentials: true,
+  credentials: true, // Allow cookies and authorization headers
 }));
+
+
 app.use(morgan("tiny"))//logger for express 
 cloudinary.config({
   cloud_name: process.env.cloudinary_name,
