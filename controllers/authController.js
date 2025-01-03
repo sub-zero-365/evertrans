@@ -6,6 +6,7 @@ const { StatusCodes } = require("http-status-codes");
 const cookies = require("../utils/COOKIES");
 const { createJWT } = require("../utils/tokenUtils");
 const { USER_ROLES, USER_ROLES_STATUS } = require("../utils/constants");
+const dayjs =require("dayjs")
 const Register = async (req, res) => {
     // console.log("hit the registe route here")
     // const { userRole } = req.query
@@ -58,14 +59,12 @@ const Login = async (req, res) => {
     });
 };
 const logout = (req, res) => {
-    res.cookie('token', 'logout',
-        {
-            httpOnly: true,
-            expires: new Date(Date.now()),
-        }
-    );
+    res.cookie('token', 'logout', {
+      httpOnly: true,
+      expires: new Date(dayjs().add(-1,"day")),
+    });
     res.status(StatusCodes.OK).json({ msg: 'user logged out!' });
-};
+  };
 module.exports = {
     Register,
     Login,
