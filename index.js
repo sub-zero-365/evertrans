@@ -21,22 +21,26 @@ const allowedOrigins = [
 
 
 // Configure CORS middleware
+// app.use(cors({
+//   origin: (origin, callback) => {
+//     console.log("Request Origin:", origin); // Debugging: log the origin
+//     if (!origin || allowedOrigins.includes(origin)) {
+//       console.log("enter here ")
+//       // Allow requests with no origin or from allowed origins
+//       callback(null, true);
+//     } else {
+//       console.error("Blocked by CORS:", origin); // Log blocked origins for debugging
+//       callback(new Error("Not allowed by CORS"));
+//     }
+//   },
+//   credentials: true, // Allow cookies and authorization headers
+// }));
+
 app.use(cors({
-  origin: (origin, callback) => {
-    console.log("Request Origin:", origin); // Debugging: log the origin
-    if (!origin || allowedOrigins.includes(origin)) {
-      console.log("enter here ")
-      // Allow requests with no origin or from allowed origins
-      callback(null, true);
-    } else {
-      console.error("Blocked by CORS:", origin); // Log blocked origins for debugging
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
-  credentials: true, // Allow cookies and authorization headers
-}));
+  origin: "*",
+  credentials: true, // fAllow cookies and authorization headers
 
-
+}))
 app.use(morgan("tiny"))//logger for express 
 cloudinary.config({
   cloud_name: process.env.cloudinary_name,
@@ -98,9 +102,9 @@ app.post("/public/ticket",
   validateGetTicket,
   getTicketForAnyUser)
 app.get("/ranked-users", getRankUsers)
-app.use("/reciepts",recieptRouter)
+app.use("/reciepts", recieptRouter)
 app.get("/allcities", cityController);
-app.get("/hello-world",(_,res)=>res.send("hello world from server"))
+app.get("/hello-world", (_, res) => res.send("hello world from server"))
 app.use("/cities", authenticateUser,
   IsUserRestricted,
   authorizePermissions(
