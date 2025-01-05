@@ -49,9 +49,12 @@ const Login = async (req, res) => {
 };
 const logout = (_req, res) => {
     res.cookie('token', 'logout', {
-      httpOnly: true,
-      expires: new Date(0),
-    });
+        httpOnly: true, // Match this with the original cookie
+        expires: new Date(0), // Expire immediately
+        path: '/', // Ensure this matches the original cookie's path
+        secure: process.env.NODE_ENV === 'production', // HTTPS only in production
+        sameSite: 'None', // Or match the original sameSite attribute
+      });
     res.status(StatusCodes.OK).json({ msg: 'user logged out!' });
   };
 module.exports = {
