@@ -37,10 +37,15 @@ const allowedOrigins = [
 // }));
 
 app.use(cors({
-  origin: "*",
-  credentials: true, // fAllow cookies and authorization headers
-
-}))
+  origin: (origin, callback) => {
+    // Allow requests with no origin (e.g., mobile apps or Postman)
+    if (!origin) {
+      return callback(null, true);
+    }
+    callback(null, origin); // Reflect the incoming origin
+  },
+  credentials: true, // Allow credentials (cookies, Authorization headers, etc.)
+}));
 app.use(morgan("tiny"))//logger for express 
 cloudinary.config({
   cloud_name: process.env.cloudinary_name,
