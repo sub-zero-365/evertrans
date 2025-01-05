@@ -53,7 +53,7 @@ const logout = (_req, res) => {
         expires: new Date(Date.now()),
         secure: process.env.NODE_ENV === 'production',
       });
-    res.status(StatusCodes.OK).json({ msg: 'user logged out!' });
+    res.status(StatusCodes.OK).json({ msg: 'user logged out with name!' });
   };
 module.exports = {
     Register,
