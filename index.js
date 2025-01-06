@@ -21,31 +21,22 @@ const allowedOrigins = [
 
 
 // Configure CORS middleware
-// app.use(cors({
-//   origin: (origin, callback) => {
-//     console.log("Request Origin:", origin); // Debugging: log the origin
-//     if (!origin || allowedOrigins.includes(origin)) {
-//       console.log("enter here ")
-//       // Allow requests with no origin or from allowed origins
-//       callback(null, true);
-//     } else {
-//       console.error("Blocked by CORS:", origin); // Log blocked origins for debugging
-//       callback(new Error("Not allowed by CORS"));
-//     }
-//   },
-//   credentials: true, // Allow cookies and authorization headers
-// }));
-
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (e.g., mobile apps or Postman)
-    if (!origin) {
-      return callback(null, true);
+    console.log("Request Origin:", origin); // Debugging: log the origin
+    if (!origin || allowedOrigins.includes(origin)) {
+      console.log("enter here ")
+      // Allow requests with no origin or from allowed origins
+      callback(null, true);
+    } else {
+      console.error("Blocked by CORS:", origin); // Log blocked origins for debugging
+      callback(new Error("Not allowed by CORS"));
     }
-    callback(null, origin); // Reflect the incoming origin
   },
-  credentials: true, // Allow credentials (cookies, Authorization headers, etc.)
+  credentials: true, // Allow cookies and authorization headers
 }));
+
+
 app.use(morgan("tiny"))//logger for express 
 cloudinary.config({
   cloud_name: process.env.cloudinary_name,
