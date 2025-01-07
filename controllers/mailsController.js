@@ -617,7 +617,8 @@ const showStats = async (req, res) => {
 module.exports = {
     createMail,
     getStaticMail,
-    getAllMeals: getUsersAllMails, downloadsoftcopy, editMail,
+    getAllMeals: getUsersAllMails,
+     downloadsoftcopy, editMail,
     showStats,
     getRankUsersMails
 }
