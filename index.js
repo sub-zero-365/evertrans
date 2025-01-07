@@ -92,10 +92,12 @@ app.use("/bus", authenticateUser,
   IsUserRestricted,
   busRouter);
 // app.use("/contact", Admin_auth, contactRouter);
+app.get("/downloadmail/:id", downloadsoftcopy)
+
 app.use("/restricted", restrictedRouter);
+
 app.use("/mails", authenticateUser, mailRouter)
 app.get("/downloadticket/:id", downloadsoftcopyticket)
-app.get("/downloadmail/:id", downloadsoftcopy)
 app.post("/public/ticket",
   validateGetTicket,
   getTicketForAnyUser)
