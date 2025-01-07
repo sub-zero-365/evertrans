@@ -44,12 +44,7 @@ router.route("/").get(
         USER_ROLES_STATUS.admin
         , USER_ROLES_STATUS.sub_admin,),
     getAllMeals)
-// router.route("/admins/mails").get(
-//     admin_auth,
-//     mailsPermission,
-//     getAllMeals
 
-// )
 
 router.route("/download/:id").get(downloadsoftcopy)
 module.exports = router

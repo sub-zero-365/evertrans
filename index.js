@@ -73,6 +73,7 @@ const { getRankUsers } = require("./controllers/Ticket")
 const mailRouter = require("./routes/mailRoute");
 // const GlobalRestriction = require("./middlewares/GlobalRestriction");
 const { USER_ROLES_STATUS } = require("./utils/constants");
+const { downloadsoftcopy } = require("./controllers/mailsController");
 // const AdminUser = require("./routes/Admin")
 // app.use(GlobalRestriction)
 app.use("/users", authenticateUser
@@ -94,6 +95,7 @@ app.use("/bus", authenticateUser,
 app.use("/restricted", restrictedRouter);
 app.use("/mails", authenticateUser, mailRouter)
 app.get("/downloadticket/:id", downloadsoftcopyticket)
+app.get("/downloadmail/:id", downloadsoftcopy)
 app.post("/public/ticket",
   validateGetTicket,
   getTicketForAnyUser)
