@@ -384,125 +384,111 @@ const downloadsoftcopy = async (req, res) => {
 
     }
     // const _path = path.resolvem(__dirname, "../mails")
-
-    const _path = path.resolve(__dirname, "../tickets")
-    const createdBy = (await User.findOne({ _id: mail.createdBy }).select("fullname"))?.fullname || "n/a";
-    qrcode.toFile(path.join(_path, "qr2.png"),
-        url, {
-        type: "terminal",
-        size: 4
-    }, async function (err, code) {
-        if (err) return console.log(err)
-        try {
-            const pdfDoc = await PDFDocument.load(await readFile(path.resolve(__dirname, "../tickets", "mailtemplate-1.pdf")));
-            const page = pdfDoc.getPage(0)
-            const { width, height } = page.getSize()
-
-            const fileNames = pdfDoc.getForm().getFields().map(f => f.getName())
-            console.log(fileNames)
-            const form = pdfDoc.getForm()
-            const { name,
-                from,
-                to,
-                _id, id,
-                senderfullname,
-                senderphonenumber,
-                senderidcardnumber,
-                recieverfullname,
-                recieverphonenumber,
-                estimatedprice,createdAt
-
-            } =
-                mail.toJSON()
-            try {
-                // console.log(fileNames)
-                form.getTextField("product_name").
-                    setText(name)
-                form.getTextField("registered_time").
-                    setText("")
-                form.getTextField("registered_date").
-                    setText(day(createdAt).format("M/D/YYYY"))
-                form.getTextField("from").
-                    setText(from)
-                form.getTextField("to").
-                    setText(`${to}`)
-                form.getTextField("senderfullname").
-                    setText(`${senderfullname || "n/a"}`)
-                form.getTextField("senderidcardnumber").
-                    setText(`${senderidcardnumber || "n/a"}`)
-                form.getTextField("senderphonenumber").
-                    setText(`${senderphonenumber || "n/a"}`)
-                form.getTextField("recieverfullname").
-                    setText(`${recieverfullname || "n/a"}`)
-                form.getTextField("recieverphonenumber").
-                    setText(`${recieverphonenumber || "n/a"}`)
-                form.getTextField("registered_time").
-                    setText(`${"textfield here" || "n/a"}`)
-                form.getTextField("registered_time").
-                    setText(`${"time here" || "n/a"}`)
-                form.getTextField("estimated_price").
-                    setText(`${estimatedprice || 0} frs`)
-                form.getTextField("done_by").
-                    setText(`${createdBy || "n/a"}`)
-
-                const fontSize = 40
-                page.drawText(`${id || _id}`, {
-                    x: width - 30,
-                    y: (height / 2) - (fontSize * 8) / 2,
-                    size: fontSize,
-                    color: rgb(0, 1, 0),
-                    rotate: degrees(90)
-                })
-                form.flatten()
-            } catch (err) {
-                console.log(err)
-            }
-
-            let img = fs.readFileSync(path.join(_path, "qr2.png"));
-            let logo = fs.readFileSync(path.join(_path, "logo.png"))
-            img = await pdfDoc.embedPng(img)
-            logo = await pdfDoc.embedPng(logo)
-            img.scaleToFit(100, 100)
-            img.scale(1)
-            logo.scaleToFit(100, 100)
-            logo.scale(1)
-            page.drawImage(img, {
-                x: (width / 2) - 155,
-                y: height - 500,
-                width: 310,
-                height: 310
-            })
-
-
-
-            const pdfBytes = await pdfDoc.save()
-            await writeFile(path.join(_path, Mail._id + ".pdf"), pdfBytes);
-            await res.sendFile(path.join(_path, Mail._id + ".pdf"),
-                null,
-                function (err) {
-                    res.end()
-                    if (err) {
-                        console.log(err)
-                    }
-                    else {
-                        if (fs.existsSync(path.join(_path, "qr2.png")) && fs.existsSync(path.join(_path, Mail._id + ".pdf"))) {
-                            try {
-                                fs.unlinkSync(path.join(_path, "qr2.png"));
-                                fs.unlinkSync(path.join(_path, Mail._id + ".pdf"));
-                            }
-                            catch (err) {
-                                console.lg(err)
-                            }
-                        }
-                    }
-
-                })
+    try {
+        const _path = path.resolve(__dirname, "../tickets")
+        const createdBy = (await User.findOne({ _id: mail.createdBy }).select("fullname"))?.fullname || "n/a";
+        let img = await qrcode.toBuffer(
+            url, {
+            type: "png",
+            width: 310, // Adjust size as necessary
         }
-        catch (err) {
+
+        )
+        const pdfDoc = await PDFDocument.load(
+            await fs.promises.readFile(
+                path.resolve(__dirname, "../tickets", "mailtemplate-1.pdf")
+            )
+        );
+        const page = pdfDoc.getPage(0)
+        const { width, height } = page.getSize()
+        const fileNames = pdfDoc.getForm().getFields().map(f => f.getName())
+        console.log(fileNames)
+        const form = pdfDoc.getForm()
+        const { name,
+            from,
+            to,
+            _id, id,
+            senderfullname,
+            senderphonenumber,
+            senderidcardnumber,
+            recieverfullname,
+            recieverphonenumber,
+            estimatedprice, createdAt
+
+        } =
+            mail.toJSON()
+        try {
+            // console.log(fileNames)
+            form.getTextField("product_name").
+                setText(name)
+            form.getTextField("registered_time").
+                setText("")
+            form.getTextField("registered_date").
+                setText(day(createdAt).format("M/D/YYYY"))
+            form.getTextField("from").
+                setText(from)
+            form.getTextField("to").
+                setText(`${to}`)
+            form.getTextField("senderfullname").
+                setText(`${senderfullname || "n/a"}`)
+            form.getTextField("senderidcardnumber").
+                setText(`${senderidcardnumber || "n/a"}`)
+            form.getTextField("senderphonenumber").
+                setText(`${senderphonenumber || "n/a"}`)
+            form.getTextField("recieverfullname").
+                setText(`${recieverfullname || "n/a"}`)
+            form.getTextField("recieverphonenumber").
+                setText(`${recieverphonenumber || "n/a"}`)
+            form.getTextField("registered_time").
+                setText(`${"textfield here" || "n/a"}`)
+            form.getTextField("registered_time").
+                setText(`${"time here" || "n/a"}`)
+            form.getTextField("estimated_price").
+                setText(`${estimatedprice || 0} frs`)
+            form.getTextField("done_by").
+                setText(`${createdBy || "n/a"}`)
+
+            const fontSize = 40
+            page.drawText(`${id || _id}`, {
+                x: width - 30,
+                y: (height / 2) - (fontSize * 8) / 2,
+                size: fontSize,
+                color: rgb(0, 1, 0),
+                rotate: degrees(90)
+            })
+            form.flatten()
+        } catch (err) {
             console.log(err)
         }
+        let logo = fs.readFileSync(path.join(_path, "logo.png"))
+        img = await pdfDoc.embedPng(img)
+        logo = await pdfDoc.embedPng(logo)
+        img.scaleToFit(100, 100)
+        img.scale(1)
+        logo.scaleToFit(100, 100)
+        logo.scale(1)
+        page.drawImage(img, {
+            x: (width / 2) - 155,
+            y: height - 500,
+            width: 310,
+            height: 310
+        })
 
-    })
+
+
+        const pdfBytes = await pdfDoc.save();
+        // Set headers and send the response
+        res.setHeader("Content-Type", "application/pdf");
+        res.setHeader(
+            "Content-Disposition",
+            `inline; filename=mail-${_id}.pdf`
+        );
+        res.send(Buffer.from(pdfBytes));
+    }
+    catch (err) {
+        throw err
+    }
+
 }
 const editMail = async (req, res) => {
     const status = req.body.status || ""
@@ -618,7 +604,7 @@ module.exports = {
     createMail,
     getStaticMail,
     getAllMeals: getUsersAllMails,
-     downloadsoftcopy, editMail,
+    downloadsoftcopy, editMail,
     showStats,
     getRankUsersMails
 }

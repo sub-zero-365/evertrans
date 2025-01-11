@@ -650,7 +650,7 @@ const downloadsoftcopyticket = async (req, res) => {
 
   try {
     // Generate QR code in memory
-    const qrCodeBuffer = await qrcode.toBuffer(url, {
+    const   qrCodeBuffer = await qrcode.toBuffer(url, {
       type: "png",
       width: 310, // Adjust size as necessary
     });
